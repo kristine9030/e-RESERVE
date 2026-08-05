@@ -61,13 +61,14 @@ require __DIR__ . '/../layouts/app_header.php';
     </div>
 
     <div class="table-responsive">
-        <table class="table js-datatable" data-page-length="15" data-order-col="6" data-order-dir="desc" style="width:100%;">
+        <table class="table js-datatable" data-page-length="15" data-order-col="7" data-order-dir="desc" style="width:100%;">
             <thead>
                 <tr>
                     <th>Reference</th>
                     <th>Ticket No.</th>
                     <th>Student</th>
                     <th>Program</th>
+                    <th>Type</th>
                     <th>Qty</th>
                     <th>Amount</th>
                     <th>Reserved</th>
@@ -85,6 +86,7 @@ require __DIR__ . '/../layouts/app_header.php';
                             <div class="cell-sub"><?= e($r['student_no']) ?></div>
                         </td>
                         <td><?= e($r['program']) ?><div class="cell-sub"><?= e($r['year']) ?></div></td>
+                        <td><?= tier_badge($r['tier'] ?? null) ?></td>
                         <td class="text-center"><?= (int) $r['quantity'] ?></td>
                         <td class="fw-800"><?= peso($r['amount']) ?></td>
                         <td class="cell-sub"><?= pretty_date($r['created_at']) ?></td>
@@ -125,6 +127,8 @@ require __DIR__ . '/../layouts/app_header.php';
                   row('Program', r.program) +
                   row('Year Level', r.year) +
                   row('Ticket No.', r.ticket_no) +
+                  row('Ticket Type', r.tier) +
+                  row('Seat', r.seat) +
                   row('Quantity', r.quantity) +
                   row('Amount', '₱' + Number(r.amount).toFixed(2)) +
                   row('Status', r.status.toUpperCase()) +

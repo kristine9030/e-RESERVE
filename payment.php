@@ -4,7 +4,7 @@
  *
  * REPLACE LATER (real integration outline):
  *   1. POST https://api.paymongo.com/v1/sources
- *        { type: "gcash", amount: 35000, currency: "PHP",
+ *        { type: "gcash", amount: 50000, currency: "PHP",   // centavos: VIP 50000 · SVIP 80000
  *          redirect: { success: ".../payment.php?status=success",
  *                      failed:  ".../payment.php?status=failed" } }
  *   2. Redirect the student to data.attributes.redirect.checkout_url
@@ -60,7 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $user   = current_user();
 $res    = get_reservation();
-$intent = mock_paymongo_intent(TICKET_PRICE);
+$tier   = tier($res['tier'] ?? null);
+$amount = (float) ($res['amount'] ?? $tier['price']);
+$intent = mock_paymongo_intent($amount);
 
 $pageTitle = 'Secure Checkout';
 $bodyClass = 'checkout-page';
@@ -93,9 +95,11 @@ require __DIR__ . '/layouts/head.php';
             <!-- Amount -->
             <div class="pay-amount">
                 <div class="lbl mb-2">Amount to Pay</div>
-                <div class="amt"><?= peso(TICKET_PRICE) ?></div>
+                <div class="amt"><?= peso($amount) ?></div>
                 <div class="mt-2">
-                    <span class="badge-soft badge-gold"><i class="fa-solid fa-ticket"></i> SIGLA 2026 · General Admission</span>
+                    <span class="badge-soft badge-gold">
+                        <i class="fa-solid <?= $tier['icon'] ?>"></i> SIGLA 2026 · <?= e($tier['name']) ?> Ticket
+                    </span>
                 </div>
             </div>
 
@@ -113,6 +117,7 @@ require __DIR__ . '/layouts/head.php';
                 <div class="pay-row"><span class="k">Source ID</span><span class="v mono" style="font-size:.74rem;"><?= e($intent['source_id']) ?></span></div>
                 <div class="pay-row"><span class="k">Merchant</span><span class="v">SSC ARASOF-Nasugbu</span></div>
                 <div class="pay-row"><span class="k">Reservation</span><span class="v mono"><?= e($res['code']) ?></span></div>
+                <div class="pay-row"><span class="k">Ticket Type</span><span class="v"><?= e($tier['name']) ?> · <?= peso((float) $tier['price']) ?></span></div>
                 <div class="pay-row"><span class="k">Payer</span><span class="v"><?= e($user['name']) ?></span></div>
                 <div class="pay-row"><span class="k">Student No.</span><span class="v mono"><?= e($user['student_no']) ?></span></div>
                 <div class="pay-row"><span class="k">Payment Method</span><span class="v"><i class="fa-solid fa-mobile-screen me-1 text-gold"></i>GCash e-Wallet</span></div>
@@ -121,7 +126,7 @@ require __DIR__ . '/layouts/head.php';
 
                 <div class="pay-row">
                     <span class="k fw-800 text-deep">Total Due</span>
-                    <span class="v" style="font-size:1.1rem;"><?= peso(TICKET_PRICE) ?></span>
+                    <span class="v" style="font-size:1.1rem;"><?= peso($amount) ?></span>
                 </div>
             </div>
 
@@ -166,7 +171,8 @@ require __DIR__ . '/layouts/head.php';
         Swal.fire({
             icon: 'question',
             title: 'Authorize GCash payment?',
-            html: 'You are about to pay <strong><?= peso(TICKET_PRICE) ?></strong> to ' +
+            html: 'You are about to pay <strong><?= peso($amount) ?></strong> for your ' +
+                  '<strong><?= e($tier['name']) ?></strong> ticket to ' +
                   '<strong>SSC ARASOF-Nasugbu</strong>.<br>' +
                   '<span style="font-size:.8rem;color:#7C8F88;">Ref. <?= e($intent['reference']) ?></span>',
             showCancelButton: true,

@@ -71,11 +71,50 @@ define('EVENT_TIME_TEXT', '6:00 PM – 12:00 MN');
 define('EVENT_CAPACITY',  2500);
 
 /* --------------------------------------------------------------------------
- | Ticketing
+ | Ticketing — SIGLA 2026 sells exactly two tiers: VIP and SVIP.
+ |
+ | REPLACE LATER: this array becomes tbl_ticket_types. Everything that shows a
+ | price reads it from here (or from the stored reservation amount), so a price
+ | change only ever happens in this one block.
  * ------------------------------------------------------------------------ */
-define('TICKET_PRICE',    350.00);
-define('TICKET_PREFIX',   'SIGLA-2026-');
-define('TICKET_LIMIT',    1);   // Business rule: One Student = One Ticket
+define('TICKET_TIERS', [
+    'VIP' => [
+        'code'  => 'VIP',
+        'name'  => 'VIP',
+        'price' => 500.00,
+        'seat'  => 'VIP',
+        'tone'  => 'green',
+        'icon'  => 'fa-ticket',
+        'blurb' => 'Reserved VIP seating with full access to every segment of the night.',
+        'perks' => [
+            'Reserved VIP seating section',
+            'Access to all SIGLA 2026 segments',
+            'Entry to the post-program afterparty',
+            'Official e-ticket with QR gate entry',
+        ],
+    ],
+    'SVIP' => [
+        'code'  => 'SVIP',
+        'name'  => 'SVIP',
+        'price' => 800.00,
+        'seat'  => 'SVIP',
+        'tone'  => 'gold',
+        'icon'  => 'fa-crown',
+        'blurb' => 'Front-row seating, priority lane at the gate and the SVIP loot bag.',
+        'perks' => [
+            'Front-row SVIP seating section',
+            'Priority scanning lane — no queue',
+            'Access to all SIGLA 2026 segments',
+            'Entry to the post-program afterparty',
+            'Exclusive SVIP loot bag and lanyard',
+        ],
+    ],
+]);
+
+define('TICKET_DEFAULT_TIER', 'VIP');
+define('TICKET_PRICE_FROM',   500.00);   // entry tier — used for "starts at" copy
+define('TICKET_PREFIX',       'SIGLA-2026-');
+define('TICKET_LIMIT',        1);        // Business rule: One Student = One Ticket
 
 /* --------------------------------------------------------------------------
  | Payment gateway (mock) — replace with live credentials on integration
@@ -100,5 +139,6 @@ define('STORAGE_PATH', APP_PATH . '/sessions');
 
 date_default_timezone_set('Asia/Manila');
 
+require_once __DIR__ . '/qr.php';
 require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/data.php';

@@ -31,11 +31,12 @@ require __DIR__ . '/../layouts/app_header.php';
 
 <div class="row g-3 mb-4">
     <?php
+    $svip = count(array_filter($rows, static fn($t) => ($t['tier'] ?? '') === 'SVIP'));
     $mini = [
         ['fa-ticket',       'gold',  'Tickets Issued', count($rows)],
         ['fa-circle-check', 'green', 'Valid / Unused', $valid],
         ['fa-user-check',   'info',  'Already Used',   $used],
-        ['fa-ban',          'danger','Voided',         0],
+        ['fa-crown',        'deep',  'SVIP Tickets',   $svip],
     ];
     foreach ($mini as $i => [$icon, $tone, $label, $val]): ?>
         <div class="col-6 col-lg-3">
@@ -64,6 +65,7 @@ require __DIR__ . '/../layouts/app_header.php';
                     <th>Ticket No.</th>
                     <th>Student</th>
                     <th>Program</th>
+                    <th>Type</th>
                     <th>Seat</th>
                     <th>Issued</th>
                     <th>Status</th>
@@ -79,6 +81,7 @@ require __DIR__ . '/../layouts/app_header.php';
                             <div class="cell-sub"><?= e($t['student_no']) ?></div>
                         </td>
                         <td><?= e($t['program']) ?></td>
+                        <td><?= tier_badge($t['tier'] ?? null) ?></td>
                         <td><span class="badge-soft badge-muted"><?= e($t['seat']) ?></span></td>
                         <td class="cell-sub"><?= pretty_date($t['issued_at']) ?></td>
                         <td><?= status_badge($t['status']) ?></td>
@@ -87,7 +90,8 @@ require __DIR__ . '/../layouts/app_header.php';
                                     data-ticket="<?= e($t['ticket_no']) ?>"
                                     data-name="<?= e($t['name']) ?>"
                                     data-seat="<?= e($t['seat']) ?>"
-                                    data-qr="<?= e(url('admin/qr.php?s=170&t=' . urlencode($t['ticket_no'] . '|' . $t['student_no']))) ?>"
+                                    data-tier="<?= e(tier_name($t['tier'] ?? null)) ?>"
+                                    data-qr="<?= e(url('admin/qr.php?s=170&t=' . urlencode(ticket_qr_payload($t)))) ?>"
                                     title="Show QR">
                                 <i class="fa-solid fa-qrcode" style="font-size:.75rem;"></i>
                             </button>
@@ -112,9 +116,10 @@ require __DIR__ . '/../layouts/app_header.php';
                   '<img src="' + btn.dataset.qr + '" width="170" height="170" alt="QR code">' +
                   '</div></div>' +
                   '<div style="font-weight:800;color:#06251B;">' + btn.dataset.name + '</div>' +
-                  '<div style="font-size:.8rem;color:#7C8F88;">Seat ' + btn.dataset.seat + ' · Admit one</div>' +
+                  '<div style="font-size:.8rem;color:#7C8F88;">' + btn.dataset.tier +
+                  ' · Seat ' + btn.dataset.seat + ' · Admit one</div>' +
                   '<div style="font-size:.72rem;color:#7C8F88;margin-top:.8rem;">' +
-                  'Placeholder QR — swap for a generated code on integration.</div>',
+                  'Scan this with the Gate Check-in camera to admit the student.</div>',
             confirmButtonText: 'Close',
             width: 380
         });

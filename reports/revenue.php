@@ -16,6 +16,12 @@ $net      = $gross - $fees;
 $target   = 350000.00;                       // mock revenue target for the event
 $attain   = $target > 0 ? round($gross / $target * 100, 1) : 0;
 
+/* Income-statement lines that sit on top of ticket sales. */
+$refunds     = tier_price('SVIP');           // the single refund in the ledger
+$sponsorship = 75000.00;
+$totalIncome = $net - $refunds + $sponsorship;
+$avgPrice    = average_ticket_price();
+
 /* Simple expense sheet so the report reads like a real financial summary. */
 $expenses = [
     ['Production and stage design',   68000.00],
@@ -85,7 +91,7 @@ require __DIR__ . '/../layouts/app_header.php';
             <div class="card-body-p">
                 <div class="mini-chart">
                     <?php foreach ($trend as $i => $t): ?>
-                        <div class="mc-col" data-bs-toggle="tooltip" title="<?= e($t['label']) ?>: <?= peso($t['count'] * TICKET_PRICE) ?>">
+                        <div class="mc-col" data-bs-toggle="tooltip" title="<?= e($t['label']) ?>: <?= peso($t['count'] * $avgPrice) ?> (est.)">
                             <div class="mc-bar" style="height:<?= round($t['count'] / $maxTrend * 100) ?>%;animation-delay:<?= $i * 45 ?>ms;"></div>
                             <div class="mc-label"><?= e($t['label']) ?></div>
                         </div>
@@ -131,20 +137,22 @@ require __DIR__ . '/../layouts/app_header.php';
         <div class="card-soft h-100 fade-up d4">
             <div class="card-head"><h5 class="mb-0">Statement of Income</h5></div>
             <div class="card-body-p">
-                <div class="receipt-row">
-                    <span class="k">Ticket sales (<?= count($payments) ?> × <?= peso(TICKET_PRICE) ?>)</span>
-                    <span class="v"><?= peso($gross) ?></span>
-                </div>
+                <?php foreach (tier_breakdown() as $t): ?>
+                    <div class="receipt-row">
+                        <span class="k"><?= e($t['name']) ?> ticket sales (<?= number_format($t['sold']) ?> × <?= peso((float) $t['price']) ?>)</span>
+                        <span class="v"><?= peso($t['revenue']) ?></span>
+                    </div>
+                <?php endforeach; ?>
                 <div class="receipt-row"><span class="k">Less: PayMongo gateway fees (2.5%)</span><span class="v text-danger">(<?= peso($fees) ?>)</span></div>
-                <div class="receipt-row"><span class="k">Less: Refunds and adjustments</span><span class="v text-danger">(<?= peso(TICKET_PRICE) ?>)</span></div>
-                <div class="receipt-row"><span class="k">Add: Sponsorship contributions</span><span class="v text-green"><?= peso(75000) ?></span></div>
+                <div class="receipt-row"><span class="k">Less: Refunds and adjustments</span><span class="v text-danger">(<?= peso($refunds) ?>)</span></div>
+                <div class="receipt-row"><span class="k">Add: Sponsorship contributions</span><span class="v text-green"><?= peso($sponsorship) ?></span></div>
 
                 <div class="receipt-total">
                     <div>
                         <div class="info-label">Total Income</div>
                         <div class="cell-sub">Before event expenses</div>
                     </div>
-                    <div class="amt"><?= peso($net - TICKET_PRICE + 75000) ?></div>
+                    <div class="amt"><?= peso($totalIncome) ?></div>
                 </div>
             </div>
         </div>
@@ -177,14 +185,14 @@ require __DIR__ . '/../layouts/app_header.php';
         <div class="row g-4">
             <div class="col-md-4">
                 <div class="info-label">Total Income</div>
-                <div class="fw-900 text-deep" style="font-size:1.5rem;letter-spacing:-1px;"><?= peso($net + 75000 - TICKET_PRICE) ?></div>
+                <div class="fw-900 text-deep" style="font-size:1.5rem;letter-spacing:-1px;"><?= peso($totalIncome) ?></div>
             </div>
             <div class="col-md-4">
                 <div class="info-label">Total Expenses</div>
                 <div class="fw-900" style="font-size:1.5rem;letter-spacing:-1px;color:var(--danger);"><?= peso($totalExpense) ?></div>
             </div>
             <div class="col-md-4">
-                <?php $surplus = $net + 75000 - TICKET_PRICE - $totalExpense; ?>
+                <?php $surplus = $totalIncome - $totalExpense; ?>
                 <div class="info-label"><?= $surplus >= 0 ? 'Projected Surplus' : 'Projected Deficit' ?></div>
                 <div class="fw-900" style="font-size:1.5rem;letter-spacing:-1px;color:<?= $surplus >= 0 ? 'var(--success)' : 'var(--danger)' ?>;">
                     <?= peso(abs($surplus)) ?>

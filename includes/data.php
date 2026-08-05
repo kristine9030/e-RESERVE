@@ -53,8 +53,12 @@ function sample_reservations(): array
     $students = sample_students();
     $statuses = ['paid', 'paid', 'paid', 'pending', 'paid', 'paid', 'cancelled', 'paid'];
 
+    // Roughly one in three students springs for SVIP.
+    $tiers = ['VIP', 'VIP', 'SVIP'];
+
     foreach ($students as $i => [$name, $sn, $program, $year]) {
         $status = $statuses[$i % count($statuses)];
+        $tier   = tier($tiers[$i % count($tiers)]);
         $day    = 1 + ($i % 26);
         $date   = sprintf('2026-10-%02d %02d:%02d:00', $day, 8 + ($i % 11), ($i * 7) % 60);
 
@@ -66,7 +70,9 @@ function sample_reservations(): array
             'program'    => $program,
             'year'       => $year,
             'quantity'   => 1,
-            'amount'     => TICKET_PRICE,
+            'tier'       => $tier['code'],
+            'seat'       => $tier['seat'] . '-' . str_pad((string) (100 + $i), 4, '0', STR_PAD_LEFT),
+            'amount'     => (float) $tier['price'],
             'status'     => $status,
             'created_at' => $date,
             'paid_at'    => $status === 'paid' ? date('Y-m-d H:i:s', strtotime($date) + 3600) : null,
@@ -77,6 +83,7 @@ function sample_reservations(): array
     // --- live session record on top ----------------------------------------
     if (function_exists('get_reservation') && ($mine = get_reservation())) {
         $ticket = get_ticket();
+        $tier   = tier($mine['tier'] ?? null);
         array_unshift($rows, [
             'code'       => $mine['code'],
             'ticket_no'  => $ticket['ticket_no'] ?? '—',
@@ -85,6 +92,8 @@ function sample_reservations(): array
             'program'    => $mine['program'],
             'year'       => $mine['year'],
             'quantity'   => $mine['quantity'],
+            'tier'       => $tier['code'],
+            'seat'       => $ticket['seat'] ?? '—',
             'amount'     => $mine['amount'],
             'status'     => $mine['status'],
             'created_at' => $mine['created_at'],
@@ -111,6 +120,7 @@ function sample_payments(): array
             'ticket_no'  => $r['ticket_no'],
             'name'       => $r['name'],
             'student_no' => $r['student_no'],
+            'tier'       => $r['tier'],
             'method'     => PAYMENT_METHOD,
             'amount'     => $r['amount'],
             'fee'        => round($r['amount'] * 0.025, 2),   // mock 2.5% gateway fee
@@ -125,7 +135,7 @@ function sample_payments(): array
 function sample_tickets(): array
 {
     $rows = [];
-    foreach (sample_reservations() as $i => $r) {
+    foreach (sample_reservations() as $r) {
         if ($r['status'] !== 'paid') {
             continue;
         }
@@ -134,7 +144,9 @@ function sample_tickets(): array
             'name'       => $r['name'],
             'student_no' => $r['student_no'],
             'program'    => $r['program'],
-            'seat'       => 'GA-' . str_pad((string) (100 + $i), 4, '0', STR_PAD_LEFT),
+            'tier'       => $r['tier'],
+            'amount'     => $r['amount'],
+            'seat'       => $r['seat'],
             'status'     => $r['checked_in'] ? 'used' : 'valid',
             'checked_in' => $r['checked_in'],
             'issued_at'  => $r['paid_at'] ?? $r['created_at'],
@@ -228,7 +240,7 @@ function finance_ledger(): array
         $rows[] = [
             'date'      => $p['paid_at'],
             'reference' => $p['reference'],
-            'particular'=> 'Ticket sale · ' . $p['ticket_no'],
+            'particular'=> 'Ticket sale · ' . tier_name($p['tier'] ?? null) . ' · ' . $p['ticket_no'],
             'payer'     => $p['name'],
             'method'    => $p['method'],
             'debit'     => 0.0,
@@ -245,8 +257,8 @@ function finance_ledger(): array
     ];
     $rows[] = [
         'date' => '2026-11-02 09:15:00', 'reference' => 'ADJ-2026-004',
-        'particular' => 'Refund · duplicate GCash charge', 'payer' => 'Danica Rose Malvar',
-        'method' => 'GCash', 'debit' => TICKET_PRICE, 'credit' => 0.0, 'fee' => 0.0, 'status' => 'refunded',
+        'particular' => 'Refund · duplicate GCash charge (SVIP)', 'payer' => 'Danica Rose Malvar',
+        'method' => 'GCash', 'debit' => tier_price('SVIP'), 'credit' => 0.0, 'fee' => 0.0, 'status' => 'refunded',
     ];
 
     usort($rows, static fn($a, $b) => strcmp((string) $b['date'], (string) $a['date']));
@@ -276,6 +288,10 @@ function faqs(): array
          'All bona fide students of Batangas State University TNEU – ARASOF Nasugbu with an active @g.batstate-u.edu.ph GSuite account may reserve.'],
         ['How many tickets can I reserve?',
          'One student is entitled to exactly one ticket. The system automatically blocks a second reservation on the same account.'],
+        ['What ticket types are available?',
+         'Two: VIP at ' . peso(tier_price('VIP')) . ' and SVIP at ' . peso(tier_price('SVIP')) . '. '
+         . 'Both include the full six-hour program and the afterparty; SVIP adds front-row seating, '
+         . 'a priority scanning lane at the gate and an exclusive loot bag.'],
         ['What payment methods are accepted?',
          'Payments are processed through PayMongo using GCash. Additional channels (Maya, GrabPay, cards) will be enabled in a later release.'],
         ['When do I receive my ticket?',

@@ -97,7 +97,7 @@ require __DIR__ . '/layouts/app_header.php';
 
                             <?php if ($s['state'] === 'current' && $s['key'] === 'pending'): ?>
                                 <a href="<?= url('payment.php') ?>" class="btn btn-gold btn-sm2 mt-3">
-                                    <i class="fa-solid fa-mobile-screen"></i> Pay <?= peso(TICKET_PRICE) ?> now
+                                    <i class="fa-solid fa-mobile-screen"></i> Pay <?= peso((float) ($res['amount'] ?? TICKET_PRICE_FROM)) ?> now
                                 </a>
                             <?php elseif ($s['state'] === 'current' && $s['key'] === 'submitted'): ?>
                                 <a href="<?= url('reserve.php') ?>" class="btn btn-gold btn-sm2 mt-3">
@@ -121,6 +121,7 @@ require __DIR__ . '/layouts/app_header.php';
                     <div class="receipt-row"><span class="k">Reference</span><span class="v mono"><?= e($res['code']) ?></span></div>
                     <div class="receipt-row"><span class="k">Status</span><span class="v"><?= status_badge($res['status']) ?></span></div>
                     <div class="receipt-row"><span class="k">Reserved On</span><span class="v"><?= pretty_date($res['created_at']) ?></span></div>
+                    <div class="receipt-row"><span class="k">Ticket Type</span><span class="v"><?= tier_badge($res['tier'] ?? null) ?></span></div>
                     <div class="receipt-row"><span class="k">Amount</span><span class="v"><?= peso($res['amount']) ?></span></div>
                     <?php if ($pay): ?>
                         <div class="receipt-row"><span class="k">Receipt No.</span><span class="v mono"><?= e($pay['receipt_no']) ?></span></div>

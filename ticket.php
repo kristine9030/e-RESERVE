@@ -41,13 +41,9 @@ require __DIR__ . '/layouts/app_header.php';
 <?php else: ?>
 
     <?php
-    // Payload the gate scanner would read.
-    $qrPayload = json_encode([
-        'ticket'  => $ticket['ticket_no'],
-        'student' => $ticket['student_no'],
-        'event'   => 'SIGLA-2026',
-        'issued'  => $ticket['issued_at'],
-    ]);
+    // Exactly what the gate scanner reads off this ticket.
+    $qrPayload = ticket_qr_payload($ticket);
+    $tier      = tier($ticket['tier'] ?? null);
     ?>
 
     <div class="page-hero fade-up no-print">
@@ -82,7 +78,10 @@ require __DIR__ . '/layouts/app_header.php';
                 </div>
                 <div>
                     <div class="tg-label">Admission</div>
-                    <div class="tg-value">General · Seat <?= e($ticket['seat']) ?></div>
+                    <div class="tg-value">
+                        <span style="color:var(--gold-400);"><i class="fa-solid <?= $tier['icon'] ?>"></i> <?= e($tier['name']) ?></span>
+                        · Seat <?= e($ticket['seat']) ?>
+                    </div>
                 </div>
                 <div>
                     <div class="tg-label">Student Name</div>
@@ -128,17 +127,17 @@ require __DIR__ . '/layouts/app_header.php';
         <div class="eticket-stub">
             <div class="info-label mb-2">Scan at Gate</div>
             <div class="qr-frame mb-3">
-                <?= qr_placeholder($qrPayload, 190) ?>
+                <?= qr_svg($qrPayload, 190, ['label' => 'Ticket ' . $ticket['ticket_no']]) ?>
             </div>
             <div class="mono fw-800 text-deep" style="font-size:.82rem;letter-spacing:.6px;"><?= e($ticket['ticket_no']) ?></div>
-            <div class="cell-sub mb-3">Admit one (1) student</div>
+            <div class="cell-sub mb-2">Admit one (1) student · <?= e($tier['name']) ?></div>
             <span class="badge-soft badge-<?= $ticket['checked_in'] ? 'info' : 'success' ?>">
                 <i class="fa-solid fa-<?= $ticket['checked_in'] ? 'user-check' : 'circle-check' ?>"></i>
                 <?= $ticket['checked_in'] ? 'Checked In' : 'Valid for Entry' ?>
             </span>
 
-            <p class="cell-sub mt-3 mb-0 print-only">
-                Placeholder QR — replace with a generated code on API integration.
+            <p class="cell-sub mt-3 mb-0">
+                Scannable with any QR reader — the gate desk decodes it straight into the check-in log.
             </p>
         </div>
     </div>

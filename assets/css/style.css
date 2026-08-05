@@ -1180,6 +1180,115 @@ a { text-decoration: none; transition: color .2s ease; }
     color: var(--gold-400);
 }
 
+/* ==========================================================================
+   GATE SCANNER STAGE  (live camera preview on admin/checkin.php)
+   ========================================================================== */
+.scan-stage {
+    position: relative;
+    border-radius: var(--radius-sm);
+    border: 2px dashed var(--green-200);
+    background: var(--green-050);
+    overflow: hidden;
+    min-height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.scan-stage #qrReader { width: 100%; }
+.scan-stage #qrReader video,
+.scan-stage #qrReader canvas { width: 100% !important; height: auto !important; display: block; }
+.scan-stage #qrReader img[alt="Info icon"] { display: none; }
+
+.scan-idle {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.5rem;
+    pointer-events: none;
+}
+.scan-idle i { font-size: 3rem; color: var(--green-500); opacity: .38; }
+
+/* ==========================================================================
+   TICKET TIER PICKER  (VIP · SVIP)
+   ========================================================================== */
+.tier-pick {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+.tier-option {
+    position: relative;
+    display: block;
+    padding: 1.15rem 1.2rem 1.25rem;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    cursor: pointer;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.tier-option:hover { border-color: var(--green-200); transform: translateY(-2px); }
+.tier-option input { position: absolute; opacity: 0; pointer-events: none; }
+.tier-option.is-selected {
+    border-color: var(--gold-500);
+    box-shadow: var(--shadow-gold);
+    background: var(--gold-050);
+}
+
+.tier-head { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; }
+.tier-name {
+    font-weight: 900;
+    font-size: 1rem;
+    letter-spacing: -.3px;
+    color: var(--green-800);
+}
+.tier-name i { color: var(--gold-600); margin-right: .35rem; }
+.tier-price {
+    font-weight: 900;
+    font-size: 1.25rem;
+    letter-spacing: -1px;
+    color: var(--green-700);
+    white-space: nowrap;
+}
+.tier-option.is-selected .tier-price { color: var(--gold-700); }
+
+.tier-blurb {
+    display: block;
+    margin-top: .45rem;
+    font-size: .78rem;
+    line-height: 1.6;
+    color: var(--ink-muted);
+}
+.tier-perks { list-style: none; margin: .8rem 0 0; padding: 0; }
+.tier-perks li {
+    display: flex;
+    align-items: flex-start;
+    gap: .5rem;
+    font-size: .76rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    padding: .18rem 0;
+}
+.tier-perks i { color: var(--success); font-size: .6rem; margin-top: .32rem; }
+
+.tier-check {
+    position: absolute;
+    top: .75rem;
+    right: .85rem;
+    color: var(--gold-600);
+    opacity: 0;
+    transform: scale(.6);
+    transition: opacity .2s ease, transform .2s ease;
+}
+.tier-option.is-selected .tier-check { opacity: 1; transform: scale(1); }
+
+@media (max-width: 575.98px) {
+    .tier-pick { grid-template-columns: 1fr; }
+}
+
 .qr-frame {
     background: var(--white);
     border: 1px solid var(--line);

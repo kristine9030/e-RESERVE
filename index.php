@@ -106,15 +106,20 @@ require __DIR__ . '/layouts/public_nav.php';
 
                     <div class="d-flex align-items-end justify-content-between mb-3">
                         <div>
-                            <div class="cd-label mb-1">General Admission</div>
-                            <div class="price"><?= peso(TICKET_PRICE, false) ?><small> PHP</small></div>
+                            <div class="cd-label mb-1">Tickets from</div>
+                            <div class="price"><?= peso(TICKET_PRICE_FROM, false) ?><small> PHP</small></div>
                         </div>
                         <span class="badge-soft badge-gold"><i class="fa-solid fa-circle-check"></i> Selling Fast</span>
                     </div>
 
                     <div class="ticket-rows pt-3">
+                        <?php foreach (ticket_tiers() as $t): ?>
+                            <div class="ticket-row">
+                                <span class="k"><i class="fa-solid <?= $t['icon'] ?> me-1"></i> <?= e($t['name']) ?></span>
+                                <span class="v"><?= peso((float) $t['price']) ?></span>
+                            </div>
+                        <?php endforeach; ?>
                         <div class="ticket-row"><span class="k">Slots remaining</span><span class="v"><?= number_format($remaining) ?> of <?= number_format(EVENT_CAPACITY) ?></span></div>
-                        <div class="ticket-row"><span class="k">Payment channel</span><span class="v">GCash via PayMongo</span></div>
                         <div class="ticket-row"><span class="k">Limit</span><span class="v">1 ticket / student</span></div>
                     </div>
 
@@ -217,7 +222,7 @@ require __DIR__ . '/layouts/public_nav.php';
             $steps = [
                 ['01', 'fa-right-to-bracket', 'Sign In',  'Use your @g.batstate-u.edu.ph GSuite account. No extra registration needed.'],
                 ['02', 'fa-calendar-check',   'Reserve',  'Claim your slot in one click. The system enforces one ticket per student.'],
-                ['03', 'fa-mobile-screen',    'Pay',      'Settle ' . peso(TICKET_PRICE) . ' through GCash, processed by PayMongo.'],
+                ['03', 'fa-mobile-screen',    'Pay',      'Settle your VIP or SVIP ticket through GCash, processed by PayMongo.'],
                 ['04', 'fa-qrcode',           'Celebrate','Your e-ticket and receipt generate instantly. Scan in at the gate.'],
             ];
             foreach ($steps as $i => [$num, $icon, $title, $desc]): ?>
@@ -239,67 +244,68 @@ require __DIR__ . '/layouts/public_nav.php';
 ====================================================================== -->
 <section class="section" id="tickets">
     <div class="container">
-        <div class="row g-5 align-items-center">
-            <div class="col-lg-6 reveal">
-                <span class="eyebrow"><i class="fa-solid fa-tag"></i> Ticket Price</span>
-                <h2 class="section-title">One ticket. <span class="grad-text">Everything included.</span></h2>
-                <div class="divider-dot"></div>
-                <p class="section-lead">
-                    A single General Admission ticket covers the whole six-hour program, from the opening rites
-                    to the afterparty. No tiers, no hidden add-ons.
-                </p>
+        <div class="text-center mb-5 reveal">
+            <span class="eyebrow"><i class="fa-solid fa-tag"></i> Ticket Prices</span>
+            <h2 class="section-title">Two tiers. <span class="grad-text">One unforgettable night.</span></h2>
+            <div class="divider-dot mx-auto"></div>
+            <p class="section-lead mx-auto" style="max-width:620px;">
+                Choose <strong class="text-deep">VIP</strong> or <strong class="text-deep">SVIP</strong> — both cover the
+                whole six-hour program, from the opening rites to the afterparty. One ticket per student.
+            </p>
+        </div>
 
-                <ul class="list-unstyled mt-4">
-                    <?php
-                    $incl = [
-                        'Full access to all SIGLA 2026 segments',
-                        'Free entry to the post-program afterparty',
-                        'Official e-ticket with QR-coded gate entry',
-                        'Downloadable, printable official receipt',
-                        'Real-time reservation tracking on your dashboard',
-                    ];
-                    foreach ($incl as $item): ?>
-                        <li class="d-flex align-items-start gap-3 mb-3">
-                            <span class="badge-soft badge-success" style="width:26px;height:26px;justify-content:center;padding:0;border-radius:50%;flex:0 0 auto;">
-                                <i class="fa-solid fa-check" style="font-size:.62rem;"></i>
-                            </span>
-                            <span class="fw-600 text-soft" style="font-size:.9rem;"><?= e($item) ?></span>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-
-            <div class="col-lg-6 reveal">
-                <div class="card-soft p-0 overflow-hidden" style="border-radius:var(--radius-lg);">
-                    <div class="p-4 p-lg-5 text-center" style="background:var(--grad-green);color:#fff;position:relative;overflow:hidden;">
-                        <span class="orb orb-gold" style="width:280px;height:280px;top:-140px;right:-90px;opacity:.28;"></span>
-                        <div class="position-relative">
-                            <span class="eyebrow on-dark mb-3"><i class="fa-solid fa-ticket"></i> General Admission</span>
-                            <div class="mt-3" style="font-size:4rem;font-weight:900;line-height:1;letter-spacing:-3px;color:var(--gold-400);">
-                                <?= peso(TICKET_PRICE) ?>
+        <div class="row g-4 justify-content-center">
+            <?php foreach (ticket_tiers() as $t): ?>
+                <?php $isTop = $t['code'] === 'SVIP'; ?>
+                <div class="col-lg-5 col-md-6 reveal">
+                    <div class="card-soft p-0 overflow-hidden h-100" style="border-radius:var(--radius-lg);<?= $isTop ? 'border-color:var(--gold-500);box-shadow:var(--shadow-gold);' : '' ?>">
+                        <div class="p-4 p-lg-5 text-center" style="background:<?= $isTop ? 'var(--grad-sun)' : 'var(--grad-green)' ?>;color:#fff;position:relative;overflow:hidden;">
+                            <span class="orb orb-gold" style="width:280px;height:280px;top:-140px;right:-90px;opacity:.28;"></span>
+                            <div class="position-relative">
+                                <span class="eyebrow on-dark mb-3"><i class="fa-solid <?= $t['icon'] ?>"></i> <?= e($t['name']) ?><?= $isTop ? ' · Most Popular' : '' ?></span>
+                                <div class="mt-3" style="font-size:4rem;font-weight:900;line-height:1;letter-spacing:-3px;color:<?= $isTop ? '#fff' : 'var(--gold-400)' ?>;">
+                                    <?= peso((float) $t['price']) ?>
+                                </div>
+                                <p class="mb-0 mt-2" style="color:rgba(255,255,255,.78);font-size:.84rem;">
+                                    Per student · <?= e($t['blurb']) ?>
+                                </p>
                             </div>
-                            <p class="mb-0 mt-2" style="color:rgba(255,255,255,.65);font-size:.84rem;">
-                                Per student · Inclusive of all segments
-                            </p>
+                        </div>
+
+                        <div class="p-4 p-lg-5">
+                            <ul class="list-unstyled mb-0">
+                                <?php foreach ($t['perks'] as $perk): ?>
+                                    <li class="d-flex align-items-start gap-3 mb-3">
+                                        <span class="badge-soft badge-success" style="width:26px;height:26px;justify-content:center;padding:0;border-radius:50%;flex:0 0 auto;">
+                                            <i class="fa-solid fa-check" style="font-size:.62rem;"></i>
+                                        </span>
+                                        <span class="fw-600 text-soft" style="font-size:.9rem;"><?= e($perk) ?></span>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+
+                            <a href="<?= url(is_logged_in() ? 'reserve.php' : 'login.php?next=reserve') ?>"
+                               class="btn <?= $isTop ? 'btn-gold' : 'btn-green' ?> btn-block2 btn-lg2 mt-4">
+                                <i class="fa-solid fa-ticket"></i> Reserve <?= e($t['name']) ?>
+                            </a>
                         </div>
                     </div>
-
-                    <div class="p-4 p-lg-5">
-                        <div class="receipt-row"><span class="k">Event</span><span class="v"><?= EVENT_NAME ?></span></div>
-                        <div class="receipt-row"><span class="k">Date &amp; Time</span><span class="v"><?= EVENT_DATE_TEXT ?><br><?= EVENT_TIME_TEXT ?></span></div>
-                        <div class="receipt-row"><span class="k">Venue</span><span class="v"><?= EVENT_VENUE ?></span></div>
-                        <div class="receipt-row"><span class="k">Payment</span><span class="v">GCash · PayMongo</span></div>
-                        <div class="receipt-row"><span class="k">Reservation limit</span><span class="v">1 ticket per student</span></div>
-
-                        <a href="<?= url(is_logged_in() ? 'reserve.php' : 'login.php?next=reserve') ?>" class="btn btn-green btn-block2 btn-lg2 mt-4">
-                            <i class="fa-solid fa-ticket"></i> Reserve Now
-                        </a>
-                        <p class="text-center text-muted2 mb-0 mt-3" style="font-size:.74rem;">
-                            <i class="fa-solid fa-shield-halved me-1 text-green"></i>
-                            Secured checkout · Your slot is held until payment
-                        </p>
-                    </div>
                 </div>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="card-soft mt-4 reveal">
+            <div class="card-body-p">
+                <div class="row g-3">
+                    <div class="col-md-3"><div class="info-label">Event</div><div class="info-value" style="font-size:.86rem;"><?= EVENT_NAME ?></div></div>
+                    <div class="col-md-3"><div class="info-label">Date &amp; Time</div><div class="info-value" style="font-size:.86rem;"><?= EVENT_DATE_TEXT ?> · <?= EVENT_TIME_TEXT ?></div></div>
+                    <div class="col-md-3"><div class="info-label">Payment</div><div class="info-value" style="font-size:.86rem;">GCash · PayMongo</div></div>
+                    <div class="col-md-3"><div class="info-label">Reservation limit</div><div class="info-value" style="font-size:.86rem;">1 ticket per student</div></div>
+                </div>
+                <p class="text-center text-muted2 mb-0 mt-4" style="font-size:.74rem;">
+                    <i class="fa-solid fa-shield-halved me-1 text-green"></i>
+                    Secured checkout · Your slot is held until payment
+                </p>
             </div>
         </div>
     </div>

@@ -71,7 +71,7 @@ require __DIR__ . '/../layouts/app_header.php';
                 <div class="mini-chart">
                     <?php foreach ($trend as $i => $t): ?>
                         <div class="mc-col" data-bs-toggle="tooltip"
-                             title="<?= e($t['label']) ?>: <?= peso($t['count'] * TICKET_PRICE) ?>">
+                             title="<?= e($t['label']) ?>: <?= peso($t['count'] * average_ticket_price()) ?> (est.)">
                             <div class="mc-bar" style="height:<?= round($t['count'] / $maxTrend * 100) ?>%;animation-delay:<?= $i * 45 ?>ms;"></div>
                             <div class="mc-label"><?= e($t['label']) ?></div>
                         </div>

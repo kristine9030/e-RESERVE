@@ -134,7 +134,7 @@ require __DIR__ . '/../layouts/app_header.php';
             <thead>
                 <tr>
                     <th>#</th><th>Reference</th><th>Student</th><th>Program</th>
-                    <th>Year</th><th>Amount</th><th>Reserved</th><th>Status</th>
+                    <th>Year</th><th>Type</th><th>Amount</th><th>Reserved</th><th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -145,6 +145,7 @@ require __DIR__ . '/../layouts/app_header.php';
                         <td><div class="cell-strong"><?= e($r['name']) ?></div><div class="cell-sub"><?= e($r['student_no']) ?></div></td>
                         <td><?= e($r['program']) ?></td>
                         <td><?= e($r['year']) ?></td>
+                        <td><?= tier_badge($r['tier'] ?? null) ?></td>
                         <td class="fw-800"><?= peso($r['amount']) ?></td>
                         <td class="cell-sub"><?= pretty_date($r['created_at'], 'M d, Y') ?></td>
                         <td><?= status_badge($r['status']) ?></td>

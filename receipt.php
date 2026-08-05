@@ -108,6 +108,7 @@ require __DIR__ . '/layouts/app_header.php';
             <div class="receipt-row"><span class="k">Student Name</span><span class="v"><?= e($pay['payer']) ?></span></div>
             <div class="receipt-row"><span class="k">Student Number</span><span class="v mono"><?= e($user['student_no']) ?></span></div>
             <div class="receipt-row"><span class="k">Email</span><span class="v"><?= e($pay['payer_email']) ?></span></div>
+            <div class="receipt-row"><span class="k">Ticket Type</span><span class="v"><?= tier_badge($pay['tier'] ?? $res['tier'] ?? null) ?></span></div>
             <div class="receipt-row"><span class="k">Payment Method</span><span class="v"><i class="fa-solid fa-mobile-screen me-1 text-gold"></i><?= e($pay['method']) ?></span></div>
             <div class="receipt-row"><span class="k">PayMongo Reference</span><span class="v mono"><?= e($pay['reference']) ?></span></div>
             <div class="receipt-row"><span class="k">Source ID</span><span class="v mono" style="font-size:.76rem;"><?= e($pay['source_id']) ?></span></div>
@@ -125,13 +126,14 @@ require __DIR__ . '/layouts/app_header.php';
                         </tr>
                     </thead>
                     <tbody>
+                        <?php $tier = tier($pay['tier'] ?? $res['tier'] ?? null); ?>
                         <tr>
                             <td>
                                 <div class="cell-strong"><?= EVENT_NAME ?></div>
-                                <div class="cell-sub">General Admission · <?= EVENT_DATE_TEXT ?> · <?= EVENT_VENUE ?></div>
+                                <div class="cell-sub"><?= e($tier['name']) ?> Ticket · <?= EVENT_DATE_TEXT ?> · <?= EVENT_VENUE ?></div>
                             </td>
                             <td class="text-center">1</td>
-                            <td class="text-end fw-800"><?= peso(TICKET_PRICE) ?></td>
+                            <td class="text-end fw-800"><?= peso((float) $pay['amount']) ?></td>
                         </tr>
                         <tr>
                             <td class="text-soft">Convenience / gateway fee</td>
@@ -160,7 +162,7 @@ require __DIR__ . '/layouts/app_header.php';
                 </div>
                 <div class="col-sm-4 text-sm-end">
                     <div class="qr-frame">
-                        <?= qr_placeholder($pay['receipt_no'] . '|' . $pay['reference'], 108) ?>
+                        <?= qr_svg($pay['receipt_no'] . '|' . $pay['reference'], 108, ['label' => 'Receipt ' . $pay['receipt_no']]) ?>
                     </div>
                     <div class="cell-sub mt-2">Verification code</div>
                 </div>

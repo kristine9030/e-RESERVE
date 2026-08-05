@@ -93,7 +93,7 @@ require __DIR__ . '/layouts/app_header.php';
                 <?php if ($paid): ?>
                     <span class="up"><?= peso($pay['amount']) ?></span> via <?= e($pay['method']) ?> · <?= e($pay['reference']) ?>
                 <?php elseif ($res): ?>
-                    <span class="down"><?= peso(TICKET_PRICE) ?></span> due — settle via GCash
+                    <span class="down"><?= peso((float) $res['amount']) ?></span> due for <?= e(tier_name($res['tier'] ?? null)) ?> — settle via GCash
                 <?php else: ?>
                     No outstanding balance.
                 <?php endif; ?>
@@ -158,7 +158,7 @@ require __DIR__ . '/layouts/app_header.php';
                     <a href="<?= url('payment.php') ?>" class="action-tile primary">
                         <span class="t-icon"><i class="fa-solid fa-mobile-screen"></i></span>
                         <span>
-                            <span class="t-title d-block">Pay Now · <?= peso(TICKET_PRICE) ?></span>
+                            <span class="t-title d-block">Pay Now · <?= peso((float) $res['amount']) ?></span>
                             <span class="t-sub">GCash checkout powered by PayMongo</span>
                         </span>
                         <i class="fa-solid fa-arrow-right t-arrow"></i>
@@ -302,7 +302,13 @@ require __DIR__ . '/layouts/app_header.php';
                 </div>
                 <div class="info-row">
                     <span class="info-icon"><i class="fa-solid fa-tag"></i></span>
-                    <div><div class="info-label">Ticket Price</div><div class="info-value" style="font-size:.85rem;"><?= peso(TICKET_PRICE) ?> · General Admission</div></div>
+                    <?php
+                    $priceList = array_map(
+                        static fn($t) => e($t['name']) . ' ' . peso((float) $t['price']),
+                        ticket_tiers()
+                    );
+                    ?>
+                    <div><div class="info-label">Ticket Price</div><div class="info-value" style="font-size:.85rem;"><?= implode(' · ', $priceList) ?></div></div>
                 </div>
             </div>
         </div>

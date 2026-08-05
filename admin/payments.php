@@ -63,13 +63,14 @@ require __DIR__ . '/../layouts/app_header.php';
     </div>
 
     <div class="table-responsive">
-        <table class="table js-datatable" data-page-length="15" data-order-col="6" data-order-dir="desc" style="width:100%;">
+        <table class="table js-datatable" data-page-length="15" data-order-col="7" data-order-dir="desc" style="width:100%;">
             <thead>
                 <tr>
                     <th>Receipt No.</th>
                     <th>PayMongo Ref.</th>
                     <th>Payer</th>
                     <th>Ticket No.</th>
+                    <th>Type</th>
                     <th>Method</th>
                     <th>Amount</th>
                     <th>Paid At</th>
@@ -88,6 +89,7 @@ require __DIR__ . '/../layouts/app_header.php';
                             <div class="cell-sub"><?= e($p['student_no']) ?></div>
                         </td>
                         <td><span class="mono"><?= e($p['ticket_no']) ?></span></td>
+                        <td><?= tier_badge($p['tier'] ?? null) ?></td>
                         <td><i class="fa-solid fa-mobile-screen text-gold me-1"></i><?= e($p['method']) ?></td>
                         <td class="fw-800"><?= peso($p['amount']) ?></td>
                         <td class="cell-sub"><?= pretty_date($p['paid_at']) ?></td>

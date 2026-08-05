@@ -45,14 +45,20 @@ No password is required in prototype mode.
 
 ## The demo path (2 minutes)
 
-1. **Landing page** → countdown, price, schedule, FAQ → *Reserve Now*
+1. **Landing page** → countdown, VIP/SVIP prices, schedule, FAQ → *Reserve Now*
 2. **Login** → pick a student chip
-3. **Reserve Ticket** → confirmation dialog → reservation created
+3. **Reserve Ticket** → choose **VIP ₱500** or **SVIP ₱800** → confirmation
+   dialog → reservation created
 4. **Pay Now** → mock PayMongo/GCash checkout with a live reference number
 5. *Complete Payment* → **ticket and receipt generate automatically**
-6. **View Ticket** (QR gate pass) · **Receipt** (printable) · **Track Reservation**
-7. Sign out → sign in as **Admin** → the reservation you just made appears at the
-   top of the admin table, and its ticket number works in **Gate Check-in**
+6. **View Ticket** (real, scannable QR gate pass) · **Receipt** (printable) ·
+   **Track Reservation**
+7. Sign in as **Admin** → the reservation you just made appears at the top of the
+   admin table, and its ticket works in **Gate Check-in**
+8. **Gate Check-in** → *Start Camera* and hold up the e-ticket QR (from a phone
+   or a printout). It decodes, admits the student and the live monitor counters
+   update. The page also renders a **Demo Ticket QR** you can scan straight off
+   a second screen, and manual entry still works if there is no camera.
 
 ---
 
@@ -66,8 +72,9 @@ e-RESERVE/
 │   ├── images/              (docs only — no binary assets needed)
 │   └── icons/               (docs only — Font Awesome comes from CDN)
 ├── includes/
-│   ├── config.php           Constants, session bootstrap, BASE_URL resolver
+│   ├── config.php           Constants, ticket tiers, session bootstrap, BASE_URL
 │   ├── functions.php        ALL storage + business logic lives here
+│   ├── qr.php               Real QR code encoder (ISO/IEC 18004) + SVG renderer
 │   └── data.php             Sample datasets (the future SQL queries)
 ├── layouts/
 │   ├── head.php             Shared <head> + CDN links
@@ -103,6 +110,10 @@ down to phone width.
 
 ## Business rules implemented
 
+- **Two ticket tiers only:** VIP ₱500 and SVIP ₱800. Both are declared in
+  `TICKET_TIERS` in `includes/config.php` — the single place a price changes.
+  The chosen tier is stored on the reservation and carried through to the
+  payment, ticket, receipt and every admin/report table.
 - **One student = one ticket.** A second reservation on the same account is
   blocked with *"You already have an active ticket reservation."*
 - A reservation may be **cancelled while unpaid**; paid ones fall under the SSC
@@ -140,9 +151,17 @@ create a GCash **source**, redirect to `checkout_url`, then handle
 
 ### QR codes
 
-`qr_placeholder()` in `includes/functions.php` draws a deterministic QR-looking
-SVG. Swap it for `endroid/qr-code` (or any QR API) using the JSON payload that
-`ticket.php` already builds.
+Already real — nothing to swap. `includes/qr.php` is a dependency-free QR
+encoder (ISO/IEC 18004: byte mode, versions 1–15, EC levels L/M/Q/H) that any
+phone camera or gate scanner can read.
+
+- `qr_svg($payload, $size)` renders an inline SVG; `qr_data_uri()` gives the
+  same code for an `<img src>`; `admin/qr.php` serves it as a standalone image.
+- `ticket_qr_payload()` in `includes/functions.php` decides what goes *into* the
+  code — currently the ticket number, so a scan is directly actionable.
+- `admin/checkin.php` decodes the camera stream with `html5-qrcode` and submits
+  the result to the same handler as manual entry. `extract_ticket_code()` also
+  accepts `code|student_no`, a verification URL or a JSON payload.
 
 ### Google Workspace sign-in
 

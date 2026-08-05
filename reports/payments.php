@@ -141,7 +141,7 @@ require __DIR__ . '/../layouts/app_header.php';
             <thead>
                 <tr>
                     <th>#</th><th>Receipt No.</th><th>PayMongo Ref.</th><th>Payer</th>
-                    <th>Method</th><th>Amount</th><th>Fee</th><th>Paid At</th><th>Status</th>
+                    <th>Type</th><th>Method</th><th>Amount</th><th>Fee</th><th>Paid At</th><th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -151,6 +151,7 @@ require __DIR__ . '/../layouts/app_header.php';
                         <td><span class="mono cell-strong"><?= e($p['receipt_no']) ?></span></td>
                         <td><span class="mono"><?= e($p['reference']) ?></span></td>
                         <td><div class="cell-strong"><?= e($p['name']) ?></div><div class="cell-sub"><?= e($p['student_no']) ?></div></td>
+                        <td><?= tier_badge($p['tier'] ?? null) ?></td>
                         <td><?= e($p['method']) ?></td>
                         <td class="fw-800"><?= peso($p['amount']) ?></td>
                         <td class="cell-sub"><?= peso($p['fee']) ?></td>

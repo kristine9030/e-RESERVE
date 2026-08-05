@@ -56,6 +56,78 @@ function is_active(string $file): bool
 }
 
 /* ==========================================================================
+ | 1b. Ticket tiers — VIP and SVIP
+ |     REPLACE LATER: SELECT * FROM tbl_ticket_types WHERE active = 1
+ * ========================================================================*/
+
+/** All sellable tiers, cheapest first. */
+function ticket_tiers(): array
+{
+    return TICKET_TIERS;
+}
+
+/** A single tier row. Unknown / missing codes fall back to the default tier. */
+function tier(?string $code): array
+{
+    $code = strtoupper(trim((string) $code));
+    return TICKET_TIERS[$code] ?? TICKET_TIERS[TICKET_DEFAULT_TIER];
+}
+
+function tier_price(?string $code): float
+{
+    return (float) tier($code)['price'];
+}
+
+function tier_name(?string $code): string
+{
+    return (string) tier($code)['name'];
+}
+
+function is_valid_tier(?string $code): bool
+{
+    return isset(TICKET_TIERS[strtoupper(trim((string) $code))]);
+}
+
+/** Coloured pill for a tier, e.g. in tables and on the ticket. */
+function tier_badge(?string $code): string
+{
+    $t = tier($code);
+    return '<span class="badge-soft badge-' . $t['tone'] . '">'
+         . '<i class="fa-solid ' . $t['icon'] . '"></i> ' . e($t['name']) . '</span>';
+}
+
+/** Blended average of what students actually paid — used for trend estimates. */
+function average_ticket_price(): float
+{
+    $paid = array_filter(sample_reservations(), static fn($r) => $r['status'] === 'paid');
+    if (!$paid) {
+        return TICKET_PRICE_FROM;
+    }
+    return array_sum(array_column($paid, 'amount')) / count($paid);
+}
+
+/** Tickets sold and revenue earned per tier. */
+function tier_breakdown(): array
+{
+    $out = [];
+    foreach (ticket_tiers() as $code => $t) {
+        $out[$code] = ['code' => $code, 'name' => $t['name'], 'price' => $t['price'],
+                       'tone' => $t['tone'], 'icon' => $t['icon'], 'sold' => 0, 'revenue' => 0.0];
+    }
+
+    foreach (sample_reservations() as $r) {
+        if ($r['status'] !== 'paid') {
+            continue;
+        }
+        $code = is_valid_tier($r['tier'] ?? null) ? strtoupper($r['tier']) : TICKET_DEFAULT_TIER;
+        $out[$code]['sold']++;
+        $out[$code]['revenue'] += (float) $r['amount'];
+    }
+
+    return $out;
+}
+
+/* ==========================================================================
  | 2. Flash messages (one-shot notices rendered through SweetAlert2)
  * ========================================================================*/
 
@@ -233,9 +305,10 @@ function is_paid(): bool
  * Create the one-and-only reservation for the signed-in student.
  * REPLACE LATER: INSERT INTO tbl_reservations (...)
  *
+ * @param string $tierCode VIP or SVIP — anything else falls back to the default.
  * @return array{ok:bool, message:string, reservation:?array}
  */
-function create_reservation(): array
+function create_reservation(string $tierCode = TICKET_DEFAULT_TIER): array
 {
     if (!is_logged_in()) {
         return ['ok' => false, 'message' => 'You need to sign in first.', 'reservation' => null];
@@ -252,6 +325,7 @@ function create_reservation(): array
 
     $user = current_user();
     $seq  = next_sequence('reservation');
+    $tier = tier($tierCode);
 
     $reservation = [
         'code'        => 'RSV-2026-' . str_pad((string) $seq, 6, '0', STR_PAD_LEFT),
@@ -261,7 +335,9 @@ function create_reservation(): array
         'program'     => $user['program'],
         'year'        => $user['year'],
         'quantity'    => TICKET_LIMIT,
-        'amount'      => TICKET_PRICE,
+        'tier'        => $tier['code'],          // VIP | SVIP
+        'tier_name'   => $tier['name'],
+        'amount'      => (float) $tier['price'],
         'status'      => 'pending',              // pending | paid | cancelled
         'created_at'  => date('Y-m-d H:i:s'),
         'paid_at'     => null,
@@ -322,7 +398,10 @@ function complete_payment(): array
     }
 
     $user   = current_user();
-    $intent = mock_paymongo_intent(TICKET_PRICE);
+    $res    = get_reservation();
+    $tier   = tier($res['tier'] ?? TICKET_DEFAULT_TIER);
+    $amount = (float) ($res['amount'] ?? $tier['price']);
+    $intent = mock_paymongo_intent($amount);
     $now    = date('Y-m-d H:i:s');
 
     // --- 1. Settle the reservation -----------------------------------------
@@ -336,7 +415,8 @@ function complete_payment(): array
         'reference'   => $intent['reference'],
         'source_id'   => $intent['source_id'],
         'method'      => PAYMENT_METHOD,
-        'amount'      => TICKET_PRICE,
+        'tier'        => $tier['code'],
+        'amount'      => $amount,
         'currency'    => PAYMENT_CURRENCY,
         'status'      => 'succeeded',
         'paid_at'     => $now,
@@ -357,7 +437,10 @@ function complete_payment(): array
         'venue'       => EVENT_VENUE,
         'date_text'   => EVENT_DATE_TEXT,
         'time_text'   => EVENT_TIME_TEXT,
-        'seat'        => 'GA-' . str_pad((string) $ticketSeq, 4, '0', STR_PAD_LEFT),
+        'tier'        => $tier['code'],
+        'tier_name'   => $tier['name'],
+        'amount'      => $amount,
+        'seat'        => $tier['seat'] . '-' . str_pad((string) $ticketSeq, 4, '0', STR_PAD_LEFT),
         'status'      => 'valid',           // valid | used | void
         'issued_at'   => $now,
         'checked_in'  => false,
@@ -394,7 +477,8 @@ function tracking_timeline(): array
             'key'   => 'pending',
             'label' => 'Pending Payment',
             'icon'  => 'fa-hourglass-half',
-            'desc'  => 'Settle ' . peso(TICKET_PRICE) . ' via GCash to secure your ticket.',
+            'desc'  => 'Settle ' . peso((float) ($res['amount'] ?? TICKET_PRICE_FROM)) . ' via GCash to secure your '
+                     . tier_name($res['tier'] ?? null) . ' ticket.',
             'stamp' => $res['created_at'] ?? null,
             'done'  => (bool) $res,
         ],
@@ -483,51 +567,16 @@ function status_badge(string $status): string
 }
 
 /**
- * Placeholder QR code. Draws a deterministic, QR-looking SVG from the payload
- * so every ticket looks unique — no library, no network call.
- * REPLACE LATER: endroid/qr-code or a QR API using the ticket number.
+ * QR payload a gate scanner reads off a ticket. Kept in one place so the
+ * e-ticket, the admin registry and the scanner never drift apart.
  */
-function qr_placeholder(string $payload, int $size = 190): string
+function ticket_qr_payload(array $ticket): string
 {
-    $grid  = 21;                       // classic QR v1 module count
-    $cell  = $size / $grid;
-    $hash  = hash('sha256', $payload);
-    $bits  = '';
-    foreach (str_split($hash) as $ch) {
-        $bits .= str_pad(base_convert($ch, 16, 2), 4, '0', STR_PAD_LEFT);
-    }
-
-    $svg  = '<svg class="qr-svg" viewBox="0 0 ' . $size . ' ' . $size . '" width="' . $size . '" height="' . $size . '" role="img" aria-label="QR code placeholder">';
-    $svg .= '<rect width="' . $size . '" height="' . $size . '" fill="#ffffff"/>';
-
-    // Finder eyes at three corners.
-    $eye = static function (float $x, float $y) use ($cell): string {
-        $s = '';
-        $s .= '<rect x="' . ($x * $cell) . '" y="' . ($y * $cell) . '" width="' . (7 * $cell) . '" height="' . (7 * $cell) . '" fill="#0B3B2C"/>';
-        $s .= '<rect x="' . (($x + 1) * $cell) . '" y="' . (($y + 1) * $cell) . '" width="' . (5 * $cell) . '" height="' . (5 * $cell) . '" fill="#ffffff"/>';
-        $s .= '<rect x="' . (($x + 2) * $cell) . '" y="' . (($y + 2) * $cell) . '" width="' . (3 * $cell) . '" height="' . (3 * $cell) . '" fill="#0B3B2C"/>';
-        return $s;
-    };
-    $svg .= $eye(0, 0) . $eye($grid - 7, 0) . $eye(0, $grid - 7);
-
-    // Data modules.
-    $i = 0;
-    for ($r = 0; $r < $grid; $r++) {
-        for ($c = 0; $c < $grid; $c++) {
-            $inEye = ($r < 8 && $c < 8) || ($r < 8 && $c > $grid - 9) || ($r > $grid - 9 && $c < 8);
-            if ($inEye) {
-                continue;
-            }
-            $bit = $bits[$i % strlen($bits)];
-            $i++;
-            if ($bit === '1') {
-                $svg .= '<rect x="' . ($c * $cell) . '" y="' . ($r * $cell) . '" width="' . $cell . '" height="' . $cell . '" fill="#0B3B2C"/>';
-            }
-        }
-    }
-    $svg .= '</svg>';
-    return $svg;
+    return (string) ($ticket['ticket_no'] ?? '');
 }
+
+/* NOTE: qr_svg() / qr_data_uri() live in includes/qr.php — they emit real,
+   scannable QR codes (ISO/IEC 18004), not placeholders. */
 
 /** Small deterministic pseudo-random helper for the dummy analytics. */
 function seeded(int $seed, int $min, int $max): int

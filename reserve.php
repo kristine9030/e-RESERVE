@@ -19,14 +19,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($action === 'reserve') {
-        $result = create_reservation();
+        $chosen = (string) ($_POST['tier'] ?? TICKET_DEFAULT_TIER);
+
+        if (!is_valid_tier($chosen)) {
+            set_flash('warning', 'Choose a Ticket Type', 'Please pick either VIP or SVIP before confirming.');
+            redirect('reserve.php');
+        }
+
+        $result = create_reservation($chosen);
 
         if ($result['ok']) {
             set_flash(
                 'success',
                 'Slot Reserved!',
                 'Reference <strong>' . e($result['reservation']['code']) . '</strong> is on hold.<br>'
-                . 'Settle ' . peso(TICKET_PRICE) . ' via GCash to have your e-ticket issued.'
+                . 'Settle ' . peso($result['reservation']['amount']) . ' for your '
+                . '<strong>' . e($result['reservation']['tier_name']) . '</strong> ticket via GCash '
+                . 'to have your e-ticket issued.'
             );
             redirect('payment.php');
         }
@@ -86,20 +95,44 @@ require __DIR__ . '/layouts/app_header.php';
                     <div class="receipt-row"><span class="k">GSuite Email</span><span class="v"><?= e($user['email']) ?></span></div>
                     <div class="receipt-row"><span class="k">Event</span><span class="v"><?= EVENT_NAME ?></span></div>
                     <div class="receipt-row"><span class="k">Date &amp; Venue</span><span class="v"><?= EVENT_DATE_TEXT ?><br><?= EVENT_VENUE ?></span></div>
-                    <div class="receipt-row"><span class="k">Ticket Type</span><span class="v">General Admission × 1</span></div>
 
-                    <div class="receipt-total">
-                        <div>
-                            <div class="info-label">Amount Due</div>
-                            <div class="cell-sub">Payable via GCash on the next step</div>
-                        </div>
-                        <div class="amt"><?= peso(TICKET_PRICE) ?></div>
-                    </div>
-
-                    <form method="post" id="reserveForm" class="mt-4">
+                    <form method="post" id="reserveForm">
                         <input type="hidden" name="action" value="reserve">
 
-                        <div class="form-check mb-3">
+                        <h6 class="mt-4 mb-1">Choose your ticket type</h6>
+                        <p class="cell-sub mb-3">SIGLA 2026 offers two tiers. One ticket per student.</p>
+
+                        <div class="tier-pick">
+                            <?php foreach (ticket_tiers() as $code => $t): ?>
+                                <label class="tier-option<?= $code === TICKET_DEFAULT_TIER ? ' is-selected' : '' ?>"
+                                       data-price="<?= e(peso((float) $t['price'])) ?>"
+                                       data-name="<?= e($t['name']) ?>">
+                                    <input type="radio" name="tier" value="<?= e($code) ?>"
+                                           <?= $code === TICKET_DEFAULT_TIER ? 'checked' : '' ?>>
+                                    <span class="tier-head">
+                                        <span class="tier-name"><i class="fa-solid <?= $t['icon'] ?>"></i> <?= e($t['name']) ?></span>
+                                        <span class="tier-price"><?= peso((float) $t['price']) ?></span>
+                                    </span>
+                                    <span class="tier-blurb"><?= e($t['blurb']) ?></span>
+                                    <ul class="tier-perks">
+                                        <?php foreach ($t['perks'] as $perk): ?>
+                                            <li><i class="fa-solid fa-check"></i><?= e($perk) ?></li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                    <span class="tier-check"><i class="fa-solid fa-circle-check"></i></span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <div class="receipt-total mt-4">
+                            <div>
+                                <div class="info-label">Amount Due</div>
+                                <div class="cell-sub">Payable via GCash on the next step</div>
+                            </div>
+                            <div class="amt" id="amountDue"><?= peso(tier_price(TICKET_DEFAULT_TIER)) ?></div>
+                        </div>
+
+                        <div class="form-check mb-3 mt-4">
                             <input class="form-check-input" type="checkbox" id="agree" required>
                             <label class="form-check-label text-soft" for="agree" style="font-size:.84rem;">
                                 I confirm the details above are correct and I accept the
@@ -142,6 +175,7 @@ require __DIR__ . '/layouts/app_header.php';
                     <div class="receipt-row"><span class="k">Reference Code</span><span class="v mono"><?= e($res['code']) ?></span></div>
                     <div class="receipt-row"><span class="k">Student</span><span class="v"><?= e($res['name']) ?> · <?= e($res['student_no']) ?></span></div>
                     <div class="receipt-row"><span class="k">Program &amp; Year</span><span class="v"><?= e($res['program']) ?> · <?= e($res['year']) ?></span></div>
+                    <div class="receipt-row"><span class="k">Ticket Type</span><span class="v"><?= tier_badge($res['tier'] ?? null) ?> · <?= peso(tier_price($res['tier'] ?? null)) ?></span></div>
                     <div class="receipt-row"><span class="k">Quantity</span><span class="v"><?= (int) $res['quantity'] ?> ticket</span></div>
                     <div class="receipt-row"><span class="k">Reserved On</span><span class="v"><?= pretty_date($res['created_at']) ?></span></div>
                     <?php if ($res['paid_at']): ?>
@@ -231,11 +265,43 @@ require __DIR__ . '/layouts/app_header.php';
 <?php require __DIR__ . '/layouts/app_footer.php'; ?>
 
 <script>
+    /* ---- Ticket-type picker: highlight the card and echo the price ---- */
+    var tierOptions = document.querySelectorAll('.tier-option');
+    var amountDue   = document.getElementById('amountDue');
+
+    tierOptions.forEach(function (option) {
+        option.querySelector('input').addEventListener('change', function () {
+            tierOptions.forEach(function (o) { o.classList.remove('is-selected'); });
+            option.classList.add('is-selected');
+            if (amountDue) amountDue.textContent = option.dataset.price;
+        });
+    });
+
+    function selectedTier() {
+        var checked = document.querySelector('.tier-option input:checked');
+        var option  = checked ? checked.closest('.tier-option') : null;
+        return {
+            code:  checked ? checked.value : '',
+            name:  option ? option.dataset.name : '',
+            price: option ? option.dataset.price : ''
+        };
+    }
+
     /* ---- Confirmation dialog before creating the reservation ---- */
     var reserveForm = document.getElementById('reserveForm');
     if (reserveForm) {
         reserveForm.addEventListener('submit', function (e) {
             e.preventDefault();
+
+            if (!document.querySelector('.tier-option input:checked')) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Pick a ticket type',
+                    text: 'Choose either VIP or SVIP to continue.',
+                    confirmButtonText: 'Okay'
+                });
+                return;
+            }
 
             if (!document.getElementById('agree').checked) {
                 Swal.fire({
@@ -247,6 +313,8 @@ require __DIR__ . '/layouts/app_header.php';
                 return;
             }
 
+            var picked = selectedTier();
+
             Swal.fire({
                 icon: 'question',
                 title: 'Confirm your reservation?',
@@ -255,8 +323,8 @@ require __DIR__ . '/layouts/app_header.php';
                     '<div><strong>Student:</strong> <?= e($user['name']) ?></div>' +
                     '<div><strong>Student No.:</strong> <?= e($user['student_no']) ?></div>' +
                     '<div><strong>Event:</strong> <?= EVENT_NAME ?></div>' +
-                    '<div><strong>Ticket:</strong> General Admission × 1</div>' +
-                    '<div><strong>Amount:</strong> <?= peso(TICKET_PRICE) ?></div>' +
+                    '<div><strong>Ticket:</strong> ' + picked.name + ' × 1</div>' +
+                    '<div><strong>Amount:</strong> ' + picked.price + '</div>' +
                     '</div>' +
                     '<p style="margin-top:1rem;font-size:.82rem;color:#7C8F88;">' +
                     'Remember: one student is entitled to one ticket only.</p>',
