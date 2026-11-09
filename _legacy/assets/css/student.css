@@ -1,0 +1,26 @@
+/* ==========================================================================
+   Student side — only the HEADER cards (welcome card on the dashboard and the
+   banner at the top of every other student page) get the sky-blue → warm-orange
+   gradient with the faint concert crowd. All other cards keep the plain glass look.
+   Scoped to body.role-student so the staff pages are untouched.
+   ========================================================================== */
+
+.role-student .page-hero {
+    background:
+        url('../images/concert-silhouette-soft.svg') center bottom / cover no-repeat,
+        radial-gradient(460px 260px at 0% 0%, rgba(70, 175, 232, .70), transparent 70%),
+        radial-gradient(460px 280px at 100% 100%, rgba(255, 156, 60, .65), transparent 70%),
+        linear-gradient(115deg, #A9DDF6 0%, #D6EEFA 38%, #FFE7BF 70%, #FFC983 100%);
+    color: var(--green-900);
+    border: 1px solid rgba(255, 255, 255, .7);
+    box-shadow: 0 16px 36px rgba(60, 150, 200, .18), inset 0 1px 0 rgba(255, 255, 255, .8);
+}
+.role-student .page-hero::before { display: none; }
+.role-student .page-hero h2, .role-student .page-hero .text-white { color: var(--green-900) !important; text-shadow: none; }
+.role-student .page-hero p { color: var(--ink-soft); }
+.role-student .page-hero strong { color: var(--green-900); }
+.role-student .page-hero [style*="rgba(255,255,255"] { color: var(--ink-soft) !important; }
+.role-student .page-hero [style*="--gold-400"] { color: #E8821F !important; }
+.role-student .page-hero .tg-label { color: var(--ink-muted); }
+.role-student .page-hero .eyebrow.on-dark { background: rgba(255, 255, 255, .8); border-color: #fff; color: var(--green-700); }
+.role-student .page-hero .prog-track { background: rgba(23, 59, 77, .12) !important; }

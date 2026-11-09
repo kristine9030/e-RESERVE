@@ -1,0 +1,73 @@
+/* ==========================================================================
+   Sliding sponsors strip — seamless infinite marquee
+   ========================================================================== */
+.sponsors {
+    padding: 2.4rem 0 1.6rem;
+    background: rgba(255, 255, 255, .5);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+            backdrop-filter: blur(16px) saturate(160%);
+    border-top: 1px solid rgba(255, 255, 255, .85);
+    border-bottom: 1px solid rgba(255, 255, 255, .85);
+}
+.sponsors-head { text-align: center; margin-bottom: 1.4rem; }
+.sponsors-head h3 { margin: .7rem 0 0; font-size: 1.35rem; }
+
+.marquee {
+    --gap: 1.1rem;
+    display: flex; overflow: hidden; user-select: none; gap: var(--gap);
+    padding: .6rem 0 1rem;
+    /* fade the edges so logos glide in and out */
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+}
+.marquee-track {
+    flex: 0 0 auto; display: flex; align-items: center; gap: var(--gap); min-width: 100%;
+    justify-content: space-around;
+    animation: marquee 34s linear infinite;
+}
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes marquee { to { transform: translateX(calc(-100% - var(--gap))); } }
+
+.sponsor-item {
+    flex: 0 0 auto; height: 78px; min-width: 190px; padding: 0 1.6rem;
+    display: flex; align-items: center; justify-content: center; gap: .8rem;
+    background: rgba(255, 255, 255, .85); border: 1px solid #fff; border-radius: 20px;
+    box-shadow: 0 10px 24px rgba(23, 59, 77, .08), inset 0 1px 0 #fff;
+    transition: transform .3s cubic-bezier(.22, 1, .36, 1), box-shadow .3s ease;
+}
+.sponsor-item:hover { transform: translateY(-4px) scale(1.04); box-shadow: 0 18px 34px rgba(23, 59, 77, .16); }
+.sponsor-item img { max-height: 44px; max-width: 150px; object-fit: contain; filter: grayscale(1); opacity: .75; transition: filter .3s ease, opacity .3s ease; }
+.sponsor-item:hover img { filter: none; opacity: 1; }
+
+.sponsor-mark {
+    width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; flex: 0 0 auto;
+    background: linear-gradient(180deg, #FFD644, #FF9A3C); color: #5A2E00; font-size: 1rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6);
+}
+.sponsor-item:nth-child(even) .sponsor-mark { background: linear-gradient(180deg, #7FD6F7, #35A4D2); color: #fff; }
+.sponsor-name { font-weight: 800; font-size: .92rem; color: var(--green-900); white-space: nowrap; letter-spacing: -.01em; }
+
+.sponsors-cta { margin: .2rem 0 0; font-size: .78rem; color: var(--ink-muted); }
+.sponsors-cta a { color: var(--gold-700); font-weight: 800; }
+
+@media (max-width: 575.98px) {
+    .sponsor-item { height: 66px; min-width: 160px; padding: 0 1.1rem; }
+    .marquee-track { animation-duration: 26s; }
+}
+/* Motion-sensitive visitors get a scrollable row instead of an auto-slide. */
+@media (prefers-reduced-motion: reduce) {
+    .marquee { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+    .marquee-track { animation: none !important; }
+    .marquee-track[aria-hidden="true"] { display: none; }
+}
+
+/* Plain wordmark sponsors (no logo file yet) */
+.sponsor-word {
+    font-weight: 800; font-size: 1.45rem; letter-spacing: -.03em; color: #5C6C75; white-space: nowrap;
+    transition: color .3s ease;
+}
+.sponsor-item:hover .sponsor-word { color: var(--green-700); }
+
+/* Real logos: shown in full colour */
+.sponsor-item img { filter: none; opacity: 1; max-height: 46px; max-width: 160px; }
+.sponsor-item { min-width: 200px; }

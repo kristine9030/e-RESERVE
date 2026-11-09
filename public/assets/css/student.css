@@ -1,0 +1,103 @@
+/* ==========================================================================
+   Header cards — only the HEADER cards (welcome card on the dashboard and the
+   banner at the top of every other student page) get the sky-blue → warm-orange
+   gradient with the faint concert crowd. All other cards keep the plain glass look.
+   Applies on every page, student and staff.
+   ========================================================================== */
+
+.page-hero {
+    background:
+        url('../images/concert-silhouette-soft.svg') center bottom / cover no-repeat,
+        radial-gradient(460px 260px at 0% 0%, rgba(70, 175, 232, .70), transparent 70%),
+        radial-gradient(460px 280px at 100% 100%, rgba(255, 156, 60, .65), transparent 70%),
+        linear-gradient(115deg, #A9DDF6 0%, #D6EEFA 38%, #FFE7BF 70%, #FFC983 100%);
+    color: var(--green-900);
+    border: 1px solid rgba(255, 255, 255, .7);
+    box-shadow: 0 16px 36px rgba(60, 150, 200, .18), inset 0 1px 0 rgba(255, 255, 255, .8);
+}
+.page-hero::before { display: none; }
+.page-hero h2, .page-hero .text-white { color: var(--green-900) !important; text-shadow: none; }
+.page-hero p { color: var(--ink-soft); }
+.page-hero strong { color: var(--green-900); }
+.page-hero [style*="rgba(255,255,255"] { color: var(--ink-soft) !important; }
+.page-hero [style*="--gold-400"] { color: #E8821F !important; }
+.page-hero .tg-label { color: var(--ink-muted); }
+.page-hero .eyebrow.on-dark { background: rgba(255, 255, 255, .8); border-color: #fff; color: var(--green-700); }
+.page-hero .prog-track { background: rgba(23, 59, 77, .12) !important; }
+
+/* ---- Notification bell (student navbar) ------------------------------------ */
+.bell { position: relative; }
+.bell-btn { position: relative; width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--line); background: var(--white); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; }
+.bell-btn:hover { border-color: var(--green-500, #2A8DB5); }
+.bell-count { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #E5484D; color: #fff; font-size: .68rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; border: 2px solid var(--white); }
+.bell-menu { width: 360px; max-width: calc(100vw - 1.5rem); padding: 0; overflow: hidden; }
+.bell-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .8rem 1rem; border-bottom: 1px solid var(--line); }
+.bell-readall { background: none; border: 0; color: #2A8DB5; font-size: .78rem; font-weight: 700; padding: 0; }
+.bell-item { display: flex; gap: .75rem; padding: .8rem 1rem; text-decoration: none; color: inherit; border-bottom: 1px solid var(--line); }
+.bell-item:last-child { border-bottom: 0; }
+.bell-item:hover { background: #F2F8FB; }
+.bell-item.unread { background: #EEF7FB; }
+.bell-item.unread .bell-title::after { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2A8DB5; margin-left: .4rem; }
+.bell-ico { flex: 0 0 36px; height: 36px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; background: #E3F0F6; color: #2A8DB5; font-size: .85rem; }
+.bell-ico.t-approved, .bell-ico.t-ticket { background: #E1F5EA; color: #1E9A5A; }
+.bell-ico.t-returned { background: #FDE8E8; color: #D13B3B; }
+.bell-ico.t-waitlist { background: #FFF3DC; color: #C48A12; }
+.bell-txt { display: flex; flex-direction: column; min-width: 0; }
+.bell-title { font-weight: 800; font-size: .86rem; }
+.bell-body { font-size: .8rem; color: var(--ink-muted); overflow-wrap: anywhere; }
+.bell-time { font-size: .72rem; color: var(--ink-muted); margin-top: .15rem; }
+.bell-empty { padding: 1.6rem 1rem; text-align: center; color: var(--ink-muted); font-size: .85rem; }
+.bell-empty i { display: block; font-size: 1.5rem; margin-bottom: .4rem; opacity: .6; }
+@media (max-width: 1199.98px) {
+    .app-nav-tools { display: flex; align-items: center; gap: .6rem; }
+}
+/* Collapsed navbar (phones and tablets): anchor the list to the navbar instead of hanging off the bell. */
+@media (max-width: 575.98px) { .bell-btn { width: 46px; height: 46px; } }
+@media (max-width: 1199.98px) {
+    .app-nav { position: sticky; }
+    .bell { position: static; }
+    .bell-menu { position: absolute !important; inset: 100% .75rem auto .75rem !important; transform: none !important; width: auto; max-width: 440px; margin-top: .4rem !important; max-height: 70vh; overflow-y: auto; }
+}
+
+/* Profile page banner uses the same sky → orange look */
+.profile-hero {
+    background:
+        url('../images/concert-silhouette-soft.svg') center bottom / cover no-repeat,
+        radial-gradient(460px 260px at 0% 0%, rgba(70, 175, 232, .70), transparent 70%),
+        radial-gradient(460px 280px at 100% 100%, rgba(255, 156, 60, .65), transparent 70%),
+        linear-gradient(115deg, #A9DDF6 0%, #D6EEFA 38%, #FFE7BF 70%, #FFC983 100%);
+}
+.profile-hero::before { display: none; }
+
+/* ---- Notifications page ------------------------------------------------------ */
+.bell-all { display: block; text-align: center; padding: .75rem 1rem; font-size: .82rem; font-weight: 700; color: #2A8DB5; text-decoration: none; border-top: 1px solid var(--line); background: #FAFCFD; }
+.bell-all:hover { background: #F2F8FB; color: #1F7396; }
+.notice-row { display: flex; align-items: center; gap: .85rem; width: 100%; text-align: left; padding: 1rem 1.25rem; background: transparent; border: 0; border-bottom: 1px solid var(--line); color: inherit; transition: background .15s ease; }
+.notice-row:last-child { border-bottom: 0; }
+.notice-row:hover { background: #F2F8FB; }
+.notice-row.unread { background: #EEF7FB; }
+.notice-row.unread .bell-title::after { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2A8DB5; margin-left: .45rem; }
+.notice-go { color: var(--ink-muted); font-size: .75rem; }
+
+/* Modals are solid white (the glass look made them grey over the dark backdrop). */
+.modal-content { background: #fff !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.modal-backdrop.show { opacity: .45; }
+
+/* ---- One notification, opened ----------------------------------------------- */
+.notice-modal { border: 0; border-radius: 24px; overflow: hidden; box-shadow: 0 30px 80px rgba(23, 59, 77, .30); }
+.nm-head { display: flex; align-items: center; gap: .9rem; padding: 1.2rem 1.35rem; background: linear-gradient(120deg, #DDF0FA, #F3F9FC); }
+.notice-modal.t-approved .nm-head, .notice-modal.t-ticket .nm-head { background: linear-gradient(120deg, #D9F3E5, #F1FAF5); }
+.notice-modal.t-returned .nm-head { background: linear-gradient(120deg, #FCDFDF, #FEF3F3); }
+.notice-modal.t-waitlist .nm-head { background: linear-gradient(120deg, #FFEBC7, #FFF8EA); }
+.notice-big { width: 52px; height: 52px; flex: 0 0 52px; border-radius: 16px; font-size: 1.2rem; background: #fff; box-shadow: 0 6px 16px rgba(23, 59, 77, .10); }
+.nm-kind { display: block; font-size: .7rem; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase; color: #2A7FA6; }
+.notice-modal.t-approved .nm-kind, .notice-modal.t-ticket .nm-kind { color: #1E7A4D; }
+.notice-modal.t-returned .nm-kind { color: #B83232; }
+.notice-modal.t-waitlist .nm-kind { color: #A8620A; }
+.nm-time { font-size: .78rem; color: var(--ink-muted); margin-top: .1rem; }
+.nm-body { padding: 1.4rem 1.5rem .6rem; }
+.nm-body h5 { font-size: 1.25rem; margin: 0 0 .6rem; color: var(--green-900); letter-spacing: -.3px; }
+.nm-body p { font-size: .95rem; line-height: 1.65; color: var(--ink-soft); margin: 0 0 1rem; overflow-wrap: anywhere; }
+.nm-date { font-size: .78rem; color: var(--ink-muted); }
+.nm-foot { display: flex; justify-content: flex-end; gap: .6rem; padding: 1rem 1.4rem 1.3rem; }
+@media (max-width: 575.98px) { .nm-foot .btn { flex: 1 1 0; } }

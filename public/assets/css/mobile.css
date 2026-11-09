@@ -1,0 +1,192 @@
+/* ==========================================================================
+   e-RESERVE · phone layout
+   Loaded last. Everything here is scoped to small screens (or touch devices),
+   so desktop is untouched. Tables marked .table-stack turn into cards.
+   ========================================================================== */
+
+/* ---- Touch devices: no "stuck" hover lift after a tap ---------------------- */
+@media (hover: none) {
+    .card-soft:hover { transform: none; box-shadow: var(--shadow-sm); border-color: var(--line); }
+    .tilt, [data-tilt] { transform: none !important; }
+}
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+img, svg, video, canvas { max-width: 100%; }
+.mono, .cell-strong, .cell-sub { overflow-wrap: anywhere; }
+.min-w-0 { min-width: 0; }
+.college-card { min-width: 0; overflow: hidden; }
+
+/* ---- Phones and small tablets --------------------------------------------- */
+@media (max-width: 767.98px) {
+
+    /* iOS zooms the page when a field under 16px gets focus. */
+    .form-control, .form-select, input, select, textarea { font-size: 16px !important; }
+    .form-control, .form-select { min-height: 46px; }
+
+    /* Bootstrap's wide gutters poke out of a 1rem container (landing page). */
+    .row.g-5 { --bs-gutter-x: 1.5rem; --bs-gutter-y: 2rem; }
+    .row.g-4 { --bs-gutter-x: 1rem; }
+
+    /* ---- Readable small print ---------------------------------------------- */
+    .cell-sub, .stat-label, .eyebrow, .tg-label, .form-label-sm, .badge-soft, .doc-chip, .u-role { font-size: max(.74rem, 11.5px); }
+
+    /* Long ticket numbers / labels wrap instead of pushing the page sideways */
+    .badge-soft { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+    .college-waiting { white-space: normal; text-align: center; }
+
+    /* ---- Comfortable tap targets (>= 44px) ---------------------------------- */
+    .btn, .btn-sm2, .btn-block2 { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; }
+    .btn-block2 { display: flex; width: 100%; }
+    .icon-btn { min-width: 44px; min-height: 44px; }
+    .page-link { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+    .top-link { min-height: 46px; display: flex; align-items: center; }
+    .top-badge { margin-left: auto; }
+    a.doc-chip, .doc-chip { padding: .45rem .7rem; }
+
+    /* ---- Page header / cards ------------------------------------------------ */
+    .page-hero .col-lg-4 { text-align: left !important; }
+    .page-hero .btn { margin-top: .25rem; }
+    .page-hero h2 { font-size: 1.45rem; line-height: 1.2; }
+    .card-head { flex-wrap: wrap; padding: 1rem 1.1rem; gap: .75rem; }
+    .card-head > * { min-width: 0; }
+    .card-body-p { padding: 1.1rem; }
+
+    /* Stat tiles: two per row, tighter */
+    .stat-card { padding: 1rem; }
+    .stat-value { font-size: 1.5rem; }
+
+    /* ---- Filter bars (search + selects) stack full-width -------------------- */
+    .filter-bar { display: flex; flex-direction: column; align-items: stretch; width: 100%; gap: .6rem; }
+    .filter-bar > * { max-width: none !important; width: 100% !important; flex: 1 1 auto; }
+    .filter-bar .btn { width: 100%; }
+
+    /* ---- Review cards ------------------------------------------------------- */
+    .review-card { flex-wrap: wrap; align-items: flex-start; gap: .85rem; padding: 1rem; }
+    .review-card > .flex-grow-1 { flex: 1 1 calc(100% - 4.5rem); min-width: 0; }
+    .review-card > .d-flex.flex-wrap.gap-2 {
+        flex: 1 1 100%; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;
+        display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .6rem !important;
+    }
+    .review-card > .d-flex.flex-wrap.gap-2 > *, .review-card > .d-flex.flex-wrap.gap-2 form { min-width: 0; max-width: 100%; box-sizing: border-box; }
+    .review-card > .d-flex.flex-wrap.gap-2 > a { grid-column: 1 / -1; }
+    .review-card > .d-flex.flex-wrap.gap-2 form { display: block !important; }
+    .review-card > .d-flex.flex-wrap.gap-2 form .btn,
+    .review-card > .d-flex.flex-wrap.gap-2 > .btn { width: 100%; }
+    .bulk-bar { gap: .75rem !important; }
+    .bulk-bar .btn { width: 100%; }
+
+    /* ---- Tables become cards ------------------------------------------------ */
+    .table-responsive:has(.table-stack) { overflow: visible; padding: 0 .85rem .5rem; }
+    .table-stack, .table-stack tbody, .table-stack tr, .table-stack td { display: block; width: 100% !important; }
+    .table-stack { border: 0; }
+    .table-stack thead { display: none; }
+    .table-stack tr {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin: 0 0 .75rem;
+        padding: .3rem .95rem;
+        box-shadow: var(--shadow-sm);
+    }
+    .table-stack td {
+        display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
+        padding: .6rem 0 !important; border: 0 !important; border-bottom: 1px dashed var(--line) !important;
+        text-align: right; background: transparent !important; white-space: normal;
+    }
+    .table-stack td:last-child { border-bottom: 0 !important; }
+    .table-stack td::before {
+        content: attr(data-label);
+        flex: 0 0 36%; max-width: 36%; text-align: left;
+        font-size: .68rem; font-weight: 800; letter-spacing: .9px; text-transform: uppercase; color: var(--ink-muted);
+        padding-top: .15rem;
+    }
+    .table-stack td:not([data-label])::before { display: none; }
+    .table-stack td[data-empty] { display: none; }   /* nothing to show, save the space */
+    /* First cell of each row acts as the card title */
+    .table-stack td:first-child { display: block; text-align: left; padding-top: .8rem !important; }
+    .table-stack td > div, .table-stack td > span, .table-stack td > form, .table-stack td > a { max-width: 100%; }
+    .table-stack td .d-flex { justify-content: flex-end; }
+    .table-stack td form .btn { min-width: 120px; }
+
+    /* ---- DataTables controls ------------------------------------------------ */
+    .dataTables_wrapper > .row { --bs-gutter-x: 0; margin: 0; padding: 0 .85rem; }
+    .dataTables_wrapper > .row > div { width: 100%; text-align: left !important; padding: 0; margin-bottom: .6rem; }
+    .dataTables_filter label, .dataTables_length label { width: 100%; display: flex; align-items: center; gap: .6rem; }
+    .dataTables_filter input { flex: 1; width: 100% !important; margin-left: 0 !important; }
+    .dataTables_paginate .pagination { flex-wrap: wrap; justify-content: center; }
+    .dataTables_info { padding-top: 0 !important; font-size: .8rem; }
+
+    /* Laravel pagination links */
+    .pagination { flex-wrap: wrap; justify-content: center; gap: .15rem; }
+
+    /* ---- Gate scanner: big and thumb-friendly ------------------------------- */
+    #qrReader, .scan-stage { width: 100%; }
+    #qrReader video { width: 100% !important; height: auto !important; border-radius: 14px; }
+    #btnStartCam, #btnStopCam { min-height: 54px; font-size: 1rem; }
+    #scanForm .btn-lg2 { min-height: 54px; }
+
+    /* ---- Modals fill the width ---------------------------------------------- */
+    .modal-dialog { margin: .75rem; }
+    .modal-footer { flex-wrap: wrap; }
+    .modal-footer .btn { flex: 1 1 100%; }
+    .js-preset { white-space: normal; text-align: left; flex: 1 1 100%; }
+
+    /* ---- Official report sheet: keep the printed form, make it swipeable ---- */
+    .report-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .report-scroll::after { content: "Swipe to see all columns →"; display: block; text-align: center; font-size: .72rem; color: var(--ink-muted); padding: .5rem 0 .75rem; }
+    .report-sheet { border-radius: 12px; }
+
+    /* ---- Auth pages: give the fields the width the card was wasting --------- */
+    .auth-shell { min-height: 100svh; }
+    .auth-main { padding: 1.25rem .75rem 2rem; }
+    .auth-card { padding: 1.6rem 1.2rem; border-radius: 24px; }
+    .gsuite-btn { padding: .8rem .9rem; }
+}
+
+/* ---- Landing hero: the 3D scene becomes a clean, in-flow stack on phones -- */
+@media (max-width: 575.98px) {
+    .scene { height: auto !important; display: flex; flex-direction: column; gap: 1rem; margin-top: 1.25rem; }
+    .float-el, .ticket3d.ghost { display: none !important; }
+    .ticket3d, .ticket3d.main {
+        position: relative !important; top: auto !important; left: auto !important; right: auto !important;
+        width: 100% !important; height: auto !important; transform: none !important;
+        grid-template-columns: 1fr 112px;
+    }
+    .ticket3d.main.tilt.tilt, .ticket3d.main.tilt.tilt:hover { transform: none !important; }
+    .t3-top { padding: .75rem .9rem; gap: .6rem; flex-wrap: wrap; }
+    .t3-logo { transform: none; }
+    .t3-body { padding: .9rem; }
+    .t3-title { font-size: 1.3rem; transform: none; }
+    .t3-when, .t3-acts { transform: none; }
+    .t3-when { gap: .6rem 1rem; }
+    .t3-stub { padding: .8rem .6rem; }
+    .t3-qr { transform: none; }
+    .count-glass { position: relative !important; left: auto !important; bottom: auto !important; translate: none !important; width: 100% !important; }
+    .count-row b { font-size: 1.6rem; }
+}
+
+/* ---- Very small phones (<= 360px) ------------------------------------------ */
+@media (max-width: 380px) {
+    .app-container { padding-left: .75rem; padding-right: .75rem; }
+    .page-hero { padding: 1.3rem 1.1rem; }
+    .page-hero h2 { font-size: 1.3rem; }
+    .stat-value { font-size: 1.3rem; }
+    .brand-sub { display: none; }
+    .table-stack td::before { flex-basis: 40%; max-width: 40%; }
+}
+
+/* Landscape phones: do not let sticky chrome eat the screen */
+@media (max-height: 480px) and (orientation: landscape) {
+    .app-nav { position: static; }
+    .hero { min-height: auto; padding-top: 5rem; }
+}
+
+/* Landing is shown at 992px on phones (desktop layout): keep the nav on one line */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .nav-public .nav-link, .nav-public .btn, .brand-name { white-space: nowrap; }
+    .nav-public .navbar-nav { gap: 0 !important; }
+    .nav-public .nav-link { padding-left: .22rem; padding-right: .22rem; font-size: .78rem; }
+    .nav-public .btn { padding-left: .6rem; padding-right: .6rem; font-size: .78rem; }
+    .nav-public .brand-sub { display: none; }
+    .nav-public .container { padding-left: .6rem; padding-right: .6rem; }
+}

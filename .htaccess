@@ -1,0 +1,7 @@
+# XAMPP serves this whole folder. Only /public is meant to be reachable;
+# .env, vendor/, storage/, _legacy/ ... must never be.
+RewriteEngine On
+RewriteBase /e-RESERVE/
+RewriteRule ^$ public/ [R=301,L]
+RewriteRule ^public(/|$) - [L]
+RewriteRule .* - [R=404,L]

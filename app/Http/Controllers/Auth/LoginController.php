@@ -1,0 +1,122 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\AccountService;
+use App\Services\Audit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+
+class LoginController extends Controller
+{
+    public function __construct(private AccountService $accounts)
+    {
+    }
+
+    public function show(Request $request)
+    {
+        return view('auth.login', ['next' => (string) $request->query('next', '')]);
+    }
+
+    /** The SSC staff sign-in page (/ssc): staff accounts only, no sign-up, no Google. */
+    public function showStaff()
+    {
+        return view('auth.staff-login');
+    }
+
+    public function storeStaff(Request $request)
+    {
+        return $this->store($request, staffOnly: true);
+    }
+
+    public function store(Request $request, bool $staffOnly = false)
+    {
+        $email = strtolower(trim((string) $request->input('email')));
+        $pass  = (string) $request->input('password', '');
+        $next  = (string) $request->input('next', '');
+
+        $error = $this->attempt($request, $email, $pass, $staffOnly);
+
+        if ($error !== null) {
+            return back()->withInput($request->only('email', 'next', 'remember'))->with('login_error', $error);
+        }
+
+        $user = Auth::user();
+
+        return redirect()
+            ->to($user->isStaff() ? $user->homeRoute() : ($next === 'documents' ? route('documents.index') : route('dashboard')))
+            ->with('flash', flash(
+                'success',
+                'Welcome, ' . e(explode(' ', $user->name)[0]) . '!',
+                'You are signed in to ' . app_name() . ' as <strong>' . e($user->email) . '</strong>.'
+            ));
+    }
+
+    /** @return string|null an error message, or null when signed in */
+    private function attempt(Request $request, string $email, string $password, bool $staffOnly = false): ?string
+    {
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return 'That does not look like a valid email address.';
+        }
+        if (!$this->accounts->staffEmailAllowed($email)) {
+            return $this->accounts->domainRejection($email);
+        }
+
+        $key = 'login:' . $email . '|' . $request->ip();
+        if (RateLimiter::tooManyAttempts($key, 8)) {
+            return 'Too many sign-in attempts. Try again in ' . RateLimiter::availableIn($key) . ' seconds.';
+        }
+        if ($password === '') {
+            return 'Enter your password.';
+        }
+
+        $user = User::where('email', $email)->first();
+
+        // One wording for every failure, and a hash check even when the account
+        // does not exist, so this form cannot be used to discover accounts.
+        $generic = 'Incorrect email or password.';
+
+        if ($user === null) {
+            Hash::check($password, '$2y$12$Dp.zz6rpUONA4CJ4up5PguhTU5f0j2BMzx54SUWCQla.XHz2iu10C');
+            RateLimiter::hit($key, 300);
+            return $generic;
+        }
+        if (empty($user->password) || !Hash::check($password, $user->password)) {
+            RateLimiter::hit($key, 300);
+            return $generic;
+        }
+        if (!$user->isActive()) {
+            return 'That account has been disabled. Please contact the SSC.';
+        }
+        // Password was right, but this door is for staff. Do not sign a student in here.
+        if ($staffOnly && !$user->isStaff()) {
+            return 'This page is for SSC staff. Students sign in from the main sign-in page.';
+        }
+
+        RateLimiter::clear($key);
+
+        Auth::login($user, $request->boolean('remember'));
+        $request->session()->regenerate();         // defeats session fixation
+        $user->forceFill(['last_login_at' => now()])->save();
+        session(['logged_in_at' => now()->toDateTimeString()]);
+
+        Audit::log('login', 'user', (string) $user->id);
+
+        return null;
+    }
+
+    public function destroy(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('home')->with('flash', flash(
+            'success', 'Signed Out', 'You have been signed out of ' . app_name() . '. See you at SIGLA 2026!'
+        ));
+    }
+}

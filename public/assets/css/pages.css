@@ -1,0 +1,211 @@
+/* ==========================================================================
+   e-RESERVE — Page layer (loaded last)
+   Readable glass · artist cards · sign-in / sign-up artwork · Google button
+   ========================================================================== */
+
+/* ---------- Readability: glass that still reads clearly ---------- */
+:root {
+    --glass-bg: rgba(255, 255, 255, .74);
+    --glass-bg-strong: rgba(255, 255, 255, .88);
+    --ink-soft: #46555E;
+    --ink-muted: #6F818B;
+}
+.card-soft, .stat-card, .doc-card, .guide-card, .pipe-card, .fact, .next-step, .doc-row,
+.review-card, .pipeline-app, .guide-item, .rule-pill, .callout, .auth-card {
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+            backdrop-filter: blur(18px) saturate(160%);
+}
+.doc-preview { padding: 1.6rem; }
+.doc-preview .text-soft, .pipe-card p, .guide-item p, .doc-hint { color: var(--ink-soft) !important; }
+.doc-rules li { background: rgba(238, 248, 252, .95); color: #1D5772; }
+.cell-sub, .info-label, .stat-label { color: var(--ink-muted); }
+.section-lead, .hero-lead { color: var(--ink-soft); }
+
+/* ---------- Artists ---------- */
+.artist-card {
+    position: relative; overflow: hidden; aspect-ratio: 4 / 3.1; border-radius: 26px;
+    background: #DDE9EF; border: 1px solid #fff;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 20px 40px rgba(23, 59, 77, .16);
+}
+.artist-photo {
+    position: absolute; inset: 0; background-size: cover; background-position: center;
+    transform: scale(1.04); transition: transform .8s cubic-bezier(.22, 1, .36, 1);
+}
+.artist-card:hover .artist-photo { transform: scale(1.1); }
+.artist-card::after {                       /* soft fade so the label reads on any photo */
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, transparent 45%, rgba(23, 59, 77, .38) 100%);
+}
+.artist-info {
+    position: absolute; z-index: 2; left: .85rem; right: .85rem; bottom: .85rem;
+    padding: .8rem 1.05rem; border-radius: 18px;
+    background: rgba(255, 255, 255, .9); border: 1px solid #fff;
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    box-shadow: 0 12px 26px rgba(23, 59, 77, .18);
+}
+.artist-info h5 { margin: .1rem 0 0; font-size: 1.22rem; color: var(--green-900); }
+.artist-tag { font-size: .64rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #B8570C; }
+.artist-tag i { margin-right: .2rem; }
+.artist-placeholder {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6rem; padding-bottom: 3rem;
+    background:
+        url('../images/concert-silhouette.svg') center bottom / cover no-repeat,
+        linear-gradient(135deg, #BFE6F6 0%, #FFE4BD 100%);
+    background-blend-mode: soft-light, normal;
+    color: #1D5772; transform: none;
+}
+.artist-card:hover .artist-placeholder { transform: none; }
+.artist-placeholder i { font-size: 2.6rem; color: #E8821F; }
+.artist-placeholder span { font-size: .7rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; opacity: .8; }
+
+/* ==========================================================================
+   Sign-in / sign-up
+   ========================================================================== */
+.auth-shell { background: transparent; grid-template-columns: 1.08fr 1fr; }
+.auth-main { background: transparent; }
+
+.auth-aside {
+    display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem;
+    padding: 2.4rem 3rem;
+    background:
+        radial-gradient(520px 320px at 100% 0%, rgba(255, 190, 90, .42), transparent 65%),
+        radial-gradient(480px 360px at 0% 100%, rgba(255, 255, 255, .18), transparent 65%),
+        linear-gradient(160deg, #1F73A0 0%, #3A9ACB 55%, #6CC6EA 100%);
+    isolation: isolate;
+}
+.aside-crowd {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 46%; z-index: -1;
+    background: url('../images/concert-silhouette.svg') center bottom / cover no-repeat;
+    filter: brightness(0) invert(1); opacity: .12;
+}
+.aside-orb { position: absolute; border-radius: 50%; z-index: -1; animation: bob 8s ease-in-out infinite; }
+.orb-a {
+    width: 260px; height: 260px; right: -70px; top: 90px;
+    background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, .7), rgba(255, 255, 255, 0) 40%), linear-gradient(160deg, #8EDBF8, #2B9AC9);
+    box-shadow: 0 0 0 14px rgba(255, 255, 255, .14), 0 0 0 30px rgba(255, 255, 255, .07);
+}
+.orb-b { width: 120px; height: 120px; left: -30px; bottom: 26%; border: 14px solid rgba(255, 200, 100, .5); animation-delay: -3s; }
+.orb-c { width: 70px; height: 70px; left: 46%; top: 8%; background: var(--pill-orange); opacity: .85; box-shadow: 0 14px 28px rgba(255, 138, 61, .4); animation-delay: -5s; }
+
+.aside-mid { display: flex; flex-direction: column; align-items: flex-start; }
+.aside-pill { margin-bottom: 1.1rem; }
+.aside-title { color: #fff; font-size: clamp(2rem, 3.4vw, 2.9rem); line-height: 1.05; letter-spacing: -.04em; margin: 0 0 .8rem; text-shadow: 0 2px 14px rgba(23, 59, 77, .25); }
+.aside-title span { background: linear-gradient(90deg, #FFE08A, #FFB347); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: .1em; display: inline-block; }
+.aside-lead { color: rgba(255, 255, 255, .88); max-width: 430px; font-size: .95rem; }
+
+.mini-scene {
+    position: relative; width: 520px; height: 290px; margin: .6rem 0 -40px;
+    transform: scale(.78); transform-origin: 0 0; perspective: 1400px;
+}
+.mini-scene .ticket3d { top: 28px; left: 0; }
+.mini-scene .mg { transform: perspective(1400px) rotateX(8deg) rotateY(-16deg) rotateZ(-3deg) translate3d(34px, 30px, -60px); }
+.mini-pill { right: 0; top: -6px; display: inline-flex; align-items: center; gap: .5rem; padding: .5rem 1rem; border-radius: 99px; font-weight: 800; font-size: .68rem; letter-spacing: .08em; background: var(--pill-orange); color: #5A2E00; box-shadow: 0 0 0 5px rgba(255, 214, 120, .4), 0 14px 26px rgba(255, 138, 61, .4); }
+.mini-note { left: 38%; top: -14px; width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; color: #E8821F; background: rgba(255, 255, 255, .9); box-shadow: 0 14px 26px rgba(23, 59, 77, .22); }
+
+.aside-steps { list-style: none; padding: 0; margin: 1.2rem 0 0; display: grid; gap: .55rem; }
+.aside-steps li { display: flex; align-items: center; gap: .8rem; color: #fff; font-weight: 600; font-size: .9rem; }
+.aside-steps span { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: .78rem; background: var(--pill-orange); color: #5A2E00; box-shadow: 0 0 0 4px rgba(255, 214, 120, .3); flex: 0 0 auto; }
+
+.aside-count { display: flex; gap: .6rem; margin-top: 1.4rem; }
+.aside-count div {
+    min-width: 66px; padding: .55rem .7rem; text-align: center; border-radius: 16px;
+    background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .4);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.aside-count b { display: block; font-size: 1.35rem; line-height: 1.1; color: #FFD66B; font-variant-numeric: tabular-nums; }
+.aside-count span { font-size: .55rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: rgba(255, 255, 255, .8); }
+.aside-foot { font-size: .76rem; color: rgba(255, 255, 255, .75); }
+.aside-foot .footer-motto { color: #FFD66B; }
+
+@media (max-width: 1199.98px) {
+    .mini-scene { transform: scale(.66); margin-bottom: -80px; }
+}
+@media (max-width: 991.98px) {
+    .auth-shell { grid-template-columns: 1fr; }
+    .auth-aside { padding: 1.6rem 1.4rem; }
+    .mini-scene, .aside-count, .aside-steps, .orb-a { display: none; }
+}
+
+/* Form card */
+.auth-card { background: var(--glass-bg-strong); border-radius: 30px; padding: 2.2rem 2.2rem; }
+.auth-card .form-control, .auth-card .form-select { background: rgba(255, 255, 255, .95); }
+.auth-card .input-group-text { background: #EAF5FB; color: var(--green-700); border-color: #DCE7E2; }
+
+/* Continue with Google */
+.btn-google {
+    display: flex; align-items: center; justify-content: center; gap: .8rem; width: 100%;
+    padding: .85rem 1.2rem; margin-bottom: 1.1rem;
+    background: #fff; color: #2B373D; font-weight: 700; font-size: .95rem;
+    border: 1.5px solid #DCE5EA; border-radius: 99px;
+    box-shadow: 0 6px 16px rgba(23, 59, 77, .08);
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.btn-google:hover { color: #1B2830; transform: translateY(-2px); border-color: #B9CBD5; box-shadow: 0 14px 28px rgba(23, 59, 77, .14); }
+.btn-google .g-logo { width: 22px; height: 22px; flex: 0 0 auto; }
+
+.google-chip {
+    display: flex; align-items: center; gap: .85rem; padding: .85rem 1rem; margin-bottom: 1.2rem;
+    border-radius: 16px; background: rgba(31, 157, 99, .07); border: 1px solid rgba(31, 157, 99, .25); font-size: .78rem; color: var(--ink-soft);
+}
+.google-chip .g-logo { width: 26px; height: 26px; flex: 0 0 auto; }
+.google-chip strong { color: var(--green-900); font-size: .88rem; }
+
+/* pipeline numerals sit behind the text; floating icon clear of the countdown */
+.pipe-num { z-index: 0; font-size: 1.6rem; opacity: .7; }
+.pipe-card h5, .pipe-card p, .pipe-tag { position: relative; z-index: 1; }
+.n3 { right: -1%; bottom: 20%; }
+
+/* ---------- Artist name tags: frosted glass ---------- */
+.artist-card::after { background: linear-gradient(180deg, transparent 55%, rgba(10, 30, 44, .30) 100%); }
+.artist-info {
+    background: rgba(255, 255, 255, .22);
+    border: 1px solid rgba(255, 255, 255, .55);
+    -webkit-backdrop-filter: blur(20px) saturate(190%);
+            backdrop-filter: blur(20px) saturate(190%);
+    box-shadow: 0 14px 30px rgba(10, 30, 44, .28), inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -1px 0 rgba(255, 255, 255, .15);
+}
+.artist-info h5 { color: #fff; text-shadow: 0 1px 8px rgba(10, 30, 44, .55); }
+.artist-tag { color: #FFD98A; text-shadow: 0 1px 6px rgba(10, 30, 44, .5); }
+.artist-placeholder + .artist-info h5 { color: #fff; }
+
+/* ---------- FAQ: glass rows and a chevron instead of + / − ---------- */
+.faq .accordion-item {
+    background: var(--glass-bg); border: 1px solid var(--glass-edge);
+    -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+    box-shadow: var(--glass-shadow);
+}
+.faq .accordion-button { background: transparent; }
+.faq .accordion-button:not(.collapsed) { background: rgba(238, 248, 252, .75); }
+.faq .accordion-button::after,
+.faq .accordion-button:not(.collapsed)::after {
+    content: '\f078'; font-size: .7rem; color: #5A2E00;
+    width: 30px; height: 30px; display: grid; place-items: center; flex: 0 0 auto; margin-left: 1rem;
+    border-radius: 50%; background: var(--pill-orange);
+    box-shadow: 0 0 0 3px rgba(255, 214, 120, .35), inset 0 1px 0 rgba(255, 255, 255, .6);
+    transition: transform .35s cubic-bezier(.22, 1, .36, 1);
+}
+.faq .accordion-button:not(.collapsed)::after { transform: rotate(180deg); }
+
+/* placeholder photo: richer colour so the glass tag reads; chevron sits at the row's right edge */
+.artist-placeholder { background: url('../images/concert-silhouette.svg') center bottom / cover no-repeat, linear-gradient(135deg, #3A9ACB 0%, #7FC8EA 45%, #F5A04A 100%); background-blend-mode: soft-light, normal; color: #fff; }
+.artist-placeholder i { color: #fff; filter: drop-shadow(0 4px 10px rgba(23, 59, 77, .35)); }
+.faq .accordion-button::after, .faq .accordion-button:not(.collapsed)::after { margin-left: auto; }
+
+/* ---- Register: "who are you" cards -------------------------------------------- */
+.who-card { display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.15rem; margin-bottom: .9rem; border-radius: 20px; background: #fff; border: 1px solid var(--line); text-decoration: none; color: inherit; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.who-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(42, 127, 166, .14); border-color: #8CCBE6; color: inherit; }
+.who-ico { flex: 0 0 54px; width: 54px; height: 54px; border-radius: 17px; display: grid; place-items: center; font-size: 1.3rem; color: #fff; background: linear-gradient(135deg, #46AFE8, #2A8DB5); }
+.who-ico-gold { background: linear-gradient(135deg, #FFB347, #F58634); color: #3B2405; }
+.who-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .15rem; }
+.who-txt strong { font-size: 1rem; color: var(--green-900); line-height: 1.25; }
+.who-txt span { font-size: .8rem; color: var(--ink-soft); line-height: 1.45; }
+.who-go { color: var(--ink-muted); font-size: .8rem; }
+
+/* ---- Show / hide password ------------------------------------------------- */
+.pw-wrap { position: relative; }
+.has-pw-toggle { position: relative; }
+.has-pw-toggle input[type="password"], .has-pw-toggle input[data-pw-toggle] { padding-right: 2.9rem; }
+.pw-toggle { position: absolute; z-index: 6; top: 50%; right: .45rem; transform: translateY(-50%); width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: var(--ink-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background .15s ease, color .15s ease; }
+.pw-toggle:hover { background: #EEF6FA; color: #2A8DB5; }
+.pw-toggle:focus-visible { outline: 2px solid #2A8DB5; outline-offset: 1px; }
+.form-control.is-invalid ~ .pw-toggle { right: 1.9rem; }
