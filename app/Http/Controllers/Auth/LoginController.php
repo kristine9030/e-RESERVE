@@ -39,6 +39,14 @@ class LoginController extends Controller
         $pass  = (string) $request->input('password', '');
         $next  = (string) $request->input('next', '');
 
+        // A one-letter slip in the domain (g.bastate-u… for g.batstate-u…) is fixed for them;
+        // the password is still required, so this opens nothing up.
+        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) && !$this->accounts->staffEmailAllowed($email)
+            && ($fixed = $this->accounts->suggestDomain($email))) {
+            $email = substr($email, 0, (int) strrpos($email, '@')) . '@' . strtolower($fixed);
+            $request->merge(['email' => $email]);
+        }
+
         $error = $this->attempt($request, $email, $pass, $staffOnly);
 
         if ($error !== null) {

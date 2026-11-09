@@ -130,8 +130,16 @@
 
     /* Friendly client-side domain check before the round trip. */
     document.getElementById('loginForm').addEventListener('submit', function (e) {
-        var email = document.getElementById('email').value.trim().toLowerCase();
+        var field = document.getElementById('email');
+        var email = field.value.trim().toLowerCase();
         var warning = email ? domainWarning(email) : null;
+
+        /* A one-letter slip in the domain is corrected for them and the sign-in carries on. */
+        var at = email.lastIndexOf('@');
+        if (warning && at > 0) {
+            var guess = nearestDomain(email.slice(at + 1));
+            if (guess) { field.value = email.slice(0, at) + '@' + guess; warning = null; }
+        }
             if (warning) {
             e.preventDefault();
             Swal.fire({

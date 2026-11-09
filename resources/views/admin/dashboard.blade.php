@@ -4,8 +4,8 @@
 @section('nav', 'admin')
 
 @section('content')
-<div class="page-hero fade-up">
-    <div class="row align-items-center g-4">
+<div class="page-hero page-hero-compact fade-up">
+    <div class="row align-items-center g-3">
         <div class="col-lg-8">
             <span class="eyebrow on-dark"><i class="fa-solid fa-chart-line"></i> Live Overview</span>
             <h2>{{ ev('name') }}</h2>
@@ -21,17 +21,106 @@
     </div>
 </div>
 
+<!-- ================= Needs your attention (first thing staff see) ================= -->
+<?php
+    $attn = [
+        ['fa-inbox',        'Documents to review',   $stats['docs_pending'],   'Students are waiting for approval',   route('admin.documents'),     'Review now'],
+        ['fa-id-card-clip', 'Change requests',       $changes,                 'Name or SR-code edits to approve',    route('admin.requests'),      'Open'],
+        ['fa-handshake',    'New sponsor inquiries', $inquiries,               'Companies that wrote to the SSC',     route('admin.sponsors'),      'Open'],
+        ['fa-rotate-left',  'Returned to students',  $stats['docs_rejected'],  'Waiting for the student to re-upload', route('admin.registrations'), 'See students'],
+    ];
+    $todo = collect($attn)->filter(fn ($a) => (int) $a[2] > 0)->count();
+?>
+<section class="attn fade-up d1" aria-label="Needs your attention">
+    <div class="attn-head">
+        <h5 class="mb-0"><i class="fa-solid fa-bell-concierge"></i> Needs your attention</h5>
+        @if ($todo)
+            <span class="badge-soft badge-warning">{{ $todo }} thing{{ $todo === 1 ? '' : 's' }} to do</span>
+        @else
+            <span class="badge-soft badge-success"><i class="fa-solid fa-circle-check"></i> All clear</span>
+        @endif
+    </div>
+    <div class="row g-3">
+        @foreach ($attn as [$icon, $label, $count, $sub, $href, $cta])
+            <?php $on = (int) $count > 0; ?>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <a href="{{ $href }}" class="attn-tile {{ $on ? 'is-on' : '' }}">
+                    <span class="attn-icon"><i class="fa-solid {{ $icon }}"></i></span>
+                    <span class="attn-body">
+                        <span class="attn-num">{{ number_format($count) }}</span>
+                        <span class="attn-label">{{ $label }}</span>
+                        <span class="attn-sub">{{ $on ? $sub : 'Nothing waiting' }}</span>
+                    </span>
+                    @if ($on)<span class="attn-cta">{{ $cta }} <i class="fa-solid fa-arrow-right"></i></span>@endif
+                </a>
+            </div>
+        @endforeach
+    </div>
+</section>
+
+<!-- ================= Review queue + shortcuts ================= -->
+<div class="row g-4 mb-4">
+    <!-- ================= Review queue preview ================= -->
+    <div class="col-xl-8">
+        <div class="card-soft h-100 fade-up d3">
+            <div class="card-head">
+                <div>
+                    <h5 class="mb-0">Needs Review</h5>
+                    <span class="cell-sub">{{ number_format($waiting) }} document{{ $waiting === 1 ? '' : 's' }} waiting</span>
+                </div>
+                <a href="{{ route('admin.documents') }}" class="btn btn-gold btn-sm2">Open queue <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="card-body-p">
+                @if (!$queue)
+                    <p class="cell-sub mb-0 py-3 text-center"><i class="fa-solid fa-circle-check text-green me-1"></i> Nothing waiting. Nice work.</p>
+                @endif
+                <?php foreach (array_slice($queue, 0, 6) as $d): $meta = config('ereserve.documents')[$d['doc_type']]; ?>
+                    <div class="info-row">
+                        <span class="info-icon"><i class="fa-solid {{ $meta['icon'] }}"></i></span>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="info-value" style="font-size:.88rem;">{{ $d['student_name'] }} · {{ $meta['short'] }}</div>
+                            <div class="cell-sub">{{ $d['student_no'] }} · {{ pretty_date($d['uploaded_at'], 'M d · g:i A') }}</div>
+                        </div>
+                        <a href="{{ document_url((int) $d['id']) }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm2"><i class="fa-solid fa-eye"></i></a>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= Shortcuts ================= -->
+    <div class="col-xl-4">
+        <div class="card-soft h-100 fade-up d4">
+            <div class="card-head"><h5 class="mb-0">Shortcuts</h5></div>
+            <div class="card-body-p d-grid gap-2">
+                <?php $ops = [
+                    ['fa-file-circle-check', 'Review Documents', 'Approve or return uploaded PDFs',      route('admin.documents')],
+                    ['fa-users',             'Students',         'Every account and its document status', route('admin.registrations')],
+                    ['fa-qrcode',            'Gate Scan',        'Scan tickets at the entrance',          route('admin.checkin')],
+                    ['fa-folder-open',       'Reports Hub',      'Three official report forms',           route('reports.index')],
+                ];
+                foreach ($ops as [$icon, $title, $sub, $href]): ?>
+                    <a href="{{ $href }}" class="action-tile">
+                        <span class="t-icon"><i class="fa-solid {{ $icon }}"></i></span>
+                        <span><span class="t-title d-block">{{ $title }}</span><span class="t-sub">{{ $sub }}</span></span>
+                        <i class="fa-solid fa-arrow-right t-arrow"></i>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h6 class="section-kicker">Event at a glance</h6>
 <!-- ================= Stat cards ================= -->
 <div class="row g-3 g-lg-4 mb-4">
     <?php $cards = [
         ['fa-users',          'deep',   'Registered Students', $stats['students'],     'Accounts created'],
         ['fa-ticket',         'green',  'Tickets Issued',      $stats['tickets'],      'Valid or used'],
-        ['fa-inbox',          'orange', 'Docs For Review',     $stats['docs_pending'], 'Waiting for staff'],
-        ['fa-rotate-left',    'danger', 'Docs Returned',       $stats['docs_rejected'],'Waiting on students'],
         ['fa-user-check',     'info',   'Checked In',          $stats['checked_in'],   'Scanned at the gate'],
     ];
     foreach ($cards as $i => [$icon, $tone, $label, $value, $foot]): ?>
-        <div class="col-6 col-lg-4 col-xl">
+        <div class="col-6 col-lg-4 col-xl-4">
             <div class="stat-card fade-up d{{ $i + 1 }}">
                 <div class="stat-icon {{ $tone }}"><i class="fa-solid {{ $icon }}"></i></div>
                 <div class="stat-label">{{ $label }}</div>
@@ -110,36 +199,8 @@
 </div>
 
 <div class="row g-4 mb-4">
-    <!-- ================= Review queue preview ================= -->
-    <div class="col-xl-7">
-        <div class="card-soft h-100 fade-up d3">
-            <div class="card-head">
-                <div>
-                    <h5 class="mb-0">Needs Review</h5>
-                    <span class="cell-sub">{{ number_format($waiting) }} document{{ $waiting === 1 ? '' : 's' }} waiting</span>
-                </div>
-                <a href="{{ route('admin.documents') }}" class="btn btn-gold btn-sm2">Open queue <i class="fa-solid fa-arrow-right"></i></a>
-            </div>
-            <div class="card-body-p">
-                @if (!$queue)
-                    <p class="cell-sub mb-0 py-3 text-center"><i class="fa-solid fa-circle-check text-green me-1"></i> Nothing waiting. Nice work.</p>
-                @endif
-                <?php foreach (array_slice($queue, 0, 6) as $d): $meta = config('ereserve.documents')[$d['doc_type']]; ?>
-                    <div class="info-row">
-                        <span class="info-icon"><i class="fa-solid {{ $meta['icon'] }}"></i></span>
-                        <div class="flex-grow-1 min-w-0">
-                            <div class="info-value" style="font-size:.88rem;">{{ $d['student_name'] }} · {{ $meta['short'] }}</div>
-                            <div class="cell-sub">{{ $d['student_no'] }} · {{ pretty_date($d['uploaded_at'], 'M d · g:i A') }}</div>
-                        </div>
-                        <a href="{{ document_url((int) $d['id']) }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm2"><i class="fa-solid fa-eye"></i></a>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </div>
-
     <!-- ================= Program breakdown ================= -->
-    <div class="col-xl-5">
+    <div class="col-xl-12">
         <div class="card-soft h-100 fade-up d4">
             <div class="card-head">
                 <h5 class="mb-0">Tickets by Program</h5>
@@ -162,6 +223,8 @@
             </div>
         </div>
     </div>
+</div>
+
 </div>
 
 <!-- ================= Latest registrations ================= -->
@@ -197,32 +260,6 @@
                 @endforeach
             </tbody>
         </table>
-    </div>
-</div>
-
-<!-- ================= Operations ================= -->
-<div class="card-soft fade-up d5">
-    <div class="card-head"><h5 class="mb-0">Operations</h5>
-        <span class="badge-soft badge-gold"><i class="fa-solid fa-bolt"></i> Shortcuts</span>
-    </div>
-    <div class="card-body-p">
-        <div class="row g-2">
-            <?php $ops = [
-                ['fa-file-circle-check', 'Review Documents', 'Approve or return uploaded PDFs',     route('admin.documents')],
-                ['fa-users',             'Students',         'Every account and its document status', route('admin.registrations')],
-                ['fa-qrcode',            'Gate Scan',        'Scan tickets at the entrance',         route('admin.checkin')],
-                ['fa-folder-open',       'Reports Hub',      'Three official report forms',          route('reports.index')],
-            ];
-            foreach ($ops as [$icon, $title, $sub, $href]): ?>
-                <div class="col-md-6 col-xl-3">
-                    <a href="{{ $href }}" class="action-tile h-100">
-                        <span class="t-icon"><i class="fa-solid {{ $icon }}"></i></span>
-                        <span><span class="t-title d-block">{{ $title }}</span><span class="t-sub">{{ $sub }}</span></span>
-                        <i class="fa-solid fa-arrow-right t-arrow"></i>
-                    </a>
-                </div>
-            <?php endforeach; ?>
-        </div>
     </div>
 </div>
 @endsection

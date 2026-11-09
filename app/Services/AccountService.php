@@ -214,6 +214,8 @@ class AccountService
                 'initials' => $this->initials($name), 'student_no' => $employeeNo,
                 'program' => config('ereserve.employee_types')[$type], 'year_level' => null, 'college_code' => null,
                 'mobile' => $mobile === '' ? null : preg_replace('/\D/', '', $mobile), 'status' => 'active',
+                // Faculty and staff skip the confirmation email: the university address is the proof.
+                'email_verified_at' => now(),
             ])->save();
         } catch (UniqueConstraintViolationException) {
             return $fail('An account with that email or employee ID already exists.', 'email');
@@ -224,9 +226,10 @@ class AccountService
         request()->session()->regenerate();
         Audit::log('user.register', 'user', (string) $user->id, ['type' => $type]);
 
-        $mail = $this->sendVerification($user);
+        // Employees have no documents to approve, so the ticket is issued right now.
+        $this->tickets->sync((int) $user->id);
 
-        return ['ok' => true, 'message' => 'Account created.', 'field' => null, 'user' => $user, 'mail_ok' => $mail['ok']];
+        return ['ok' => true, 'message' => 'Account created.', 'field' => null, 'user' => $user, 'mail_ok' => true];
     }
 
     public function employeeIdValid(string $id): bool

@@ -62,6 +62,12 @@ class RegisterController extends Controller
             ));
         }
 
+        if ($employee) {
+            return redirect()->route('dashboard')->with('flash', flash(
+                'success', 'Welcome, ' . $first . '!', 'Your account is ready and your ticket is on your dashboard. No documents or email confirmation needed.'
+            ));
+        }
+
         // Nothing can happen until the address is proved, so go straight to the confirm screen.
         // If the email could not be sent, say so instead of claiming it was.
         if (!($result['mail_ok'] ?? true)) {

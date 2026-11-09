@@ -30,6 +30,8 @@ class AdminController extends Controller
             'trend'    => $trend,
             'programs' => $this->stats->programBreakdown(),
             'queue'    => $this->documents->pending(6),
+            'changes'  => \App\Models\ChangeRequest::where('status', 'pending')->count(),
+            'inquiries' => \App\Models\SponsorInquiry::where('status', 'new')->count(),
             'maxTrend' => ($trend ? max(array_column($trend, 'count')) : 0) ?: 1,
         ]);
     }

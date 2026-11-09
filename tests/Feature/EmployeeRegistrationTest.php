@@ -63,7 +63,7 @@ class EmployeeRegistrationTest extends TestCase
 
     public function test_an_employee_registers_with_just_a_name_and_employee_id(): void
     {
-        $this->register()->assertRedirect(route('verify'));
+        $this->register()->assertRedirect(route('dashboard'));
 
         $u = User::where('email', 'maria.reyes@batstate-u.edu.ph')->firstOrFail();
         $this->assertSame('student', $u->role);
@@ -71,9 +71,9 @@ class EmployeeRegistrationTest extends TestCase
         $this->assertSame('2015-0123', $u->student_no);
         $this->assertSame('Faculty', $u->program);
         $this->assertTrue($u->isEmployee());
-        $this->assertNull($u->email_verified_at);
-        $this->assertSame(0, DB::table('tickets')->where('user_id', $u->id)->count(), 'no ticket before the email is confirmed');
-        Mail::assertQueued(\App\Mail\ConfirmEmail::class, fn ($m) => $m->hasTo($u->email));
+        $this->assertNotNull($u->email_verified_at, 'employees skip the confirmation email');
+        $this->assertSame(1, DB::table('tickets')->where('user_id', $u->id)->where('status', 'valid')->count(), 'ticket is issued on sign-up');
+        Mail::assertNotQueued(\App\Mail\ConfirmEmail::class);
     }
 
     public function test_confirming_the_email_issues_the_ticket_with_no_documents(): void
@@ -106,7 +106,7 @@ class EmployeeRegistrationTest extends TestCase
 
     public function test_duplicates_are_refused_across_students_and_employees(): void
     {
-        $this->register()->assertRedirect(route('verify'));
+        $this->register()->assertRedirect(route('dashboard'));
         auth()->logout();
 
         $this->register(['email' => 'other@batstate-u.edu.ph'])->assertSessionHas('register_error.field', 'employee_no');
