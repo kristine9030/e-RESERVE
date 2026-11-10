@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Audit;
 use App\Services\DocumentService;
+use App\Services\RecordsExport;
 use App\Services\Stats;
 use App\Services\TicketService;
 use Illuminate\Http\Request;
@@ -20,30 +21,66 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        $trend = $this->stats->issuanceTrend();
         $stats = $this->stats->dashboard();
 
         return view('admin.dashboard', [
             'stats'    => $stats,
             'waiting'  => (int) $stats['docs_pending'],
             'regs'     => $this->stats->registrations(20),
-            'trend'    => $trend,
-            'programs' => $this->stats->programBreakdown(),
+            'audience' => $this->stats->audienceBreakdown(),
+            'colleges' => collect($this->stats->collegeBreakdown())->sortByDesc('students')->values()->all(),
             'queue'    => $this->documents->pending(6),
-            'changes'  => \App\Models\ChangeRequest::where('status', 'pending')->count(),
-            'inquiries' => \App\Models\SponsorInquiry::where('status', 'new')->count(),
-            'maxTrend' => ($trend ? max(array_column($trend, 'count')) : 0) ?: 1,
+            'programsBy' => $this->stats->programsByCollege(),
+            'groupDetail' => $this->stats->groupDetails(),
         ]);
     }
 
     public function registrations(Request $request)
     {
-        $filters = $request->only(['q', 'college', 'docs', 'ticket']);
+        $filters = $request->only(['q', 'college', 'docs', 'ticket', 'program', 'type']);
+        $filters['type'] = (string) ($filters['type'] ?? 'all');   // 'all' = every record; the sidebar opens one group at a time
 
         return view('admin.registrations', [
             'rows'    => $this->stats->registrationsPage($filters),
             'filters' => $filters,
             'stats' => $this->stats->dashboard(),
+        ]);
+    }
+
+    /** Download the Records list (with the current filters) as Excel, PDF or CSV. */
+    public function recordsExport(Request $request, string $format, RecordsExport $export)
+    {
+        $data = $export->build($request->only(RecordsExport::FILTERS));
+        Audit::log('records.export', 'records', $format, ['group' => $data['title'], 'rows' => count($data['rows'])]);
+
+        return match ($format) {
+            'xlsx' => response($export->xlsx($data), 200, [
+                'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename="' . $export->filename($data, 'xlsx') . '"',
+                'Cache-Control'       => 'no-store',
+            ]),
+            'pdf' => response($export->pdf($data), 200, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $export->filename($data, 'pdf') . '"',
+                'Cache-Control'       => 'no-store',
+            ]),
+            default => response($export->csv($data), 200, [
+                'Content-Type'        => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="' . $export->filename($data, 'csv') . '"',
+                'Cache-Control'       => 'no-store',
+            ]),
+        };
+    }
+
+    /** Signed link (expires in two hours): plain CSV for Google Sheets' IMPORTDATA. */
+    public function recordsFeed(Request $request, RecordsExport $export)
+    {
+        $data = $export->build($request->only(RecordsExport::FILTERS));
+
+        return response($export->csv($data, false), 200, [
+            'Content-Type'  => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-store',
+            'X-Robots-Tag'  => 'noindex',
         ]);
     }
 
@@ -76,14 +113,15 @@ class AdminController extends Controller
 
     public function documents(Request $request)
     {
-        $filters = $request->only(['q', 'college']);
+        $filters = $request->only(['q', 'college', 'type']);
+        if (!in_array($filters['type'] ?? '', ['student', 'employee', 'sponsor'], true)) {
+            unset($filters['type']);
+        }
 
         return view('admin.documents', [
             'queue'    => $this->stats->pendingStudentsPage($filters),
+            'counts'   => $this->stats->pendingGroupCounts($filters),
             'filters'  => $filters,
-            'colleges' => $this->stats->collegeBreakdown(),
-            'reviewed' => $this->stats->reviewedDocuments(),
-            'stats'    => $this->stats->dashboard(),
         ]);
     }
 

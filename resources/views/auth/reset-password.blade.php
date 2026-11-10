@@ -6,7 +6,7 @@
 <div class="container" style="max-width:560px;padding:4rem 1rem;">
     <div class="text-center mb-4">
         <a class="brand-lockup d-inline-flex" href="{{ route('home') }}">
-            <img class="brand-logo" src="{{ asset(ssc('logo')) }}" alt="Supreme Student Council seal">
+            <img class="brand-logo" src="{{ asset(ssc('logo_small')) }}" alt="Supreme Student Council seal">
             <span class="brand-text text-start">
                 <span class="brand-name d-block">e-<span>RESERVE</span></span>
                 <span class="brand-sub">SIGLA 2026</span>

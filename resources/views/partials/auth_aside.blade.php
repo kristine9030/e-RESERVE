@@ -7,7 +7,7 @@
 
     <div class="aside-top">
         <a class="brand-lockup" href="{{ route('home') }}">
-            <img class="brand-logo" src="{{ asset(ssc('logo')) }}" alt="Supreme Student Council seal">
+            <img class="brand-logo" src="{{ asset(ssc('logo_small')) }}" alt="Supreme Student Council seal">
             <span class="brand-text">
                 <span class="brand-name d-block text-white">e-<span style="color:var(--gold-400);">RESERVE</span></span>
                 <span class="brand-sub" style="color:rgba(255,255,255,.65);">SIGLA 2026</span>
@@ -47,7 +47,7 @@
             <div class="ticket3d ghost mg"></div>
             <div class="ticket3d main tilt" data-tilt="12" data-tilt-rest="8,-16,-3" data-glare>
                 <div class="t3-top">
-                    <img class="t3-logo" src="{{ asset(ssc('logo')) }}" alt="">
+                    <img class="t3-logo" src="{{ asset(ssc('logo_small')) }}" alt="">
                     <div class="t3-org"><strong>Supreme Student Council</strong><span>ARASOF-Nasugbu</span></div>
                     <span class="t3-admit">ADMIT ONE</span>
                 </div>
@@ -61,7 +61,7 @@
                     </div>
                 </div>
                 <div class="t3-stub">
-                    <div class="t3-qr">{!! qr_svg('SIGLA-2026-SAMPLE', 120, ['label' => 'Sample ticket']) !!}</div>
+                    <div class="t3-qr">{!! qr_svg('SIGLA-2026-SAMPLE', 120, ['cache' => true, 'label' => 'Sample ticket']) !!}</div>
                     <span class="t3-sample">Sample</span>
                 </div>
             </div>

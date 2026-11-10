@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\DB;
  */
 class CheckinController extends Controller
 {
-    private const GATES = ['Gate A', 'Gate B', 'Gate C'];
+    public const GATES = ['Gate A', 'Gate B', 'Gate C', 'Gate D', 'Gate E'];
 
     public function __construct(private TicketService $tickets, private Stats $stats)
     {
@@ -88,6 +88,53 @@ class CheckinController extends Controller
         return response()->json($result);
     }
 
+    /** Manual check-in by SR-code: the backup when a QR code will not scan. */
+    public function manual(Request $request)
+    {
+        $result = $this->admitBySrCode($request, (string) $request->input('sr_code', ''), (string) $request->input('gate', ''));
+
+        if ($request->expectsJson()) {
+            return response()->json($result);
+        }
+
+        return redirect()->route('admin.checkin')->with('scan_result', Arr::except($result, 'ok'));
+    }
+
+    /**
+     * The gate staff types the SR-code (or employee ID) and the registered holder's ticket is
+     * admitted exactly as a scan would: same single-use rule, same void check, same log.
+     *
+     * @return array{ok:bool,tone:string,title:string,text:string}
+     */
+    private function admitBySrCode(Request $request, string $input, string $gate): array
+    {
+        $gate = in_array($gate, self::GATES, true) ? $gate : 'Gate A';
+        $code = strtoupper(trim($input));
+
+        // Students may type 2370362 or 23-70362.
+        if (preg_match('/^\d{7}$/', $code)) {
+            $code = substr($code, 0, 2) . '-' . substr($code, 2);
+        }
+
+        if ($code === '') {
+            return ['ok' => false, 'tone' => 'warning', 'title' => 'No SR-code entered', 'text' => 'Type the student’s SR-code first.'];
+        }
+
+        $user = \App\Models\User::whereRaw('UPPER(student_no) = ?', [$code])->first();
+        if (!$user) {
+            return ['ok' => false, 'tone' => 'error', 'title' => 'Not registered',
+                    'text' => 'No registered account has the SR-code <strong>' . e($code) . '</strong>. Check the number, or ask the student to register first.'];
+        }
+
+        $ticket = $this->tickets->ticketFor((int) $user->id);
+        if (!$ticket) {
+            return ['ok' => false, 'tone' => 'warning', 'title' => 'No ticket yet',
+                    'text' => '<strong>' . e($user->name) . '</strong> is registered, but SSC has not approved all their documents, so no ticket was issued.'];
+        }
+
+        return $this->decide($request, $ticket, $code, $gate, manual: true);
+    }
+
     /**
      * Decide one scan.
      *
@@ -109,6 +156,17 @@ class CheckinController extends Controller
             return ['ok' => false, 'tone' => 'error', 'title' => 'Ticket not recognised',
                     'text' => 'No valid ticket matches <strong>' . e($code) . '</strong>. A fabricated or edited code fails this check.'];
         }
+        return $this->decide($request, $ticket, $code, $gate);
+    }
+
+    /**
+     * The shared decision once the ticket is known (QR, typed number or SR-code):
+     * void check, single-use flip, check-in row, result message.
+     *
+     * @return array{ok:bool,tone:string,title:string,text:string}
+     */
+    private function decide(Request $request, array $ticket, string $code, string $gate, bool $manual = false): array
+    {
         if ($ticket['status'] === 'void') {
             return ['ok' => false, 'tone' => 'error', 'title' => 'Ticket voided',
                     'text' => '<strong>' . e($code) . '</strong> is no longer valid for entry.'];
@@ -148,7 +206,7 @@ class CheckinController extends Controller
                    'text' => '<strong>' . e($code) . '</strong> is no longer valid for entry.'];
         }
 
-        Audit::log('gate.checkin', 'ticket', $ticket['ticket_no'], ['gate' => $gate]);
+        Audit::log('gate.checkin', 'ticket', $ticket['ticket_no'], ['gate' => $gate] + ($manual ? ['manual' => 'sr-code'] : []));
 
         return ['ok' => true, 'tone' => 'success', 'title' => 'Welcome, ' . explode(' ', $ticket['name'])[0] . '!',
                 'text' => '<strong>' . e($ticket['ticket_no']) . '</strong> · ' . e($ticket['student_no'])

@@ -23,12 +23,12 @@ class TeamController extends Controller
 
     public function index()
     {
-        $members = SscMember::with('user:id,status,last_login_at')->orderBy('sort')->get();
+        $members = SscMember::with('user:id,role,status,ssc_access,last_login_at')->orderBy('sort')->get();
 
         return view('admin.team', [
             'groups'  => $members->groupBy('org_group'),
             'total'   => $members->count(),
-            'active'  => $members->filter(fn ($m) => $m->user && $m->user->status === 'active')->count(),
+            'active'  => $members->filter(fn ($m) => $m->hasAccess())->count(),
             'domains' => allowed_domains_text(),
         ]);
     }
@@ -46,9 +46,33 @@ class TeamController extends Controller
         $taken = SscMember::where('email', $email)->where('id', '!=', $member->id)->exists();
         $user  = User::where('email', $email)->first();
 
-        if ($taken || ($user && $user->role === 'student') || ($user && $member->user_id && $user->id !== $member->user_id)) {
+        if ($taken || ($user && $member->user_id && $user->id !== $member->user_id)) {
             return back()->with('flash', flash('error', 'Email already in use',
                 e($email) . ' already belongs to another account. Use that person’s own GSuite address.'));
+        }
+
+        // They already registered as a student / faculty / sponsor: no new login, just SSC access
+        // on that same account (same email, same password they already use).
+        if ($user && $user->role === 'student') {
+            if ($user->email_verified_at === null) {
+                return back()->with('flash', flash('error', 'Email not confirmed yet',
+                    e($user->name) . ' has not confirmed their email yet. Ask them to confirm it first, then try again.'));
+            }
+            if ($user->status !== 'active') {
+                return back()->with('flash', flash('error', 'Account is turned off', 'That account is disabled, so SSC access cannot be given.'));
+            }
+            $user->forceFill(['ssc_access' => true])->save();
+            $member->forceFill(['email' => $email, 'user_id' => $user->id])->save();
+            Audit::log('staff.grant', 'user', (string) $user->id, ['position' => $member->position, 'name' => $member->display_name]);
+
+            return back()->with('flash', flash('success', 'SSC access given',
+                '<strong>' . e($member->display_name) . '</strong> · ' . e($member->position) . '<br>'
+                . 'They sign in with the <strong>same email and password</strong> they use as a student. '
+                . 'At <code>/ssc</code> they open the SSC panel; from the student side they can switch with “SSC panel”.'));
+        }
+
+        if ($user && $user->role !== 'admin') {
+            return back()->with('flash', flash('error', 'Email already in use', e($email) . ' already belongs to another account.'));
         }
 
         $password = Str::password(14, symbols: false);
@@ -82,13 +106,15 @@ class TeamController extends Controller
     {
         $user = $member->user;
         abort_if($user === null, 404);
+        $member->setRelation('user', $user);
 
         if ($user->id === $request->user()->id) {
             return back()->with('flash', flash('error', 'Not your own account', 'You cannot turn off your own access.'));
         }
 
         $disable = $request->input('action') === 'disable';
-        $user->forceFill(['status' => $disable ? 'disabled' : 'active'])->save();
+        // A student account keeps working as a student; only its SSC access is switched.
+        $user->forceFill($member->isStudentLink() ? ['ssc_access' => !$disable] : ['status' => $disable ? 'disabled' : 'active'])->save();
         Audit::log($disable ? 'staff.disable' : 'staff.enable', 'user', (string) $user->id, ['position' => $member->position]);
 
         return back()->with('flash', flash('success', $disable ? 'Access turned off' : 'Access restored',

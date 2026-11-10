@@ -17,9 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin'    => EnsureAdmin::class,
             'staff'    => App\Http\Middleware\EnsureStaff::class,
+            'superadmin' => App\Http\Middleware\EnsureSuperAdmin::class,
             'student'  => EnsureStudent::class,
             'verified' => EnsureVerified::class,
         ]);
+
+        // One row per request for the super admin's Performance tab.
+        $middleware->appendToGroup('web', App\Http\Middleware\CaptureMetrics::class);
 
         // A disabled account is signed out on its next request.
         $middleware->appendToGroup('web', App\Http\Middleware\EnsureActive::class);
@@ -28,7 +32,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Guests are sent to the sign-in page.
         // Staff areas send a signed-out visitor to the SSC door, everything else to the student sign-in.
-        $middleware->redirectGuestsTo(fn ($request) => $request->is('admin', 'admin/*', 'reports', 'reports/*') ? route('ssc.login') : route('login'));
+        $middleware->redirectGuestsTo(fn ($request) => $request->is('superadmin', 'superadmin/*') ? route('superadmin.login')
+            : ($request->is('admin', 'admin/*', 'reports', 'reports/*') ? route('ssc.login') : route('login')));
         // Signed-in users who open /login or /register go to their own home.
         $middleware->redirectUsersTo(fn () => auth()->user()?->homeRoute() ?? route('dashboard'));
     })

@@ -23,6 +23,22 @@ class SscMember extends Model
         return $this->belongsTo(User::class);
     }
 
+    /** Linked to a student/faculty/sponsor account (uses their own password) rather than a separate SSC login. */
+    public function isStudentLink(): bool
+    {
+        return $this->user && $this->user->role === 'student';
+    }
+
+    /** Can sign in to the SSC panel right now. */
+    public function hasAccess(): bool
+    {
+        if (!$this->user) {
+            return false;
+        }
+
+        return $this->isStudentLink() ? (bool) $this->user->ssc_access : $this->user->status === 'active';
+    }
+
     /** "Villacrusis, JC Zylene Castillo" -> "JC Zylene Castillo Villacrusis". */
     public static function displayName(string $fullName, string $group): string
     {

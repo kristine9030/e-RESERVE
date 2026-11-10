@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Models\Sponsor;
 use App\Models\SponsorInquiry;
 use App\Services\Audit;
@@ -18,7 +19,7 @@ class SponsorController extends Controller
         return view('admin.sponsors', [
             'sponsors'  => Sponsor::orderBy('sort')->orderBy('id')->get(),
             'inquiries' => SponsorInquiry::orderByRaw("status = 'new' DESC")->orderByDesc('id')->limit(100)->get(),
-            'demo'      => Sponsor::count() === 0 && config('ereserve.sponsors') !== [],
+            'published' => Setting::enabled('show_sponsors'),
         ]);
     }
 
@@ -58,7 +59,7 @@ class SponsorController extends Controller
         ]);
         Audit::log('sponsor.add', 'sponsor', (string) $s->id, ['name' => $name]);
 
-        return back()->with('flash', flash('success', 'Sponsor added', e($name) . ' now shows on the landing page.'));
+        return back()->with('flash', flash('success', 'Sponsor added', e($name) . (Setting::enabled('show_sponsors') ? ' now shows on the landing page.' : ' is saved. It shows once you publish the sponsors section in Site Settings.')));
     }
 
     public function toggle(Sponsor $sponsor)

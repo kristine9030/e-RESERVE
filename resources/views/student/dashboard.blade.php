@@ -8,7 +8,7 @@
 <!-- ================= Welcome ================= -->
 <section class="dash-welcome">
     <div class="dw-text">
-        <span class="dw-greet"><i class="fa-solid fa-hand-sparkles"></i> {{ $greeting }}</span>
+        <span class="dw-greet"><i class="fa-solid fa-hand-sparkles"></i> <span id="dwGreet">{{ $greeting }}</span></span>
         <h2>Welcome, {{ $firstName }}!</h2>
         <p class="dw-meta">
             <span><i class="fa-solid fa-graduation-cap"></i> {{ $user['program'] }} · {{ $user['year'] }}</span>
@@ -83,7 +83,7 @@
                 <a href="{{ route('documents.index') }}" class="btn btn-ghost btn-sm2">Manage <i class="fa-solid fa-arrow-right"></i></a>
             </div>
             <div class="dash-docs">
-                <?php foreach (config('ereserve.documents') as $key => $meta):
+                <?php foreach (required_documents() as $key => $meta):
                     $doc    = $docs[$key] ?? null;
                     $status = $doc['status'] ?? 'missing'; ?>
                     <a href="{{ route('documents.index') . '#doc-' . $key }}" class="doc-row state-{{ $status }}">
@@ -147,3 +147,15 @@
     </aside>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    /* Greet by the time on the person's own device, so it is right wherever they are. */
+    (function () {
+        var el = document.getElementById('dwGreet');
+        if (!el) return;
+        var h = new Date().getHours();
+        el.textContent = h >= 5 && h < 12 ? 'Good morning' : (h >= 12 && h < 18 ? 'Good afternoon' : (h >= 18 && h < 22 ? 'Good evening' : 'Good night'));
+    })();
+</script>
+@endpush

@@ -5,59 +5,17 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-/** Dashboard, ticket, tracking, profile and the printable waiver. */
+/** Dashboard, ticket, tracking, profile and the official waiver download. */
 class StudentController extends Controller
 {
-    /** Faculty / staff have no documents to track: their dashboard is just email → ticket. */
-    private function employeeDashboard()
-    {
-        $user     = auth()->user();
-        $verified = $user->hasVerifiedEmail();
-        $ticket   = get_ticket();
-        $has      = $ticket && $ticket['status'] !== 'void';
-        $hour     = (int) date('G');
-
-        if (!$verified) {
-            $next = ['fa-envelope-open-text', 'Confirm your email', 'Open the link we sent to ' . $user->email . '. Your ticket is issued the moment it is confirmed.', 'Resend link', route('verify')];
-        } elseif ($has && !$ticket['checked_in']) {
-            $next = ['fa-qrcode', 'Your ticket is ready', 'Show the QR code at the gate on event night. Save it as a picture as a backup.', 'Open my ticket', route('ticket')];
-        } elseif ($has) {
-            $next = ['fa-circle-check', 'You’re all set', 'You have been scanned in. Enjoy SIGLA!', 'View ticket', route('ticket')];
-        } else {
-            $next = ['fa-hourglass-half', 'Waiting for a seat', 'Every ticket is taken for now. If one is released, yours is issued automatically.', 'Check my ticket', route('ticket')];
-        }
-
-        $stage = $ticket && $ticket['checked_in'] ? ['Attended', 'info', 'fa-user-check']
-            : ($has ? ['Ticket Ready', 'success', 'fa-circle-check']
-            : ($verified ? ['Waiting for a seat', 'warning', 'fa-hourglass-half'] : ['Confirm Email', 'warning', 'fa-envelope']));
-
-        return view('student.employee-dashboard', [
-            'user'      => current_user(),
-            'ticket'    => $ticket,
-            'verified'  => $verified,
-            'next'      => $next,
-            'stage'     => $stage,
-            'steps'     => [
-                ['fa-user-plus',          'Create your account',  true,      'Name, employee ID and university email.'],
-                ['fa-envelope-open-text', 'Confirm your email',   $verified, $verified ? 'Confirmed.' : 'Open the link we emailed you.'],
-                ['fa-ticket',             'Get your ticket',      $has,      $has ? 'Ticket ' . $ticket['ticket_no'] : 'Issued right after your email is confirmed.'],
-            ],
-            'firstName' => explode(' ', $user->name)[0],
-            'greeting'  => $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening'),
-        ]);
-    }
-
+    /** The student dashboard: what to do next, document status and the ticket. */
     public function dashboard()
     {
-        if (auth()->user()->isEmployee()) {
-            return $this->employeeDashboard();
-        }
-
         $user     = auth()->user();
         $verified = $user->hasVerifiedEmail();
         $progress = document_progress();
         $ticket   = get_ticket();
-        $docCfg   = config('ereserve.documents');
+        $docCfg   = required_documents();
 
         // The one thing to do next — drives the big call-to-action card.
         if (!$verified) {
@@ -66,7 +24,7 @@ class StudentController extends Controller
             $next = ['fa-triangle-exclamation', 'Replace the returned document', 'Staff sent a document back with a note. Upload a corrected PDF to restore your ticket.', 'Fix it now', route('documents.index')];
         } elseif ($progress['missing']) {
             $names = implode(', ', array_map(static fn($k) => $docCfg[$k]['short'], $progress['missing']));
-            $next = ['fa-file-arrow-up', 'Upload your documents', 'Still needed: ' . $names . '. Your ticket number is issued the moment all three are in.', 'Upload now', route('documents.index')];
+            $next = ['fa-file-arrow-up', 'Upload your documents', 'Still needed: ' . $names . '. Your ticket is issued once SSC approves ' . (count($docCfg) > 1 ? 'all of them' : 'it') . '.', 'Upload now', route('documents.index')];
         } elseif ($ticket && !$ticket['checked_in']) {
             $next = ['fa-qrcode', 'Your ticket is ready', 'Show the QR code at the gate on event night. Screenshot it or print a copy as backup.', 'Open my ticket', route('ticket')];
         } else {
@@ -83,7 +41,7 @@ class StudentController extends Controller
             'timeline'  => tracking_timeline(),
             'next'      => $next,
             'firstName' => explode(' ', $user->name)[0],
-            'greeting'  => $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening'),
+            'greeting'  => greeting_for($hour),
             'stage'     => registration_stage_label(),
         ]);
     }
@@ -119,10 +77,6 @@ class StudentController extends Controller
 
     public function tracking()
     {
-        if (auth()->user()->isEmployee()) {
-            return redirect()->route('dashboard');
-        }
-
         $timeline = tracking_timeline();
         $doneCt   = count(array_filter($timeline, static fn($s) => $s['state'] === 'done'));
 
@@ -148,8 +102,12 @@ class StudentController extends Controller
         ]);
     }
 
+    /** The official SIGLA waiver (BatStateU-FO-SOA-03), exactly as the university issued it. */
     public function waiver()
     {
-        return view('student.waiver', ['user' => current_user()]);
+        $path = resource_path('forms/SIGLA-2026-Waiver.pdf');
+        abort_unless(is_file($path), 404);
+
+        return response()->download($path, 'SIGLA-2026-Waiver.pdf', ['Content-Type' => 'application/pdf']);
     }
 }

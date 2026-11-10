@@ -89,7 +89,11 @@ class AccountController extends Controller
         if (mb_strlen($name) < 3 || mb_strlen($name) > 160) {
             return $err('Enter your full name.');
         }
-        if (!isset(config('ereserve.employee_types')[$type])) {
+        $labels = $user->member_type === 'sponsor' ? ['sponsor' => 'Sponsor'] : config('ereserve.employee_types');
+        if ($user->member_type === 'sponsor') {
+            $type = 'sponsor';
+        }
+        if (!isset($labels[$type])) {
             return $err('Choose your category.');
         }
         if ($mobile !== '' && !preg_match('/^09\d{9}$/', $digits)) {
@@ -98,7 +102,7 @@ class AccountController extends Controller
 
         $parts = preg_split('/\s+/', $name) ?: [$name];
         $user->forceFill([
-            'name' => $name, 'member_type' => $type, 'program' => config('ereserve.employee_types')[$type],
+            'name' => $name, 'member_type' => $type, 'program' => $labels[$type],
             'mobile' => $mobile === '' ? null : $digits,
             'initials' => strtoupper(mb_substr($parts[0], 0, 1) . mb_substr((string) end($parts), 0, 1)),
         ])->save();
@@ -106,22 +110,6 @@ class AccountController extends Controller
         Audit::log('profile.update', 'user', (string) $user->id);
 
         return redirect()->route('profile')->with('flash', flash('success', 'Profile updated', 'Your details were saved.'));
-    }
-
-    /** Ask SSC to change the SR-code or GSuite email. Nothing changes until they approve. */
-    public function requestChange(Request $request, \App\Services\ChangeRequestService $requests)
-    {
-        $key = 'change-request:' . $request->user()->id;
-        if (RateLimiter::tooManyAttempts($key, 6)) {
-            return back()->with('flash', flash('error', 'Slow down', 'Too many requests. Try again in ' . RateLimiter::availableIn($key) . ' seconds.'));
-        }
-        RateLimiter::hit($key, 600);
-
-        $r = $requests->submit($request->user(), (string) $request->input('field'), (string) $request->input('new_value'), (string) $request->input('reason'));
-
-        return back()->withInput()->with('flash', $r['ok']
-            ? flash('success', 'Request sent', e($r['message']))
-            : flash('error', 'Could not send the request', e($r['message'])))->with($r['ok'] ? [] : ['open_request' => (string) $request->input('field')]);
     }
 
     public function passwordForm()

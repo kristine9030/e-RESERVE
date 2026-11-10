@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Document;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use App\Support\DocumentSets;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
@@ -92,7 +93,7 @@ class DocumentService
     }
 
     /**
-     * Save one of the student's three documents.
+     * Save one of the holder's required documents (three for a student, one for faculty/staff or a sponsor).
      *
      * @return array{ok:bool,message:string,ticket:string}
      */
@@ -103,10 +104,7 @@ class DocumentService
         if ($user->isStaff()) {
             return $fail('Sign in with a student account first.');
         }
-        if ($user->isEmployee()) {
-            return $fail('Faculty and staff do not upload documents. Your ticket comes with your confirmed email.');
-        }
-        if (!$this->isType($type)) {
+        if (!$this->isType($type) || !in_array($type, DocumentSets::keysFor($user->member_type), true)) {
             return $fail('That is not one of the required documents.');
         }
 
@@ -197,7 +195,7 @@ class DocumentService
         $message  = match (true) {
             $sync['state'] === 'issued'   => 'Your ticket number is ' . $sync['ticket_no'] . '.',
             $sync['state'] === 'restored' => 'Thanks — your ticket ' . $sync['ticket_no'] . ' is valid again.',
-            $progress['missing'] === []   => $label . ' uploaded. All three are in. SSC will review them, and your ticket is issued once all are approved.',
+            $progress['missing'] === []   => $label . ' uploaded.' . ($progress['total'] > 1 ? ' All ' . $progress['total'] . ' are in.' : '') . ' SSC will review ' . ($progress['total'] > 1 ? 'them' : 'it') . ', and your ticket is issued once approved.',
             default                       => $label . ' uploaded.',
         };
 
@@ -284,7 +282,7 @@ class DocumentService
         $extra = match ($sync['state']) {
             'voided' => ' Their ticket was voided until they upload a corrected file.',
             'issued' => ' All three are approved, so their ticket ' . $sync['ticket_no'] . ' was issued.',
-            'full'   => ' All three are approved, but all ' . number_format((int) config('ereserve.event.capacity')) . ' seats are taken.',
+            'full'   => ' All three are approved, but there are no seats left for their group.',
             default  => '',
         };
 

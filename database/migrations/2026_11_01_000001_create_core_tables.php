@@ -50,7 +50,7 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $t) {
             $t->id();
             $t->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $t->enum('doc_type', ['waiver', 'cor', 'id']);
+            $t->enum('doc_type', ['waiver', 'cor', 'id', 'employee_id', 'sponsorship']);
             $t->string('original_name', 190);
             $t->string('stored_name', 128)->unique();
             $t->unsignedInteger('size_bytes');

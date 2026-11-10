@@ -2246,39 +2246,47 @@ table.dataTable tbody tr:last-child td { border-bottom: 0 !important; }
        ====================================================================== */
 
     .report-sheet {
-        page: report-landscape;
         border: 0 !important;
         box-shadow: none !important;
         border-radius: 0 !important;
+        background: #fff !important;
     }
 
-    .report-head { padding: 0 0 4mm !important; border-bottom-width: 0.5mm !important; }
-    .report-seal { display: none !important; }
-    .report-title { font-size: 15pt !important; }
-    .report-org   { font-size: 7.5pt !important; line-height: 1.5 !important; }
-    .report-sub, .report-event { font-size: 8pt !important; }
-    .report-meta  { font-size: 7pt !important; margin-top: 2.5mm !important; }
+    /* Letterhead: seal, then the same lines as the page. */
+    .report-head { padding: 0 0 4mm !important; border-bottom: 0.5mm solid #1D5772 !important; }
+    .report-seal { display: block !important; width: 15mm !important; height: 15mm !important; margin: 0 auto 2mm !important; }
+    .report-title { font-size: 16pt !important; margin: 1mm 0 .5mm !important; color: #173B4D !important; }
+    .report-org   { font-size: 7.5pt !important; line-height: 1.5 !important; color: #6B7F8C !important; }
+    .report-sub   { font-size: 8.5pt !important; color: #46555E !important; }
+    .report-event { font-size: 8.5pt !important; color: #B87A18 !important; }
+    .report-meta  { font-size: 7.5pt !important; margin-top: 2.5mm !important; }
+    .report-meta strong { color: #1D5772 !important; }
 
-    .report-scroll { overflow: visible !important; }
-    .report-table  { font-size: 7.5pt !important; }
+    .report-scroll { overflow: visible !important; margin-top: 4mm; }
+    /* Fixed layout: the columns share the printable width, so the table can never run off the paper. */
+    .report-table  { font-size: 7pt !important; table-layout: fixed !important; width: 100% !important; }
+    .report-table td { overflow-wrap: anywhere; }
+    .report-table td.dt { white-space: normal !important; }
 
-    /* display:table-header-group is what repeats the band on page 2, 3, … */
+    /* display:table-header-group is what repeats the band on page 2, 3, ... */
     .report-table thead { display: table-header-group !important; }
     .report-table tfoot { display: table-footer-group !important; }
     .report-table thead th {
-        background: #0B3B2C !important;
+        background: #1D5772 !important;
         color: #fff !important;
-        border-color: #0B3B2C !important;
-        padding: 2mm 2.5mm !important;
-        font-size: 6.5pt !important;
+        border-color: #2A7FA6 !important;
+        padding: 2mm 1.6mm !important;
+        font-size: 5.8pt !important;
+        letter-spacing: .5px !important;
+        white-space: normal !important;
         -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
-    .report-table tbody td { padding: 1.5mm 2.5mm !important; }
+    .report-table tbody td { padding: 1.5mm 1.6mm !important; border-color: #D5E3EB !important; color: #2B373D !important; }
     /* Reference numbers, dates and amounts are unreadable once they wrap. */
     .report-table .nw { white-space: nowrap !important; }
     .report-table tbody tr { break-inside: avoid; page-break-inside: avoid; }
     .report-table tbody tr:nth-child(even) td {
-        background: #F4F9F6 !important;
+        background: #F4F9FC !important;
         -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
     .report-table tbody tr:hover td { background: transparent !important; }
@@ -2288,13 +2296,27 @@ table.dataTable tbody tr:last-child td { border-bottom: 0 !important; }
         padding-left: 0 !important;
         padding-right: 0 !important;
     }
-    .report-summary { border-top-width: 0.5mm !important; padding-top: 4mm !important; }
+    .report-summary { border-top: 0.5mm solid #1D5772 !important; padding-top: 4mm !important; margin-top: 5mm; }
+    .report-summary h6 { color: #1D5772 !important; }
     .report-summary-row {
-        background: #EAF4EF !important;
+        background: #EEF8FC !important;
         border-radius: 0 !important;
+        padding: 1.6mm 3mm !important;
         -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
-    .report-sign-col .role { margin-bottom: 12mm !important; }
+    .report-summary-row .k { color: #1D5772 !important; font-size: 8pt !important; }
+    .report-summary-row .v { color: #173B4D !important; font-size: 9.5pt !important; }
+    .report-sign { border-top: 0.2mm solid #D5E3EB !important; padding-top: 5mm !important; margin-top: 5mm; }
+    .report-sign-col .role { margin-bottom: 12mm !important; font-size: 8pt !important; }
+    .report-sign-col .who  { font-size: 8.5pt !important; }
+
+    /* Page margin of 0.5 in on every side, made inside the page so the dialog cannot remove it.
+       The spacer rows repeat on every printed page (top inside thead, bottom inside tfoot); the
+       first page pulls its top spacer back up so the letterhead stays close to the column band. */
+    .report-sheet { padding: 0.5in 0.5in 0.5in !important; }
+    .report-table .pg-pad { display: table-row !important; }
+    .report-table .pg-pad td { height: 0.5in; padding: 0 !important; border: 0 !important; background: transparent !important; }
+    .report-table { margin-top: -0.5in; }
 
     /* ======================================================================
        Shared paper furniture
@@ -2304,15 +2326,16 @@ table.dataTable tbody tr:last-child td { border-bottom: 0 !important; }
         display: block !important;
         margin-top: 6mm;
         padding-top: 2mm;
-        border-top: 0.2mm solid #c9dbd3;
+        border-top: 0.2mm solid #D5E3EB;
         font-size: 6.5pt;
-        color: #6b7a74;
+        color: #6B7F8C;
         text-align: center;
         letter-spacing: .3px;
     }
 }
 
 .print-only { display: none; }
+.report-table .pg-pad { display: none; }
 .ticket-cutline { display: none; }
 .print-doc-foot { display: none; }
 
@@ -2373,3 +2396,7 @@ table.dataTable tbody tr:last-child td { border-bottom: 0 !important; }
     .watermark { display: none; }
     .mini-chart { height: 130px; }
 }
+
+/* A live region that just changed: a short soft glow so staff notice the update */
+@keyframes liveFlash { from { box-shadow: 0 0 0 3px rgba(244,188,91,.55); } to { box-shadow: 0 0 0 0 rgba(244,188,91,0); } }
+.live-flash { animation: liveFlash 1.2s ease-out; border-radius: inherit; }

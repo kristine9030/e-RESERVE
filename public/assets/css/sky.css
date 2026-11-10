@@ -224,13 +224,6 @@ body::after {
 .tix-stamp-used { color: rgba(42, 127, 166, .5); border-color: rgba(42, 127, 166, .5); }
 .tix.is-void .tix-main, .tix.is-used .tix-main { filter: saturate(.55); }
 
-@media (max-width: 767.98px) {
-    .tix { grid-template-columns: 1fr; font-size: 14px; -webkit-mask: none; mask: none; }
-    .tix-stub { border-left: 0; border-top: 2px dashed #B9D6E4; }
-    .tix-title h3 { font-size: 1.8em; }
-    .tix-when { grid-template-columns: 1fr 1fr; gap: .8em 1.5em; }
-    .tix-holder { grid-template-columns: 1fr; }
-    .tix-stamp { left: 50%; }
 }
 
 @media print {
@@ -254,3 +247,18 @@ body::after {
 .brand-logo, .tix-logo { border-radius: 50%; object-fit: cover; }
 .auth-aside .brand-logo, .site-footer .brand-logo { padding: 0; }
 .tix-qr svg rect[fill]:not([fill="#ffffff"]):not([fill="#fff"]) { fill: #173B4D; }
+
+/* ---- Ticket colours: students yellow, faculty blue (default), sponsors orange ---- */
+.tix-tier-student .tix-top { background: linear-gradient(100deg, #E3A012 0%, #F4BC3A 55%, #FFD978 100%); color: #3B2A05; }
+.tix-tier-student .tix-admit { color: #8A5A00; }
+.tix-tier-student .tix-stub { background: linear-gradient(180deg, #FFFBEF 0%, #FFF1CC 100%); border-left-color: #EAD08A; }
+.tix-tier-student .tix-stub-label { color: #8A5A00; }
+.tix-tier-student .tix-title h3 em { background: linear-gradient(90deg, #D9960B, #F4BC3A 60%, #F58634); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tix-tier-student .tix-holder { border-top-color: #EAD9A8; }
+
+.tix-tier-sponsor .tix-top { background: linear-gradient(100deg, #D4560F 0%, #F2761F 55%, #FFA55C 100%); color: #fff; }
+.tix-tier-sponsor .tix-admit { color: #C2500C; }
+.tix-tier-sponsor .tix-stub { background: linear-gradient(180deg, #FFF8F1 0%, #FFE6D0 100%); border-left-color: #F0C3A0; }
+.tix-tier-sponsor .tix-stub-label { color: #B8470A; }
+.tix-tier-sponsor .tix-title h3 em { background: linear-gradient(90deg, #E8641B, #F58634 60%, #F4BC3A); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tix-tier-sponsor .tix-holder { border-top-color: #F0D2BA; }

@@ -9,7 +9,7 @@
         <div class="col-lg-8">
             <span class="eyebrow on-dark"><i class="fa-solid fa-handshake"></i> Partners</span>
             <h2>Sponsors</h2>
-            <p>Add the sponsors who agreed to be shown, and read the messages companies send from the landing page.</p>
+            <p>Add the sponsors shown on the event page and read their messages.</p>
         </div>
         <div class="col-lg-4 text-lg-end">
             <span class="badge-soft badge-gold" style="font-size:.82rem;"><i class="fa-solid fa-envelope"></i> {{ $inquiries->where('status', 'new')->count() }} new</span>
@@ -17,13 +17,13 @@
     </div>
 </div>
 
-@if ($demo)
+@unless ($published)
     <div class="callout callout-warning mb-3" style="font-size:.86rem;">
-        <i class="fa-solid fa-triangle-exclamation me-1"></i>
-        The landing page is showing <strong>demo sponsors</strong> (SM, Ayala, Jollibee…) who have not agreed to anything.
-        Add your real sponsors below. As soon as you add one, the demo list disappears.
+        <i class="fa-solid fa-eye-slash me-1"></i>
+        The sponsors section is <strong>hidden</strong> on the landing page. Add sponsors below, then publish it in
+        <a href="{{ route('admin.settings') }}">Site Settings</a> when you are ready.
     </div>
-@endif
+@endunless
 
 <div class="row g-4">
     <div class="col-lg-5">
@@ -51,7 +51,7 @@
 
     <div class="col-lg-7">
         <div class="card-soft fade-up d2">
-            <div class="card-head"><h5 class="mb-0">On the landing page</h5></div>
+            <div class="card-head"><h5 class="mb-0">Sponsor list</h5></div>
             <div class="card-body-p">
                 @forelse ($sponsors as $s)
                     <div class="info-row">
@@ -73,7 +73,7 @@
                         </form>
                     </div>
                 @empty
-                    <p class="text-soft mb-0" style="font-size:.88rem;">No sponsors added yet. {{ $demo ? 'The demo list is showing for now.' : 'The landing page says “Sponsors will be announced soon.”' }}</p>
+                    <p class="text-soft mb-0" style="font-size:.88rem;">No sponsors added yet.</p>
                 @endforelse
             </div>
         </div>

@@ -2,7 +2,7 @@
 <nav class="navbar navbar-expand-lg nav-public">
     <div class="container">
         <a class="brand-lockup" href="{{ route('home') }}">
-            <img class="brand-logo" src="{{ asset(ssc('logo')) }}" alt="Supreme Student Council seal">
+            <img class="brand-logo" src="{{ asset(ssc('logo_small')) }}" alt="Supreme Student Council seal">
             <span class="brand-text">
                 <span class="brand-name d-block">e-<span>RESERVE</span></span>
                 <span class="brand-sub">SIGLA 2026</span>
@@ -18,14 +18,29 @@
             <ul class="navbar-nav mx-auto gap-lg-1">
                 <li class="nav-item"><a class="nav-link" href="{{ $onLanding ? '#home' : route('home') . '#home' }}">Home</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ $onLanding ? '#about' : route('home') . '#about' }}">About SIGLA</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ $onLanding ? '#pipeline' : route('home') . '#pipeline' }}">How it works</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ $onLanding ? '#guidelines' : route('home') . '#guidelines' }}">Guidelines</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ $onLanding ? '#lineup' : route('home') . '#lineup' }}">Lineup</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ $onLanding ? '#faq' : route('home') . '#faq' }}">FAQ</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ $onLanding ? '#contact' : route('home') . '#contact' }}">Contact</a></li>
+                <li class="nav-item nav-extra"><a class="nav-link" href="{{ $onLanding ? '#lineup' : route('home') . '#lineup' }}">Lineup</a></li>
+                <li class="nav-item nav-extra"><a class="nav-link" href="{{ $onLanding ? '#faq' : route('home') . '#faq' }}">FAQ</a></li>
+                <li class="nav-item nav-extra"><a class="nav-link" href="{{ $onLanding ? '#contact' : route('home') . '#contact' }}">Contact</a></li>
+                {{-- Phones: the first four links stay, everything else lives under "More". --}}
+                <li class="nav-item dropdown nav-more">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">More</a>
+                    <ul class="dropdown-menu dropdown-menu-end nav-more-menu">
+                        <li><a class="dropdown-item" href="{{ $onLanding ? '#lineup' : route('home') . '#lineup' }}">Lineup</a></li>
+                        <li><a class="dropdown-item" href="{{ $onLanding ? '#faq' : route('home') . '#faq' }}">FAQ</a></li>
+                        <li><a class="dropdown-item" href="{{ $onLanding ? '#contact' : route('home') . '#contact' }}">Contact</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        @if (is_logged_in())
+                            <li><a class="dropdown-item fw-bold" href="{{ is_admin() ? route('admin.dashboard') : route('dashboard') }}"><i class="fa-solid fa-gauge-high me-2"></i>My Dashboard</a></li>
+                        @else
+                            <li><a class="dropdown-item" href="{{ route('login') }}"><i class="fa-solid fa-right-to-bracket me-2"></i>Sign In</a></li>
+                            <li><a class="dropdown-item fw-bold nav-more-cta" href="{{ route('register') }}"><i class="fa-solid fa-ticket me-2"></i>Get my ticket</a></li>
+                        @endif
+                    </ul>
+                </li>
             </ul>
 
-            <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+            <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0 nav-actions">
                 @if (is_logged_in())
                     <a href="{{ is_admin() ? route('admin.dashboard') : route('dashboard') }}" class="btn btn-outline-green btn-sm2">
                         <i class="fa-solid fa-gauge-high"></i> My Dashboard

@@ -14,7 +14,7 @@ class RegisterController extends Controller
     }
 
     /**
-     * Step 1 is "who are you": a student, or faculty / instructor / staff / administration.
+     * Step 1 is "who are you": a student, or faculty / instructor / staff, or a sponsor.
      * Each goes to its own form. A Google sign-up in progress is always a student.
      */
     public function show(Request $request)
@@ -25,6 +25,9 @@ class RegisterController extends Controller
 
         if ($as === 'employee') {
             return view('auth.register-employee', ['next' => $next, 'types' => config('ereserve.employee_types')]);
+        }
+        if ($as === 'sponsor') {
+            return view('auth.register-sponsor', ['next' => $next]);
         }
         if ($as !== 'student') {
             return view('auth.register-choose', ['next' => $next]);
@@ -43,10 +46,12 @@ class RegisterController extends Controller
     {
         $pending  = session('google_pending');
         $employee = !$pending && $request->input('as') === 'employee';
+        $sponsor  = !$pending && $request->input('as') === 'sponsor';
 
         $result = $pending
             ? $this->accounts->registerGoogle($request->all(), $pending)
-            : ($employee ? $this->accounts->registerEmployee($request->all()) : $this->accounts->registerStudent($request->all()));
+            : ($sponsor ? $this->accounts->registerSponsor($request->all())
+                : ($employee ? $this->accounts->registerEmployee($request->all()) : $this->accounts->registerStudent($request->all())));
 
         if (!$result['ok']) {
             return back()
@@ -63,8 +68,8 @@ class RegisterController extends Controller
         }
 
         if ($employee) {
-            return redirect()->route('dashboard')->with('flash', flash(
-                'success', 'Welcome, ' . $first . '!', 'Your account is ready and your ticket is on your dashboard. No documents or email confirmation needed.'
+            return redirect()->route('documents.index')->with('flash', flash(
+                'success', 'Welcome, ' . $first . '!', 'Your account is ready. Upload your employee ID (one PDF). SSC reviews it and your ticket is issued once it is approved.'
             ));
         }
 
@@ -81,7 +86,7 @@ class RegisterController extends Controller
         return redirect()->route('verify')->with('flash', flash(
             'success',
             'Welcome to e-RESERVE, ' . $first . '!',
-            ($employee ? 'One last step, then your ticket is ready: ' : 'One last step: ')
+            (($employee || $sponsor) ? 'One last step, then upload your ' . ($sponsor ? 'proof of sponsorship' : 'employee ID') . ': ' : 'One last step: ')
             . 'open the confirmation link we sent to <strong>' . e($result['user']->email) . '</strong>. Check Spam if it is not in your inbox.'
         ));
     }

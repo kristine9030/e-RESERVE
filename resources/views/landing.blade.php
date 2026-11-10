@@ -1,7 +1,6 @@
 @extends('layouts.public')
 @section('title', 'Official Event Portal')
-{{-- Landing keeps the desktop design on phones: render at 992px (smallest desktop layout) and scale to fit. --}}
-@section('viewport', 'width=992')
+@section('bodyClass', 'landing-page')
 
 @section('content')
 <!-- ======================================================================
@@ -29,7 +28,7 @@
                 </h1>
 
                 <p class="hero-lead fade-up d2">
-                    Sign up with your GSuite account, submit your 3 required documents and get your ticket number —
+                    Sign up, upload your required documents and get your ticket number —
                     then <strong class="text-deep">just scan the QR at the gate.</strong> Free, paperless, no queues.
                 </p>
 
@@ -37,11 +36,12 @@
                     <a href="{{ $cta }}" class="btn btn-gold btn-lg2 btn-shine">
                         <i class="fa-solid fa-ticket"></i> {{ is_logged_in() ? 'Continue my registration' : 'Get my ticket' }}
                     </a>
-                    <a href="#pipeline" class="btn btn-glass btn-lg2">
+                    <a href="#guidelines" class="btn btn-glass btn-lg2">
                         <i class="fa-solid fa-route"></i> How it works
                     </a>
                 </div>
 
+                @if ($showSlots)
                 @php
                     $slotCap  = max(1, (int) ($stats['capacity'] ?? ev('capacity')));
                     $slotLeft = max(0, $slotCap - (int) ($stats['tickets'] ?? 0));
@@ -54,6 +54,7 @@
                     </div>
                     <div class="slot-bar" aria-hidden="true"><i style="width:{{ $slotPct }}%"></i></div>
                 </div>
+                @endif
 
                 <div class="hero-chips fade-up d4">
                     <div class="glass-chip"><i class="fa-solid fa-calendar-day"></i><div><span>Date</span><strong>{{ ev('date_text') }}</strong></div></div>
@@ -82,7 +83,7 @@
                     <!-- the main ticket -->
                     <div class="ticket3d main tilt" data-tilt="14" data-tilt-rest="9,-17,-3" data-glare>
                         <div class="t3-top">
-                            <img class="t3-logo" src="{{ asset(ssc('logo')) }}" alt="Supreme Student Council seal">
+                            <img class="t3-logo" src="{{ asset(ssc('logo_small')) }}" alt="Supreme Student Council seal">
                             <div class="t3-org"><strong>Supreme Student Council</strong><span>ARASOF-Nasugbu</span></div>
                             <span class="t3-admit">ADMIT ONE</span>
                         </div>
@@ -103,7 +104,7 @@
                         </div>
 
                         <div class="t3-stub">
-                            <div class="t3-qr">{!! qr_svg('SIGLA-2026-SAMPLE', 120, ['label' => 'Sample ticket']) !!}</div>
+                            <div class="t3-qr">{!! qr_svg('SIGLA-2026-SAMPLE', 120, ['cache' => true, 'label' => 'Sample ticket']) !!}</div>
                             <span class="t3-sample">Sample</span>
                         </div>
                     </div>
@@ -126,8 +127,40 @@
 </section>
 
 <!-- ======================================================================
+     WHO CAN JOIN
+====================================================================== -->
+<section class="section-tight who-join" id="who-can-join" aria-label="Who can join">
+    <div class="container">
+        <div class="text-center mb-4 reveal">
+            <span class="eyebrow"><i class="fa-solid fa-users"></i> Who can join</span>
+            <h2 class="section-title">Open to the <span class="grad-text">ARASOF-Nasugbu</span> community</h2>
+        </div>
+
+        <div class="row g-3 g-lg-4 justify-content-center">
+            @foreach ([
+                ['fa-user-graduate', 'Currently enrolled students', 'Students of BatStateU TNEU – ARASOF-Nasugbu who are enrolled this semester, with an active university GSuite account.', 'Upload: waiver, COR and school ID', ['as' => 'student'], 'Register as a student'],
+                ['fa-briefcase', 'Faculty, instructors & staff', 'BatStateU ARASOF-Nasugbu faculty, instructors and staff, using their university email.', 'Upload: your employee ID (one PDF)', ['as' => 'employee'], 'Register as faculty or staff'],
+                ['fa-handshake', 'Sponsors', 'Companies and partners supporting SIGLA 2026. Any email works; you confirm it by link.', 'Upload: proof of sponsorship (one PDF)', ['as' => 'sponsor'], 'Register as a sponsor'],
+            ] as $i => [$jIcon, $jTitle, $jDesc, $jUpload, $jQuery, $jCta])
+                <div class="col-md-4 reveal" style="transition-delay:{{ $i * 90 }}ms;">
+                    <div class="card-soft feature-card join-card h-100">
+                        <div class="feature-icon"><i class="fa-solid {{ $jIcon }}"></i></div>
+                        <h5>{{ $jTitle }}</h5>
+                        <p>{{ $jDesc }}</p>
+                        <span class="badge-soft badge-gold"><i class="fa-solid fa-file-pdf"></i> {{ $jUpload }}</span>
+                        <a href="{{ route('register', $jQuery) }}" class="join-link">{{ $jCta }} <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+        <p class="text-center cell-sub mt-3 mb-0">One person, one ticket. Tickets are not transferable.</p>
+    </div>
+</section>
+
+<!-- ======================================================================
      SPONSORS (sliding)
 ====================================================================== -->
+@if ($showSponsors)
 <section class="sponsors" id="sponsors" aria-label="Sponsors">
     <div class="container">
         <div class="sponsors-head reveal">
@@ -169,6 +202,7 @@
         Want your brand here? <a href="mailto:{{ ssc('email') }}?subject=SIGLA%202026%20sponsorship">Talk to the SSC</a>
     </p>
 </section>
+@endif
 
 <!-- ======================================================================
      BECOME A SPONSOR
@@ -180,11 +214,11 @@
                 <span class="eyebrow"><i class="fa-solid fa-handshake-angle"></i> Partner with us</span>
                 <h3>Want to sponsor SIGLA 2026?</h3>
                 <p>
-                    Put your brand in front of up to <strong>{{ number_format(ev('capacity')) }}</strong> students, faculty and staff
+                    Put your brand in front of {!! $showSlots ? 'up to <strong>' . number_format(ev('capacity')) . '</strong>' : 'the' !!} students, faculty and staff
                     on <strong>{{ ev('date_text') }}</strong> at {{ ev('venue') }}. Send the SSC a message and we will get back to you with the details.
                 </p>
                 <ul class="bs-points">
-                    <li><i class="fa-solid fa-circle-check"></i> Your logo in the sponsors strip on this page</li>
+                    @if ($showSponsors)<li><i class="fa-solid fa-circle-check"></i> Your logo in the sponsors strip on this page</li>@endif
                     <li><i class="fa-solid fa-circle-check"></i> Backing a 70th anniversary student night</li>
                     <li><i class="fa-solid fa-circle-check"></i> Straight to the SSC officers, no middleman</li>
                 </ul>
@@ -294,60 +328,6 @@
 </section>
 
 <!-- ======================================================================
-     PIPELINE
-====================================================================== -->
-<section class="section-tight pipeline-section" id="pipeline">
-    <div class="container">
-        <div class="text-center mb-5 reveal">
-            <span class="eyebrow"><i class="fa-solid fa-route"></i> The pipeline</span>
-            <h2 class="section-title mx-auto">From sign-up to the gate in <span class="grad-text">four steps</span></h2>
-            <p class="section-lead mx-auto text-center">{{ config('ereserve.tagline') }}</p>
-        </div>
-
-        <div class="pipeline">
-            @foreach (pipeline_steps() as $i => $step)
-                <div class="pipe-step reveal" style="transition-delay:{{ $i * 110 }}ms;">
-                    <div class="pipe-node"><i class="fa-solid {{ $step['icon'] }}"></i></div>
-                    <div class="pipe-card tilt" data-tilt="7">
-                        <span class="pipe-num">{{ $step['num'] }}</span>
-                        <h5>{{ $step['title'] }}</h5>
-                        <p>{{ $step['text'] }}</p>
-                        <span class="pipe-tag">{{ $step['tag'] }}</span>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        <!-- The 3 required documents, spelled out -->
-        <div class="row g-4 mt-4">
-            <?php $n = 0; foreach (config('ereserve.documents') as $d): $n++; ?>
-                <div class="col-md-4 reveal" style="transition-delay:{{ $n * 90 }}ms;">
-                    <div class="card-soft doc-preview h-100 tilt" data-tilt="6">
-                        <div class="d-flex align-items-center gap-3 mb-3">
-                            <span class="feature-icon mb-0"><i class="fa-solid {{ $d['icon'] }}"></i></span>
-                            <div>
-                                <div class="doc-step">Required document {{ $n }} of 3</div>
-                                <h5 class="mb-0" style="font-size:1.02rem;">{{ $d['label'] }}</h5>
-                            </div>
-                        </div>
-                        <p class="text-soft" style="font-size:.86rem;">{{ $d['hint'] }}</p>
-                        <ul class="doc-rules mb-0">
-                            @foreach ($d['rules'] as $rule)
-                                <li><i class="fa-solid fa-check"></i> {{ $rule }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-
-        <div class="text-center mt-5 reveal">
-            <a href="{{ $cta }}" class="btn btn-gold btn-lg2"><i class="fa-solid fa-ticket"></i> Start now — it takes about 10 minutes</a>
-        </div>
-    </div>
-</section>
-
-<!-- ======================================================================
      GUIDELINES
 ====================================================================== -->
 <section class="section" id="guidelines">
@@ -358,8 +338,8 @@
                 <h2 class="section-title">Read this <span class="grad-text">before you upload.</span></h2>
                 <div class="divider-dot"></div>
                 <p class="section-lead">
-                    Everything you need to get through verification the first time — who can join, what each
-                    document must show, file rules, how your ticket works and what to expect at the gate.
+                    Everything you need to get through verification the first time: who can join, what to upload,
+                    file rules, how your ticket works and what to expect at the gate.
                 </p>
 
                 <div class="guide-note mt-4">
@@ -453,7 +433,7 @@
                         <div class="col-sm-6 reveal" style="transition-delay:{{ $i * 90 }}ms;">
                             <article class="artist-card tilt" data-tilt="7">
                                 @if ($photo)
-                                    <div class="artist-photo" style="background-image:url('{{ asset($photo) }}');" role="img" aria-label="{{ $name }}"></div>
+                                    <div class="artist-photo" style="background-image:url('{{ asset_v($photo) }}');" role="img" aria-label="{{ $name }}"></div>
                                 @else
                                     <div class="artist-photo artist-placeholder" role="img" aria-label="{{ $name }} — photo coming soon">
                                         <i class="fa-solid {{ $icon }}"></i><span>Photo coming soon</span>
@@ -523,10 +503,10 @@
                 <div class="col-lg-8">
                     <span class="eyebrow on-dark mb-3"><i class="fa-solid fa-bolt"></i> Free for every student</span>
                     <h2 class="mt-3 mb-2" style="font-size:clamp(1.6rem,3vw,2.4rem);">
-                        Your ticket to SIGLA 2026 is 3 required documents away.
+                        Your ticket to SIGLA 2026 is a few uploads away.
                     </h2>
                     <p class="mb-0" style="color:rgba(255,255,255,.72);max-width:560px;">
-                        Create your account, submit your 3 required documents and get your QR-coded ticket once SSC approves them.
+                        Create your account, upload your required documents and get your QR-coded ticket once SSC approves them.
                     </p>
                 </div>
                 <div class="col-lg-4 text-lg-end">

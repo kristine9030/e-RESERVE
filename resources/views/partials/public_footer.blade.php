@@ -5,7 +5,7 @@
         <div class="row g-5">
             <div class="col-lg-4">
                 <div class="brand-lockup mb-3">
-                    <img class="brand-logo" src="{{ asset(ssc('logo')) }}" alt="Supreme Student Council seal">
+                    <img class="brand-logo" src="{{ asset(ssc('logo_small')) }}" alt="Supreme Student Council seal">
                     <span class="brand-text">
                         <span class="brand-name d-block text-white">e-<span>RESERVE</span></span>
                         <span class="brand-sub">Register. Upload. Scan. Celebrate.</span>
@@ -28,7 +28,7 @@
                     <li><a href="{{ route('home') . '#home' }}">Home</a></li>
                     <li><a href="{{ route('home') . '#about' }}">About SIGLA</a></li>
                     <li><a href="{{ route('home') . '#lineup' }}">Lineup</a></li>
-                    <li><a href="{{ route('home') . '#pipeline' }}">How it works</a></li>
+                    <li><a href="{{ route('home') . '#guidelines' }}">How it works</a></li>
                     <li><a href="{{ route('home') . '#guidelines' }}">Guidelines</a></li>
                     <li><a href="{{ route('home') . '#faq' }}">FAQ</a></li>
                 </ul>

@@ -10,28 +10,16 @@
         <div class="empty-state">
             <div class="empty-art"><i class="fa-solid fa-ticket"></i></div>
             <h5>No ticket has been issued yet</h5>
-            @if (!empty($user['is_employee']))
             <p>
-                Your ticket is issued the moment your email is confirmed.
-                @if (auth()->user()->hasVerifiedEmail())
-                    All {{ number_format(ev('capacity')) }} tickets are taken right now. If a seat is released, you are next in line automatically.
-                @else
-                    Open the confirmation link we sent to <strong>{{ $user['email'] }}</strong>.
-                @endif
-            </p>
-            <a href="{{ route('dashboard') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
-            @else
-            <p>
-                Your ticket number appears once SSC approves your waiver, COR and school ID.
+                Your ticket number appears once SSC approves {{ count(required_documents()) > 1 ? 'your waiver, COR and school ID' : 'your ' . strtolower(collect(required_documents())->first()['label']) }}.
                 You have uploaded <strong>{{ $progress['uploaded'] }} of {{ $progress['total'] }}</strong>
                 and <strong>{{ $progress['approved'] }}</strong> {{ $progress['approved'] === 1 ? 'is' : 'are' }} approved so far.
                 @if ($progress['all_approved'])
-                    All {{ number_format(ev('capacity')) }} tickets are already taken. If a seat is released, you are next in line automatically.
+                    All the tickets for your group are already taken. If a seat is released, you are next in line automatically.
                 @endif
             </p>
             <a href="{{ route('documents.index') }}" class="btn btn-gold"><i class="fa-solid fa-file-arrow-up"></i> Upload documents</a>
             <a href="{{ route('dashboard') }}" class="btn btn-ghost ms-2"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
-            @endif
         </div>
     </div>
 
@@ -88,13 +76,14 @@
     }
     $performers = implode('  ·  ', array_column(config('ereserve.performers'), 0)); ?>
 
+    <div class="tix-fit" id="tixFit"><div class="tix-fit-inner" id="tixInner">
     <div class="tix-wrap tilt mb-4" data-tilt="7">
-        <article class="tix {{ $isVoid ? 'is-void' : '' }} {{ $ticket['checked_in'] ? 'is-used' : '' }}">
+        <article class="tix tix-tier-{{ ticket_tier($ticket['member_type'] ?? null) }} {{ $isVoid ? 'is-void' : '' }} {{ $ticket['checked_in'] ? 'is-used' : '' }}">
 
             <!-- ============ Main ============ -->
             <div class="tix-main">
                 <header class="tix-top">
-                    <img class="tix-logo" src="{{ asset(ssc('logo')) }}" alt="Supreme Student Council seal">
+                    <img class="tix-logo" src="{{ asset(ssc('logo_small')) }}" alt="Supreme Student Council seal">
                     <div class="tix-org">
                         <span>{{ ev('org') }}</span>
                         <span>BatStateU TNEU · ARASOF-Nasugbu</span>
@@ -119,7 +108,7 @@
                         <strong>{{ $ticket['name'] }}</strong>
                     </div>
                     <div>
-                        <span>{{ ($ticket['member_type'] ?? 'student') === 'student' ? 'SR-Code' : 'Employee ID' }}</span>
+                        <span>{{ ($ticket['member_type'] ?? 'student') === 'student' ? 'SR-Code' : (($ticket['member_type'] ?? '') === 'sponsor' ? 'Sponsor ID' : 'Employee ID') }}</span>
                         <strong class="mono">{{ $ticket['student_no'] }}</strong>
                     </div>
                     <div>
@@ -153,6 +142,7 @@
             @if ($ticket['checked_in'])<div class="tix-stamp tix-stamp-used">USED</div>@endif
         </article>
     </div>
+    </div></div>
 
     <div class="print-doc-foot">
         Issued {{ pretty_date($ticket['issued_at'], 'F d, Y · g:i A') }} · non-transferable · one scan per ticket ·
@@ -184,7 +174,7 @@
                     <a href="{{ route('documents.index') }}" class="action-tile">
                         <span class="t-icon"><i class="fa-solid fa-file-pdf"></i></span>
                         <span><span class="t-title d-block">My Documents</span>
-                              <span class="t-sub">The 3 required documents behind this ticket</span></span>
+                              <span class="t-sub">{{ count(required_documents()) > 1 ? "The ".count(required_documents())." required documents" : "Your required document" }} behind this ticket</span></span>
                         <i class="fa-solid fa-arrow-right t-arrow"></i>
                     </a>
 
@@ -224,3 +214,29 @@
 
 @endif
 @endsection
+
+@push('scripts')
+<script>
+    /* Phone: show the same two-part ticket as on the web, scaled down to fit the screen. */
+    (function () {
+        var fit = document.getElementById('tixFit'), inner = document.getElementById('tixInner');
+        if (!fit || !inner) return;
+        var DESIGN = 860;
+        function apply() {
+            var avail = fit.clientWidth;
+            if (avail >= DESIGN || window.matchMedia('print').matches) {
+                inner.style.width = ''; inner.style.transform = ''; fit.style.height = ''; return;
+            }
+            var k = avail / DESIGN;
+            inner.style.width = DESIGN + 'px';
+            inner.style.transform = 'scale(' + k + ')';
+            fit.style.height = Math.ceil(inner.offsetHeight * k) + 'px';
+        }
+        apply();
+        window.addEventListener('resize', apply);
+        window.addEventListener('orientationchange', apply);
+        window.addEventListener('load', apply);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(apply);
+    })();
+</script>
+@endpush

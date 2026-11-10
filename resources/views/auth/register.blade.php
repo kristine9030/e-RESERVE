@@ -22,17 +22,19 @@
         <span class="orb orb-gold orb-soft" style="width:340px;height:340px;top:-100px;right:-120px;"></span>
         <span class="orb orb-teal orb-soft" style="width:300px;height:300px;bottom:-120px;left:-100px;"></span>
 
-        <div class="auth-card fade-up" style="max-width:520px;">
-            <a href="{{ route('home') }}" class="text-muted2 fw-800 d-inline-flex align-items-center gap-2 mb-4"
-               style="font-size:.76rem;letter-spacing:1.2px;text-transform:uppercase;">
-                <i class="fa-solid fa-arrow-left"></i> {{ $pending ? 'Back to event page' : 'Not a student?' }}
+        <div class="auth-card fade-up" style="max-width:600px;">
+            <a href="{{ route('home') }}" class="auth-back">
+                <i class="fa-solid fa-arrow-left"></i> {{ $pending ? 'Back to event page' : 'Back to event page' }}
             </a>
+
+            @unless ($pending)
+                @include('partials.auth_switch', ['active' => 'register'])
+            @endunless
 
             <h3 style="font-size:1.55rem;">{{ $pending ? 'Finish your profile' : 'Create your account' }}</h3>
             <p class="text-soft mb-4" style="font-size:.87rem;">
                 Use your official <strong class="text-deep">{{ allowed_domains_text() }}</strong> address.
-                Already registered?
-                <a href="{{ route('login') . ($next !== '' ? '?next=' . urlencode($next) : '') }}" class="text-gold fw-800">Sign in</a>.
+                @unless ($pending) Already registered? <a href="{{ route('login') . ($next !== '' ? '?next=' . urlencode($next) : '') }}" class="text-gold fw-800">Sign in</a>. @endunless
             </p>
 
             @if ($error !== '')

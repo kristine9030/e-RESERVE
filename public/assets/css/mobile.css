@@ -190,3 +190,624 @@ img, svg, video, canvas { max-width: 100%; }
     .nav-public .brand-sub { display: none; }
     .nav-public .container { padding-left: .6rem; padding-right: .6rem; }
 }
+
+/* ==========================================================================
+   Phone polish: landing menu + buttons, compact sign-in header
+   ========================================================================== */
+@media (max-width: 991.98px) {
+    /* ---- Landing: hamburger menu ------------------------------------------ */
+    .nav-public .navbar-toggler { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(255, 255, 255, .7); }
+    .nav-public .navbar-collapse { padding: .4rem .4rem .9rem; margin-top: .5rem; border-top: 1px solid rgba(23, 59, 77, .08); }
+    .nav-public .navbar-nav { gap: .15rem !important; }
+    .nav-public .nav-link { display: flex; align-items: center; min-height: 48px; padding: .6rem .9rem !important; border-radius: 12px; font-size: 1rem; white-space: normal; }
+    .nav-public .nav-link:active, .nav-public .nav-link:hover { background: rgba(42, 141, 181, .1); }
+    .nav-public .navbar-collapse > .d-flex { flex-direction: column; align-items: stretch !important; gap: .6rem !important; margin-top: .9rem !important; }
+    .nav-public .navbar-collapse .btn { width: 100%; min-height: 50px; justify-content: center; font-size: 1rem; }
+}
+
+@media (max-width: 767.98px) {
+    /* ---- Landing hero: full-width, thumb-sized buttons -------------------- */
+    .hero .btn-lg2, .hero .btn { width: 100%; min-height: 54px; justify-content: center; font-size: clamp(.8rem, 4.3vw, 1.02rem); padding-left: .9rem; padding-right: .9rem; white-space: nowrap; gap: .45rem; }
+    .hero .d-flex.flex-wrap.gap-3 { gap: .7rem !important; }
+    .hero-chips { display: grid; grid-template-columns: 1fr; gap: .6rem; }
+    .hero-chips .glass-chip { width: 100%; }
+    .slot-meter { max-width: none; }
+    .cta-band .btn, .sponsor-cta .btn, #sponsor .btn, .sponsor-band .btn { width: 100%; min-height: 52px; justify-content: center; }
+    .section { padding: 3rem 0; }
+}
+
+@media (max-width: 991.98px) {
+    /* ---- Sign-in / sign-up: form first, artwork becomes a slim header ----- */
+    .auth-aside { padding: .9rem 1.2rem 1.1rem; min-height: 0; }
+    .auth-aside .aside-pill, .auth-aside .aside-lead, .auth-aside .aside-foot,
+    .auth-aside .aside-orb, .auth-aside .aside-crowd { display: none !important; }
+    .auth-aside .aside-top { margin: 0; }
+    .auth-aside .aside-title { font-size: 1.35rem; line-height: 1.15; margin: .75rem 0 0; }
+    .auth-main { padding: 1rem .75rem 2rem; align-items: flex-start; }
+    .auth-card { max-width: none !important; width: 100%; }
+}
+@media (max-width: 575.98px) {
+    .auth-card { padding: 1.3rem 1.1rem !important; border-radius: 22px; }
+    .auth-card h3 { font-size: 1.4rem !important; }
+    .auth-switch a { padding: .85rem .4rem; font-size: .95rem; }
+    .auth-card .btn-block2, .auth-card .btn-google, .auth-card .btn-lg2 { min-height: 54px; font-size: 1rem; }
+    .auth-card .form-control, .auth-card .form-select { min-height: 52px; }
+    .auth-card .input-group-text { min-width: 48px; justify-content: center; }
+    .auth-card .form-check-input { width: 1.3rem; height: 1.3rem; }
+    .auth-card .form-check-label { font-size: .9rem !important; padding-left: .25rem; }
+    .auth-card a.text-gold { padding: .35rem 0; display: inline-block; }
+    .who-card { padding: 1rem; }
+}
+
+/* ==========================================================================
+   Landing page on a phone: one column, compact type, more breathing room,
+   hamburger header, and the blue -> white -> orange wash visible from the first screen.
+   ========================================================================== */
+.nav-more { display: none; }
+
+@media (max-width: 991.98px) {
+    body.landing-page .nav-public .brand-name { font-size: 1.25rem; }
+    body.landing-page .nav-public .brand-logo { width: 46px; height: 46px; }
+    body.landing-page .hero { padding-top: 7.5rem; }
+    html { scroll-padding-top: 6rem; }
+}
+
+@media (max-width: 767.98px) {
+    /* ---- Background: blue at the top, white in the middle, orange at the bottom of every screen ---- */
+    body.landing-page::before {
+        background:
+            linear-gradient(180deg,
+                rgba(91, 184, 224, .42) 0%,
+                rgba(91, 184, 224, .16) 24%,
+                rgba(255, 255, 255, .55) 46%,
+                rgba(255, 255, 255, .35) 60%,
+                rgba(255, 170, 70, .20) 82%,
+                rgba(255, 170, 70, .38) 100%);
+    }
+    body.landing-page .glow-sky { width: 240px; height: 240px; right: -90px; top: 2%; opacity: .55; }
+    body.landing-page .glow-sun { width: 260px; height: 260px; right: -60px; bottom: 6%; opacity: .8; }
+
+    /* ---- Type: compact ---- */
+    body.landing-page { font-size: .88rem; line-height: 1.65; }
+    body.landing-page .hero-lead, body.landing-page .section-lead { font-size: .9rem; line-height: 1.7; }
+    body.landing-page .hero-title { font-size: clamp(2.8rem, 14vw, 3.3rem); }
+    body.landing-page h2, body.landing-page .section-title { font-size: clamp(1.3rem, 5.4vw, 1.55rem); line-height: 1.2; }
+    body.landing-page h3, body.landing-page h5 { font-size: 1rem; }
+    body.landing-page section p:not([style]), body.landing-page section li { font-size: .88rem; }
+    body.landing-page section p.lead, body.landing-page section .lead { font-size: .94rem; }
+    body.landing-page .cell-sub, body.landing-page .doc-step, body.landing-page .eyebrow { font-size: .68rem; }
+    body.landing-page .glass-chip strong { font-size: .86rem; }
+    body.landing-page .glass-chip span { font-size: .62rem; }
+    body.landing-page .slot-top { font-size: .78rem; }
+    body.landing-page .slot-top b { font-size: 1.1rem; }
+
+    /* ---- Buttons: smaller, same weight as the text ---- */
+    body.landing-page .btn { min-height: 41px; font-size: .86rem; font-weight: 800; padding: .45rem 1rem; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; }
+    body.landing-page .hero .btn, body.landing-page .bs-actions .btn, body.landing-page .cta-band .btn { width: 100%; }
+    body.landing-page .accordion-button { font-size: .86rem; padding: .9rem .95rem; }
+    body.landing-page .accordion-body { font-size: .84rem; }
+
+    /* ---- Spacing: room between blocks ---- */
+    body.landing-page .section, body.landing-page .section-tight { padding: 3.75rem 0; }
+    body.landing-page .hero .d-flex.flex-wrap.gap-3 { gap: .85rem !important; margin-top: .4rem; }
+    body.landing-page .hero-lead { margin-bottom: 1.9rem; }
+    body.landing-page .hero-chips { display: grid; grid-template-columns: 1fr; gap: .8rem; margin-top: 2rem; }
+    body.landing-page .hero-chips .glass-chip { width: 100%; padding: .85rem 1rem; }
+    body.landing-page .slot-meter { max-width: none; margin-top: 1.9rem; padding: .95rem 1.05rem; }
+    body.landing-page .row { --bs-gutter-y: 1.3rem; }
+    body.landing-page .card-soft, body.landing-page .pipe-card, body.landing-page .doc-preview, body.landing-page .feature-card { padding: 1.3rem 1.25rem; }
+    body.landing-page .sponsors { padding: 2.5rem 0; }
+    body.landing-page .become-sponsor { margin: 1.5rem 0; }
+    body.landing-page .section-head, body.landing-page .sponsors-head { margin-bottom: 2rem; }
+
+    /* ---- Side margins: content no longer touches the screen edges ---- */
+    body.landing-page section .container, body.landing-page footer .container, body.landing-page .site-footer .container { padding-left: 1.5rem; padding-right: 1.5rem; }
+    body.landing-page .nav-public { padding-left: .6rem; padding-right: .6rem; }
+    body.landing-page .become-sponsor { margin-left: .6rem; margin-right: .6rem; }
+}
+
+/* ---- Thinner header and a hamburger menu that does not swallow the screen ---- */
+@media (max-width: 991.98px) {
+    .nav-public { padding: .4rem 0; }
+    .nav-public .container { padding-top: .35rem; padding-bottom: .35rem; border-radius: 22px; }
+    .nav-public .brand-logo, body.landing-page .nav-public .brand-logo { width: 38px; height: 38px; }
+    .nav-public .brand-name, body.landing-page .nav-public .brand-name { font-size: 1.05rem; }
+    .nav-public .brand-sub { font-size: .56rem; letter-spacing: .2em; }
+    .nav-public .navbar-toggler { width: 38px; height: 38px; border-radius: 12px; }
+    .nav-public .navbar-toggler i { font-size: 1rem !important; }
+    .nav-public .navbar-collapse { max-height: 62vh; overflow-y: auto; padding: .3rem .25rem .6rem; margin-top: .35rem; }
+    .nav-public .nav-link { min-height: 38px; padding: .4rem .75rem !important; font-size: .9rem; border-radius: 10px; }
+    .nav-public .navbar-nav { gap: 0 !important; }
+    .nav-public .navbar-collapse > .d-flex { flex-direction: row !important; align-items: center !important; gap: .5rem !important; margin-top: .55rem !important; }
+    .nav-public .navbar-collapse .btn { flex: 1 1 0; width: auto; min-height: 40px; font-size: .84rem; padding: .35rem .6rem; }
+    body.landing-page .hero { padding-top: 6rem; }
+    html { scroll-padding-top: 5rem; }
+}
+
+/* ---- Landing on a phone: smaller type and smaller cards (final pass) ---- */
+@media (max-width: 767.98px) {
+    body.landing-page { font-size: .78rem; line-height: 1.6; }
+    body.landing-page .hero-lead, body.landing-page .section-lead { font-size: .8rem; line-height: 1.65; }
+    body.landing-page .hero-title { font-size: clamp(2.3rem, 12vw, 2.8rem); }
+    body.landing-page h2, body.landing-page .section-title { font-size: clamp(1.15rem, 4.8vw, 1.4rem); }
+    body.landing-page h3, body.landing-page h4, body.landing-page h5 { font-size: .9rem; }
+    body.landing-page section p:not([style]), body.landing-page section li, body.landing-page section p[style], body.landing-page section .text-soft,
+    body.landing-page section .doc-preview p, body.landing-page section .guide-item p { font-size: .78rem !important; line-height: 1.6; }
+    body.landing-page section p.lead, body.landing-page section .lead { font-size: .82rem !important; }
+    body.landing-page .cell-sub, body.landing-page .doc-step, body.landing-page .eyebrow, body.landing-page .badge-soft, body.landing-page .tg-label { font-size: .6rem !important; }
+    body.landing-page .glass-chip { padding: .55rem .8rem; gap: .6rem; }
+    body.landing-page .glass-chip strong { font-size: .76rem; }
+    body.landing-page .glass-chip span { font-size: .54rem; }
+    body.landing-page .glass-chip i, body.landing-page .glass-chip .chip-ico { transform: scale(.8); }
+    body.landing-page .slot-meter { padding: .7rem .85rem; }
+    body.landing-page .slot-top { font-size: .68rem; }
+    body.landing-page .slot-top b { font-size: 1rem; }
+    body.landing-page .btn { min-height: 36px; font-size: .78rem; padding: .35rem .85rem; gap: .4rem; }
+    body.landing-page .accordion-button { font-size: .78rem !important; padding: .75rem .85rem; }
+    body.landing-page .accordion-body { font-size: .74rem !important; }
+
+    /* cards: tighter padding, smaller icons */
+    body.landing-page .card-soft, body.landing-page .pipe-card, body.landing-page .doc-preview, body.landing-page .feature-card { padding: .9rem .95rem; border-radius: 16px; }
+    body.landing-page .feature-icon, body.landing-page .doc-icon { width: 36px; height: 36px; font-size: .9rem; border-radius: 11px; }
+    body.landing-page .pipe-node { transform: scale(.78); }
+    body.landing-page .rule-pill, body.landing-page .doc-preview li { font-size: .68rem !important; padding: .35rem .6rem; }
+    body.landing-page .sponsor-item { height: 52px; min-width: 120px; padding: 0 .8rem; }
+    body.landing-page .section, body.landing-page .section-tight { padding: 3rem 0; }
+    body.landing-page .row { --bs-gutter-y: 1rem; }
+}
+@media (max-width: 767.98px) {
+    body.landing-page .hero-chips { gap: .6rem; margin-top: 1.6rem; }
+    body.landing-page .hero-chips .glass-chip { padding: .5rem .8rem; border-radius: 14px; min-height: 0; }
+    body.landing-page .slot-meter { margin-top: 1.6rem; }
+}
+
+/* ---- Landing on a phone: tighter spacing between buttons (side margins unchanged) ---- */
+@media (max-width: 767.98px) {
+    body.landing-page .hero .d-flex.flex-wrap.gap-3 { gap: .4rem !important; margin-top: .2rem; }
+    body.landing-page .hero .btn + .btn, body.landing-page .bs-actions .btn + .btn { margin-top: 0; }
+    body.landing-page .bs-actions { gap: .4rem !important; }
+    body.landing-page .bs-actions .btn { margin: 0 !important; }
+    body.landing-page .cta-band .btn { margin-bottom: .4rem !important; }
+    body.landing-page .join-card .badge-soft { margin-bottom: .6rem; }
+    body.landing-page .join-link { font-size: .78rem; }
+}
+@media (max-width: 991.98px) {
+    .nav-public .navbar-collapse > .d-flex { gap: .35rem !important; margin-top: .4rem !important; }
+}
+
+/* ==========================================================================
+   PHONE, ALL SCREENS: the landing page's compact type scale everywhere.
+   (Inputs stay 16px: iOS zooms the page when a field under 16px gets focus.)
+   ========================================================================== */
+@media (max-width: 767.98px) {
+    body { font-size: .78rem; line-height: 1.6; }
+    h1 { font-size: 1.3rem; }
+    h2, .section-title { font-size: clamp(1.15rem, 4.8vw, 1.4rem); line-height: 1.2; }
+    h3, h4, h5, h6 { font-size: .9rem; }
+    .page-hero h2 { font-size: 1.2rem; }
+    .page-hero p { font-size: .8rem; }
+    .auth-card h3 { font-size: 1.2rem !important; }
+    .auth-card p, .auth-card .text-soft { font-size: .78rem !important; }
+    .stat-value { font-size: 1.3rem; }
+    .stat-label, .form-label-sm, .tg-label { font-size: .62rem; }
+    .cell-strong { font-size: .8rem; }
+    .cell-sub, .doc-step, .eyebrow, .badge-soft, .doc-chip, .u-role { font-size: .64rem; }
+    .page-head h1 { font-size: 1rem; }
+    .top-link, .dropdown-item { font-size: .85rem; }
+    .info-value { font-size: .8rem !important; }
+    .table-stack td, .table td, .table th { font-size: .76rem; }
+    .table-stack td::before { font-size: .58rem; }
+    .card-head h5, .card-head h6 { font-size: .9rem; }
+    .stat-foot { font-size: .64rem; }
+    .doc-card h5, .doc-head h5 { font-size: .92rem; }
+    .doc-card p, .doc-hint { font-size: .76rem; }
+    .receipt-row, .legend-item, .prog-row { font-size: .76rem; }
+    .alert, .callout { font-size: .78rem; }
+
+    /* Buttons: same small size as the landing page */
+    .btn { min-height: 36px; font-size: .78rem; padding: .35rem .85rem; gap: .4rem; }
+    .btn-sm2 { min-height: 34px; font-size: .74rem; padding: .3rem .75rem; }
+    .btn-lg2, .btn-block2 { min-height: 40px; font-size: .82rem; }
+    .icon-btn { min-width: 36px; min-height: 36px; }
+    .page-link { min-width: 36px; min-height: 36px; font-size: .78rem; }
+    .auth-card .btn-block2, .auth-card .btn-google, .auth-card .btn-lg2 { min-height: 44px; font-size: .86rem; }
+    .auth-switch a { padding: .65rem .4rem; font-size: .82rem; }
+    .form-control, .form-select, input, select, textarea { font-size: 16px !important; }
+}
+
+/* ==========================================================================
+   Landing on a phone: balanced button spacing, side-by-side hero buttons, no ticket in the hero
+   ========================================================================== */
+@media (max-width: 767.98px) {
+    /* two buttons on one line */
+    body.landing-page .hero .d-flex.flex-wrap.gap-3 { flex-wrap: nowrap !important; gap: .6rem !important; margin-top: .2rem; }
+    body.landing-page .hero .d-flex.flex-wrap.gap-3 .btn { flex: 1 1 0; width: auto; min-width: 0; padding: .35rem .5rem; white-space: nowrap; }
+
+    /* even rhythm between blocks (side margins untouched) */
+    body.landing-page .hero-lead { margin-bottom: 1.4rem; }
+    body.landing-page .slot-meter { margin-top: 1.4rem; }
+    body.landing-page .hero-chips { gap: .6rem; margin-top: 1.4rem; }
+    body.landing-page .bs-actions { gap: .6rem !important; }
+    body.landing-page .cta-band .btn { margin-bottom: .6rem !important; }
+
+    /* no sample ticket in the hero on a phone: keep only the countdown */
+    body.landing-page .scene .ticket3d, body.landing-page .scene .float-el, body.landing-page .scene .ticket3d.ghost { display: none !important; }
+    body.landing-page .scene { height: auto !important; margin-top: 1.4rem; display: block; }
+    body.landing-page .scene .count-glass { position: relative !important; left: auto !important; right: auto !important; bottom: auto !important; top: auto !important; translate: none !important; transform: none !important; width: 100% !important; margin: 0; }
+}
+@media (max-width: 991.98px) {
+    .nav-public .navbar-collapse > .d-flex { gap: .5rem !important; margin-top: .55rem !important; }
+}
+
+/* ---- Landing on a phone: Date + Time on one line, Where centred below at the same card size ---- */
+@media (max-width: 767.98px) {
+    body.landing-page .hero-chips { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-top: 1.4rem; align-items: stretch; }
+    body.landing-page .hero-chips .glass-chip { width: 100%; min-width: 0; padding: .4rem .55rem; gap: .45rem; border-radius: 12px; align-items: center; }
+    body.landing-page .hero-chips .glass-chip:nth-child(3) { grid-column: 1 / -1; width: calc(50% - .25rem); justify-self: center; }
+    body.landing-page .hero-chips .glass-chip > i { width: 26px; height: 26px; flex: 0 0 26px; font-size: .68rem; border-radius: 8px; transform: none; }
+    body.landing-page .hero-chips .glass-chip span { font-size: .5rem; letter-spacing: 1px; }
+    body.landing-page .hero-chips .glass-chip strong { font-size: .68rem; line-height: 1.25; overflow-wrap: anywhere; }
+}
+@media (max-width: 767.98px) { body.landing-page .hero-chips .glass-chip { min-height: 56px; } }
+
+/* ---- Landing hero on a phone: one even rhythm between lead, buttons, meter, chips and countdown ---- */
+@media (max-width: 767.98px) {
+    body.landing-page .hero-lead { margin-bottom: 1.1rem; }
+    body.landing-page .hero .d-flex.flex-wrap.gap-3 { margin-top: 0 !important; margin-bottom: 0; }
+    body.landing-page .slot-meter { margin-top: 1rem; margin-bottom: 0; }
+    body.landing-page .hero-chips { margin-top: 1rem; margin-bottom: 0; gap: .5rem; }
+    body.landing-page .scene { margin-top: 1rem; }
+}
+
+/* ---- Landing on a phone: guideline tabs wrap into rows so every tab is visible and readable ---- */
+@media (max-width: 767.98px) {
+    body.landing-page .hero-lead { margin-bottom: 1.1rem; }
+    body.landing-page .guide-tabs { flex-wrap: wrap; overflow: visible; gap: .35rem; padding: .6rem; }
+    body.landing-page .guide-tab { flex: 1 1 calc(50% - .35rem); justify-content: center; padding: .55rem .5rem; font-size: .74rem; white-space: normal; text-align: center; border-radius: 12px; }
+    body.landing-page .guide-tab i { font-size: .8rem; }
+    body.landing-page .guide-body { padding: .9rem; }
+}
+
+/* ==========================================================================
+   Sign in + create account on a phone: one step smaller (card, type, fields, buttons).
+   Field text stays 16px so iOS does not zoom the page on focus; everything around it shrinks.
+   ========================================================================== */
+@media (max-width: 767.98px) {
+    body.auth-page .auth-aside { padding: .7rem 1rem .8rem; }
+    body.auth-page .auth-aside .brand-logo { width: 38px; height: 38px; }
+    body.auth-page .auth-aside .brand-name { font-size: 1.05rem; }
+    body.auth-page .auth-aside .brand-sub { font-size: .55rem; }
+    body.auth-page .auth-aside .aside-title { font-size: 1.05rem; margin-top: .5rem; }
+    body.auth-page .auth-main { padding: .75rem .9rem 1.5rem; }
+
+    body.auth-page .auth-card { padding: 1rem .9rem !important; border-radius: 18px; }
+    body.auth-page .auth-back { font-size: .6rem; margin-bottom: .6rem; }
+    body.auth-page .auth-switch { padding: .2rem; margin-bottom: .9rem; border-radius: 12px; gap: .2rem; }
+    body.auth-page .auth-switch a { padding: .45rem .3rem; font-size: .74rem; border-radius: 9px; gap: .35rem; }
+    body.auth-page .auth-card h3 { font-size: 1.05rem !important; margin-bottom: .2rem; }
+    body.auth-page .auth-card p, body.auth-page .auth-card .text-soft { font-size: .7rem !important; margin-bottom: .8rem !important; }
+    body.auth-page .auth-card .badge-soft { font-size: .58rem !important; }
+
+    body.auth-page .btn-google, body.auth-page .gsuite-btn { min-height: 38px; padding: .45rem .8rem; font-size: .76rem; gap: .5rem; }
+    body.auth-page .btn-google .g-logo { width: 16px; height: 16px; }
+    body.auth-page .divider-or { font-size: .58rem; margin: .8rem 0; }
+
+    body.auth-page .auth-card .mb-3 { margin-bottom: .7rem !important; }
+    body.auth-page .auth-card .mb-4 { margin-bottom: .9rem !important; }
+    body.auth-page .form-label-sm { font-size: .56rem; margin-bottom: .2rem; }
+    body.auth-page .auth-card .form-control, body.auth-page .auth-card .form-select { min-height: 40px; padding-top: .35rem; padding-bottom: .35rem; font-size: 16px !important; }
+    body.auth-page .auth-card .input-group-text { min-width: 40px; padding: 0 .55rem; font-size: .8rem; }
+    body.auth-page .auth-card .input-group .btn, body.auth-page .auth-card .pw-toggle { min-height: 40px; }
+    body.auth-page .auth-card .form-check-input { width: 1.05rem; height: 1.05rem; }
+    body.auth-page .auth-card .form-check-label { font-size: .7rem !important; }
+    body.auth-page .auth-card a.text-gold { font-size: .7rem !important; padding: .15rem 0; }
+    body.auth-page .auth-card .cell-sub { font-size: .58rem !important; }
+
+    body.auth-page .auth-card .btn, body.auth-page .auth-card .btn-block2, body.auth-page .auth-card .btn-lg2 { min-height: 40px; font-size: .8rem; padding: .35rem .9rem; }
+
+    /* "who are you" choice cards */
+    body.auth-page .who-card { padding: .7rem .75rem; gap: .65rem; border-radius: 14px; margin-bottom: .6rem; }
+    body.auth-page .who-ico { flex: 0 0 38px; width: 38px; height: 38px; font-size: .95rem; border-radius: 12px; }
+    body.auth-page .who-txt strong { font-size: .8rem; }
+    body.auth-page .who-txt span { font-size: .66rem; line-height: 1.45; }
+    body.auth-page .who-go { font-size: .7rem; }
+    body.auth-page .google-chip { padding: .55rem .7rem; font-size: .68rem; }
+}
+
+/* ==========================================================================
+   Student (and staff) app on a phone: quick bottom menu + a compact dashboard
+   ========================================================================== */
+.bottom-nav { display: none; }
+@media (max-width: 991.98px) {
+    .bottom-nav {
+        display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1030;
+        background: rgba(255, 255, 255, .94); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+        border-top: 1px solid rgba(23, 59, 77, .1); box-shadow: 0 -8px 24px rgba(23, 59, 77, .1);
+        padding: .3rem .4rem calc(.3rem + env(safe-area-inset-bottom)); gap: .15rem;
+    }
+    .bn-item { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .15rem; padding: .35rem .15rem; border: 0; background: none; border-radius: 12px; color: var(--ink-muted); text-decoration: none; font-weight: 800; font-size: .6rem; line-height: 1.1; }
+    .bn-item i { font-size: 1.05rem; }
+    .bn-item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bn-item.is-active { color: #A8620A; background: #FFF1D6; }
+    .bn-item:active { background: rgba(42, 141, 181, .12); }
+    .app-shell { padding-bottom: 4.6rem; }
+}
+@media (min-width: 992px) { .bottom-nav { display: none !important; } }
+
+@media (max-width: 767.98px) {
+    .badge-soft, .doc-chip, .status-badge { white-space: nowrap; }
+
+    /* welcome card */
+    .dash-welcome { padding: 1rem 1rem 1.1rem; border-radius: 18px; }
+    .dw-greet { font-size: .62rem; }
+    .dash-welcome h2 { font-size: 1.15rem; }
+    .dw-meta, .dw-text p { font-size: .72rem; line-height: 1.5; }
+    .dw-badges { gap: .35rem; }
+    .dw-count-title { font-size: .56rem; letter-spacing: .08em; }
+    .dw-count-row { gap: .35rem; }
+    .dw-count { padding: .4rem .2rem; border-radius: 10px; }
+    .dw-count b, .dw-count-row b { font-size: 1.05rem; }
+    .dw-count span, .dw-count-row span { font-size: .5rem; }
+
+    /* next step */
+    .next-step { padding: .9rem 1rem; gap: .7rem; border-radius: 16px; }
+    .next-icon { width: 38px; height: 38px; font-size: .95rem; border-radius: 12px; }
+    .next-kicker { font-size: .56rem; }
+    .next-step h4, .next-step h5, .next-step h3 { font-size: .95rem; }
+    .next-step p { font-size: .74rem; }
+
+    /* cards + headings */
+    .dash-card { padding: .9rem 1rem 1rem; border-radius: 16px; }
+    .dash-card-head { margin-bottom: .7rem; gap: .6rem; }
+    .dash-card-head h5 { font-size: .86rem; gap: .4rem; }
+    .dash-main, .dash-side { gap: .9rem; }
+    .dash-grid { gap: .9rem; }
+
+    /* tracking timeline */
+    .pipeline-app { padding: .9rem .9rem; margin-bottom: 0; }
+    .pipeline-app .pipe-node, .pipe-node { width: 34px; height: 34px; flex: 0 0 34px; font-size: .8rem; border-radius: 11px; }
+    .pipe-title { font-size: .76rem; }
+    .pipe-sub { font-size: .62rem; }
+
+    /* required documents */
+    .dash-docs { gap: .5rem; }
+    .doc-row { padding: .6rem .7rem; gap: .6rem; border-radius: 12px; }
+    .doc-row-icon { width: 32px; height: 32px; flex: 0 0 32px; font-size: .8rem; border-radius: 10px; }
+    .doc-row .fw-800 { font-size: .78rem; }
+    .doc-row .cell-sub { font-size: .62rem; }
+    .doc-row .badge-soft { font-size: .54rem; padding: .25rem .5rem; }
+
+    /* ticket card + facts + help */
+    .mini-ticket { padding: .9rem 1rem; border-radius: 16px; }
+    .mini-ticket-no { font-size: 1rem; letter-spacing: .5px; }
+    .mini-ticket-foot { font-size: .7rem; }
+    .dash-facts .info-row, .info-row { padding: .45rem 0; gap: .6rem; }
+    .info-icon { width: 32px; height: 32px; font-size: .8rem; border-radius: 10px; }
+    .info-label, .info-row .cell-sub { font-size: .58rem; }
+    .info-value { font-size: .76rem !important; }
+    .dash-help-links { gap: .4rem; }
+    .dash-help-links .btn, .dash-help-links a { font-size: .72rem; padding: .3rem .7rem; min-height: 32px; }
+    .app-foot { font-size: .68rem; padding: 1rem 0 1.4rem; }
+    .page-head h1 { font-size: .95rem; }
+    .crumb { font-size: .58rem; }
+}
+
+/* ---- Student pages on a phone: the dashboard's compact scale on Documents, Ticket, Track, Profile, Notifications ---- */
+@media (max-width: 767.98px) {
+    .page-hero { padding: 1rem 1rem; border-radius: 18px; margin-bottom: .9rem; }
+    .page-hero .eyebrow { font-size: .58rem; }
+    .page-hero h2 { font-size: 1.1rem; }
+    .page-hero p { font-size: .74rem; line-height: 1.55; }
+    .page-hero .btn { min-height: 36px; font-size: .78rem; }
+    .page-hero .stat-value, .page-hero [class*="uploaded"] b, .page-hero .big-num { font-size: 1.6rem; }
+
+    /* documents */
+    .doc-card { padding: .9rem 1rem; border-radius: 16px; margin-bottom: .8rem; }
+    .doc-head { gap: .65rem; margin-bottom: .6rem; }
+    .doc-icon { width: 40px; height: 40px; flex: 0 0 40px; font-size: .95rem; border-radius: 12px; }
+    .doc-head h5 { font-size: .86rem; }
+    .doc-step { font-size: .56rem; }
+    .doc-hint, .doc-card > p { font-size: .72rem; line-height: 1.5; }
+    .doc-rules { gap: .3rem; }
+    .doc-rules span, .doc-rules li { font-size: .62rem; padding: .25rem .55rem; }
+    .doc-file { padding: .6rem .75rem; gap: .6rem; border-radius: 12px; }
+    .doc-file-name { font-size: .78rem; }
+    .doc-file .cell-sub { font-size: .6rem; }
+    .doc-note, .doc-locked { font-size: .7rem; padding: .55rem .7rem; border-radius: 12px; }
+    .dropzone { padding: .9rem; border-radius: 14px; }
+    .dropzone-text strong { font-size: .8rem; }
+    .dropzone-text span { font-size: .64rem; }
+    .dropzone-art { width: 40px; height: 40px; }
+    .callout { padding: .7rem .85rem; font-size: .72rem; border-radius: 14px; }
+
+    /* tracking */
+    .track-step { gap: .7rem; }
+    .track-dot { width: 32px; height: 32px; flex: 0 0 32px; font-size: .78rem; }
+    .track-stamp { font-size: .6rem; }
+    .receipt-row { padding: .45rem 0; font-size: .74rem; }
+
+    /* profile */
+    .profile-hero { padding: 1rem; }
+    .profile-avatar { width: 64px; height: 64px; font-size: 1.3rem; }
+
+
+    /* notifications */
+    .notice-row { padding: .7rem .85rem; gap: .6rem; }
+    .nm-head h5, .nm-kind { font-size: .8rem; }
+    .nm-body { font-size: .76rem; }
+    .nm-date, .nm-time { font-size: .6rem; }
+}
+
+/* ---- Ticket: the phone shows the very same ticket as the web, scaled down to fit ---- */
+.tix-fit { width: 100%; }
+.tix-fit-inner { transform-origin: top left; }
+@media print { .tix-fit { height: auto !important; } .tix-fit-inner { transform: none !important; width: auto !important; } }
+
+/* ---- Student pages on a phone: last pass so every screen shares one scale ---- */
+@media (max-width: 767.98px) {
+    /* tracking timeline */
+    .track-step h6 { font-size: .86rem; }
+    .track-step p { font-size: .72rem; line-height: 1.5; margin-bottom: .3rem; }
+    .track-step .badge-soft { font-size: .56rem; }
+    .track-dot { width: 32px !important; height: 32px !important; font-size: .75rem !important; }
+    .page-hero [class*="progress"] b, .page-hero .pct, .page-hero .track-pct { font-size: 2rem; }
+
+    /* profile */
+    .profile-hero { border-radius: 18px; }
+    .profile-hero > div:first-child, .profile-cover { height: 110px !important; min-height: 0; }
+    .profile-avatar { width: 62px !important; height: 62px !important; font-size: 1.2rem !important; margin-top: -31px; border-width: 3px; }
+    .profile-hero h3, .profile-hero h4, .profile-hero h5 { font-size: 1rem; }
+    .profile-hero p { font-size: .72rem; }
+    .profile-hero .btn { min-height: 36px; }
+
+    /* forms inside the app (password, profile edit, change requests, modals) */
+    .app-content .form-control, .app-content .form-select, .modal .form-control, .modal .form-select { min-height: 40px; padding-top: .35rem; padding-bottom: .35rem; font-size: 16px !important; }
+    .app-content .input-group-text { min-width: 40px; }
+    .app-content .form-label, .app-content label { font-size: .66rem; }
+    .app-content .btn-toggle-pw, .app-content .input-group .btn { min-height: 40px; }
+    .card-body-p { padding: .9rem 1rem; }
+    .modal-title { font-size: .95rem; }
+    .modal-body { font-size: .78rem; padding: .9rem 1rem; }
+    .modal-header, .modal-footer { padding: .7rem 1rem; }
+    .swal2-popup { font-size: .8rem !important; width: 92% !important; padding: 1rem !important; }
+    .swal2-title { font-size: 1.05rem !important; }
+    .swal2-html-container { font-size: .8rem !important; }
+    .swal2-actions .swal2-styled { font-size: .8rem !important; padding: .5rem 1rem !important; }
+}
+
+/* ==========================================================================
+   Phone spacing scale for the app (student + staff): one rhythm everywhere.
+   page 1rem sides · blocks 1rem apart · card padding 1rem · title-to-content .6rem
+   ========================================================================== */
+@media (max-width: 767.98px) {
+    .app-content { padding: .6rem 0 1rem !important; }
+    .page-head { padding: .75rem 0 .35rem; }
+    .page-head .crumb { margin-bottom: .1rem; }
+
+    /* the gap between blocks */
+    .app-content .mb-4, .app-content .mb-5 { margin-bottom: 1rem !important; }
+    .app-content .mb-3 { margin-bottom: .75rem !important; }
+    .app-content .mt-4, .app-content .mt-5 { margin-top: 1rem !important; }
+    .app-content .row { --bs-gutter-x: 1rem; --bs-gutter-y: 1rem; }
+    .app-content .row.g-3 { --bs-gutter-x: .75rem; --bs-gutter-y: .75rem; }
+    .app-content .row.g-2 { --bs-gutter-x: .5rem; --bs-gutter-y: .5rem; }
+    .page-hero { margin-bottom: 1rem !important; }
+    .card-soft, .doc-card, .callout, .stat-card { margin-bottom: 1rem; }
+    .row > [class*="col"] > .card-soft, .row > [class*="col"] > .stat-card, .dash-main > *, .dash-side > * { margin-bottom: 0; }
+    .tix-fit { margin-bottom: 1rem; }
+    .tix-wrap.mb-4 { margin-bottom: 0 !important; }
+
+    /* inside a card: title -> content -> actions */
+    .card-head { padding: .75rem 1rem; gap: .6rem; }
+    .card-body-p { padding: .85rem 1rem 1rem; }
+    .card-head + .card-body-p { padding-top: .75rem; }
+    .card-head h5, .card-head h6 { line-height: 1.3; }
+    .card-head .cell-sub { display: block; margin-top: .1rem; }
+    .receipt-row { padding: .5rem 0; }
+    .info-row { padding: .55rem 0; }
+    .action-tile { padding: .7rem .8rem; gap: .7rem; margin-bottom: 0; }
+    .d-grid.gap-2 { gap: .5rem !important; }
+    .stat-card { padding: .85rem .9rem; }
+    .stat-card .stat-icon { margin-bottom: .45rem; }
+
+    /* forms */
+    .app-content .mb-3:last-child, .auth-card .mb-3:last-child { margin-bottom: 0 !important; }
+    .form-label-sm, .app-content label { margin-bottom: .25rem; display: block; }
+    form .d-flex.gap-2 { gap: .5rem !important; }
+
+    /* footer */
+    .app-foot { padding: .9rem 0 1.2rem; margin-top: .25rem; }
+}
+
+/* ---- Ticket page + its cards: tidy spacing on a phone ---- */
+@media (max-width: 767.98px) {
+    /* title -> content gap inside every card */
+    .card-head:has(+ .card-body-p) { border-bottom: 0; padding: .8rem 1rem .1rem; }
+    .card-head + .card-body-p { padding: .45rem 1rem 1rem; }
+
+    /* action tiles (Ticket Actions, Before You Go) */
+    .action-tile { padding: .55rem .7rem; gap: .65rem; border-radius: 12px; }
+    .action-tile:hover { transform: none; }
+    .action-tile .t-icon { width: 34px; height: 34px; border-radius: 10px; font-size: .85rem; }
+    .action-tile .t-title { font-size: .8rem; }
+    .action-tile .t-sub { font-size: .66rem; line-height: 1.4; }
+    .action-tile .t-arrow { font-size: .75rem; }
+    .card-body-p.d-grid { gap: .5rem !important; }
+
+    /* the ticket itself: even breathing room above and below */
+    .page-hero + p.cell-sub { margin: -.2rem 0 .8rem !important; font-size: .64rem; line-height: 1.5; }
+    .tix-fit { margin: 0 0 1rem; }
+    .app-content .row.no-print { --bs-gutter-y: 1rem; }
+    .info-row .info-value { margin-bottom: .1rem; }
+}
+
+/* ==========================================================================
+   Faculty / sponsor screens on a phone: same compact scale as the student side
+   (sign-up forms, landing "Who can join" + sponsors, and the SSC admin pages)
+   ========================================================================== */
+@media (max-width: 767.98px) {
+
+    /* ---- Faculty + sponsor sign-up: alerts, gutters and notes match the student form ---- */
+    body.auth-page .auth-card .alert { font-size: .7rem !important; padding: .6rem .75rem; border-radius: 12px; margin-bottom: .8rem !important; line-height: 1.45; }
+    body.auth-page .auth-card .row.g-3 { --bs-gutter-x: .6rem; --bs-gutter-y: .7rem; }
+    body.auth-page .auth-card .row.g-3.mb-4 { margin-bottom: .9rem !important; }
+    body.auth-page .auth-card .mt-3 { margin-top: .7rem !important; }
+    body.auth-page .auth-card .mt-4 { margin-top: .9rem !important; }
+    body.auth-page .auth-card .badge-soft.mb-2 { margin-bottom: .4rem !important; }
+    body.auth-page .auth-card .input-group > .form-control { min-width: 0; }
+
+    /* ---- Landing: Who can join ---------------------------------------------- */
+    .who-join .section-title { font-size: 1.25rem; }
+    .join-card { padding: 1rem !important; border-radius: 16px; }
+    .join-card .feature-icon { width: 40px; height: 40px; font-size: .95rem; border-radius: 12px; margin-bottom: .6rem; }
+    .join-card h5 { font-size: .9rem; }
+    .join-card p { font-size: .72rem; line-height: 1.5; }
+    .join-card .badge-soft { font-size: .58rem; }
+    .join-link { font-size: .76rem; }
+
+    /* ---- Landing: sponsors strip + "Want to sponsor?" ----------------------- */
+    .sponsors { padding: 1.5rem 0 1rem; }
+    .sponsors-head { margin-bottom: .9rem; }
+    .sponsors-head h3 { font-size: 1.05rem; margin-top: .45rem; }
+    .sponsor-item { height: 54px; min-width: 140px; padding: 0 .9rem; border-radius: 16px; gap: .55rem; }
+    .sponsor-item img { max-height: 32px; max-width: 110px; }
+    .sponsor-mark { width: 30px; height: 30px; border-radius: 10px; font-size: .8rem; }
+    .sponsor-name { font-size: .78rem; }
+    .sponsor-word { font-size: 1.05rem; }
+    .sponsors-cta { font-size: .68rem; }
+    .sponsors-empty { padding: 1rem .85rem; border-radius: 16px; }
+    .sponsors-empty i { font-size: 1.3rem; }
+    .sponsors-empty span { font-size: .72rem; }
+
+    .become-sponsor { padding: .5rem 0 2rem; }
+    .bs-card { padding: 1.1rem 1rem !important; gap: 1rem !important; border-radius: 20px; }
+    .bs-text h3 { font-size: 1.15rem; margin: .4rem 0 .45rem; }
+    .bs-text p { font-size: .74rem; line-height: 1.55; }
+    .bs-points { gap: .35rem; font-size: .72rem; margin-top: .7rem; }
+    .bs-actions { gap: .5rem; }
+    .bs-actions .btn { min-height: 40px; font-size: .8rem; padding: .35rem .9rem; }
+    .bs-mail { font-size: .68rem; }
+
+    /* ---- SSC pages: Sponsors, SSC Team, Change Requests, Students ----------- */
+    .app-content .review-card { padding: .85rem .9rem; border-radius: 16px; gap: .7rem; }
+    .review-icon { width: 38px; height: 38px; flex: 0 0 38px; font-size: .95rem; border-radius: 12px; }
+    .sp-thumb { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 10px; }
+    .app-content .cell-strong { font-size: .82rem; }
+    .app-content .cell-sub { font-size: .66rem; }
+    .app-content .info-value[style], .app-content .info-value { font-size: .76rem !important; }
+    .app-content .mono { font-size: .74rem !important; }
+    .app-content .tg-label { font-size: .58rem; }
+    .app-content .btn-sm2 { min-height: 36px; font-size: .74rem; padding: .3rem .75rem; }
+    .app-content .btn-ghost, .app-content .btn-gold, .app-content .btn-green { font-size: .78rem; }
+    .app-content .badge-soft { font-size: .58rem !important; padding: .25rem .55rem; }
+    .app-content .callout { font-size: .72rem !important; }
+    .app-content .form-control-sm { min-height: 40px; }
+    .app-content .stat-icon { width: 40px !important; height: 40px !important; font-size: 1rem !important; }
+    .app-content p.text-soft[style] { font-size: .74rem !important; }
+    .app-content .fw-900[style*="2.6rem"] { font-size: 1.9rem !important; letter-spacing: -1px !important; }
+    .app-content .fw-900[style*="2.6rem"] span { font-size: 1rem !important; }
+    .table-stack td { font-size: .76rem; padding: .5rem 0 !important; }
+    .table-stack td::before { font-size: .58rem; }
+    .table-stack tr { border-radius: 14px; padding: .25rem .9rem; margin-bottom: .6rem; }
+    .table-stack td form .btn { min-width: 0; }
+}

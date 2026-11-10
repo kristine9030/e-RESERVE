@@ -31,7 +31,7 @@ class NotificationAndRolesTest extends TestCase
 
     private function docs(User $u): void
     {
-        foreach (array_keys(config('ereserve.documents')) as $type) {
+        foreach (config('ereserve.document_sets.student') as $type) {
             Document::create([
                 'user_id' => $u->id, 'doc_type' => $type, 'original_name' => "$type.pdf",
                 'stored_name' => '20261108-' . bin2hex(random_bytes(16)) . '.pdf', 'size_bytes' => 1000,
@@ -59,13 +59,13 @@ class NotificationAndRolesTest extends TestCase
 
         $no = DB::table('tickets')->where('user_id', $s->id)->value('ticket_no');
 
-        // The ticket mail carries the real ticket: card, QR image and a downloadable PNG.
+        // The ticket mail shows the pass (number, event, details) but never a QR code or attachment.
         Mail::assertQueued(StudentNotice::class, function ($m) use ($s, $no) {
             return $m->hasTo($s->email) && str_contains($m->subjectLine, 'ticket is ready')
                 && ($m->ticket['ticket_no'] ?? null) === $no
-                && count($m->attachments()) === 1
+                && count($m->attachments()) === 0
                 && str_contains($m->render(), $no)
-                && substr(qr_png(tickets()->qrPayload($m->ticket)), 0, 8) === "\x89PNG\r\n\x1a\n";
+                && !str_contains($m->render(), 'cid:');
         });
         $this->assertSame(1, DB::table('tickets')->where('user_id', $s->id)->count());
     }
@@ -125,7 +125,7 @@ class NotificationAndRolesTest extends TestCase
             $this->post(route('documents.store'), ['doc_type' => $type, 'document' => $pdf()])
                 ->assertRedirect(route('documents.index'))->assertSessionMissing('submitted_popup');
         }
-        $last = array_values(array_diff(array_keys(config('ereserve.documents')), ['waiver', 'cor']))[0];
+        $last = array_values(array_diff(config('ereserve.document_sets.student'), ['waiver', 'cor']))[0];
 
         $this->post(route('documents.store'), ['doc_type' => $last, 'document' => $pdf()])
             ->assertRedirect(route('documents.index'))->assertSessionHas('submitted_popup', true);

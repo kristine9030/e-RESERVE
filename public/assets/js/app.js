@@ -350,7 +350,7 @@
        Progress bars animate from 0 on reveal
     ---------------------------------------------------------------------- */
     function initProgress() {
-        const fills = document.querySelectorAll('.prog-fill[data-width]');
+        const fills = document.querySelectorAll('.prog-fill[data-width], .cr-fill[data-width]');
         if (!fills.length) return;
         requestAnimationFrame(function () {
             setTimeout(function () {
@@ -416,4 +416,88 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
     });
+})();
+
+/* Real phone screens get the enlarged touch sizes of the landing page (see mobile.css). */
+if (Math.min(window.screen.width, window.screen.height) < 600) document.documentElement.classList.add('is-phone');
+
+/* Public menu: close the hamburger after a link is tapped (anchor links stay on the page). */
+(function () {
+    var menu = document.getElementById('publicNav');
+    if (!menu || typeof bootstrap === 'undefined') return;
+    menu.addEventListener('click', function (e) {
+        var a = e.target.closest('a');
+        if (a && menu.classList.contains('show')) bootstrap.Collapse.getOrCreateInstance(menu).hide();
+    });
+})();
+
+/* Navbar (phones): bell panel and hamburger menu never stay open together */
+document.addEventListener('DOMContentLoaded', function () {
+    var menu = document.getElementById('appNavMenu');
+    var bellBtn = document.querySelector('.bell-mobile .bell-btn');
+    if (!menu || !bellBtn || !window.bootstrap) { return; }
+    bellBtn.addEventListener('show.bs.dropdown', function () {
+        if (menu.classList.contains('show')) { bootstrap.Collapse.getOrCreateInstance(menu).hide(); }
+    });
+    menu.addEventListener('show.bs.collapse', function () {
+        var dd = bootstrap.Dropdown.getInstance(bellBtn);
+        if (dd) { dd.hide(); }
+    });
+});
+
+/* ----------------------------------------------------------------------
+   Live regions: any element with data-live="name" is refreshed in place.
+   Every few seconds the page is fetched again in the background and only the
+   regions whose content changed are swapped, so tables and counters stay
+   current without a reload (and without touching forms, the camera or modals).
+   window.liveRefresh() refreshes at once, e.g. right after a scan.
+---------------------------------------------------------------------- */
+(function () {
+    if (!document.querySelector('[data-live]') || !window.fetch || !window.DOMParser) return;
+
+    var EVERY = 3000, busy = false, again = false;
+
+    function settle(root) {
+        root.querySelectorAll('.fade-up').forEach(function (n) { n.classList.remove('fade-up'); });   // no replay of the entrance animation
+        root.querySelectorAll('[data-count-to]').forEach(function (n) {                               // counters show the final number straight away
+            var dec = parseInt(n.dataset.countDecimals || '0', 10);
+            n.textContent = (n.dataset.countPrefix || '') +
+                parseFloat(n.dataset.countTo).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }) +
+                (n.dataset.countSuffix || '');
+        });
+    }
+
+    function refresh() {
+        if (document.hidden) return;
+        if (busy) { again = true; return; }
+        busy = true;
+
+        fetch(location.href, {
+            credentials: 'same-origin', cache: 'no-store',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
+        }).then(function (r) {
+            // Signed out (sent to the login page) or an error: leave the page as it is.
+            if (!r.ok || (r.redirected && new URL(r.url).pathname !== location.pathname)) throw new Error('skip');
+            return r.text();
+        }).then(function (html) {
+            var next = new DOMParser().parseFromString(html, 'text/html');
+            document.querySelectorAll('[data-live]').forEach(function (el) {
+                var fresh = next.querySelector('[data-live="' + el.getAttribute('data-live') + '"]');
+                if (!fresh) return;
+                settle(fresh);
+                if (fresh.innerHTML.trim() === el.innerHTML.trim()) return;
+                el.innerHTML = fresh.innerHTML;
+                el.classList.remove('live-flash'); void el.offsetWidth; el.classList.add('live-flash');
+            });
+        }).catch(function (e) { if (window.console && e && e.message !== 'skip') console.warn('live refresh failed', e); })
+          .then(function () {
+              busy = false;
+              if (again) { again = false; refresh(); }
+          });
+    }
+
+    window.liveRefresh = refresh;
+    setInterval(refresh, EVERY);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
+    window.addEventListener('online', refresh);
 })();

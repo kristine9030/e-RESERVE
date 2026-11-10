@@ -7,8 +7,7 @@
 <div class="page-hero fade-up no-print">
     <span class="eyebrow on-dark"><i class="fa-solid fa-folder-open"></i> Documentation</span>
     <h2>Reports</h2>
-    <p>Three official forms for the SSC, the Office of Student Affairs and the campus auditor.
-       Every report exports to a formatted spreadsheet and prints as the signed paper form.</p>
+    <p>Official report forms. Export to a spreadsheet or print the signed paper form.</p>
 </div>
 
 <div class="row g-4 mb-4 no-print">
@@ -31,6 +30,9 @@
                     </a>
                     <a href="{{ route('reports.export', ['report' => $key, 'format' => 'sheet']) }}" class="btn btn-gold btn-sm2">
                         <i class="fa-solid fa-file-excel"></i> Sheet
+                    </a>
+                    <a href="{{ route('reports.export', ['report' => $key, 'format' => 'pdf']) }}" class="btn btn-ghost btn-sm2">
+                        <i class="fa-solid fa-file-pdf"></i> PDF
                     </a>
                     <a href="{{ route('reports.export', ['report' => $key, 'format' => 'csv']) }}" class="btn btn-ghost btn-sm2">
                         <i class="fa-solid fa-file-csv"></i> CSV

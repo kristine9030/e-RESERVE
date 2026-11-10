@@ -13,17 +13,15 @@
         <span class="orb orb-teal orb-soft" style="width:300px;height:300px;bottom:-120px;left:-100px;"></span>
 
         <div class="auth-card fade-up">
-            <a href="{{ route('home') }}" class="text-muted2 fw-800 d-inline-flex align-items-center gap-2 mb-4"
-               style="font-size:.76rem;letter-spacing:1.2px;text-transform:uppercase;">
+            <a href="{{ route('home') }}" class="auth-back">
                 <i class="fa-solid fa-arrow-left"></i> Back to event page
             </a>
 
-            <h3 style="font-size:1.55rem;">Sign in to e-RESERVE</h3>
+            @include('partials.auth_switch', ['active' => 'login'])
+
+            <h3 style="font-size:1.55rem;">Welcome back</h3>
             <p class="text-soft mb-4" style="font-size:.87rem;">
-                Use your official <strong class="text-deep">{{ allowed_domains_text() }}</strong> account.
-                <span class="d-block text-muted2 mt-1" style="font-size:.78rem;">
-                    <i class="fa-solid fa-circle-info me-1"></i> No account yet? <a href="{{ route('register') . ($next !== '' ? '?next=' . urlencode($next) : '') }}" class="text-gold fw-800">Create one here</a>.
-                </span>
+                Sign in with your official <strong class="text-deep">{{ allowed_domains_text() }}</strong> account.
             </p>
 
             @if (session('login_error'))
@@ -50,7 +48,7 @@
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-brands fa-google"></i></span>
                         <input type="email" class="form-control" id="email" name="email"
-                               placeholder="juan.delacruz@g.batstate-u.edu.ph"
+                               placeholder="juan@g.batstate-u.edu.ph"
                                value="{{ old('email') }}"
                                style="border-left:0;border-radius:0 var(--radius-xs) var(--radius-xs) 0;" required>
                     </div>
@@ -123,9 +121,8 @@
             if (ALLOWED_DOMAINS.indexOf('@' + typed) !== -1) { return null; }
 
             var guess = nearestDomain(typed);
-            return guess
-                ? 'Check the spelling — did you mean <strong>' + local + '@' + guess + '</strong>?'
-                : 'e-RESERVE only accepts ' + ALLOWED_DOMAINS.join(' or ') + ' addresses.';
+            /* Not a near miss of a university domain: let the server decide (sponsors sign in with any email). */
+            return guess ? 'Check the spelling — did you mean <strong>' + local + '@' + guess + '</strong>?' : null;
         }
 
     /* Friendly client-side domain check before the round trip. */

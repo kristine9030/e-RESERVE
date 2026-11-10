@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\DocumentService;
 use Illuminate\Http\Request;
 
-/** Step 2: upload the three required PDFs. Uploading the third issues the ticket. */
+/** Step 2: upload the required PDFs (three for students, one for faculty/staff and sponsors). */
 class DocumentController extends Controller
 {
     public function __construct(private DocumentService $documents)
@@ -15,10 +15,6 @@ class DocumentController extends Controller
 
     public function index()
     {
-        if (auth()->user()->isEmployee()) {      // faculty / staff upload nothing
-            return redirect()->route('dashboard');
-        }
-
         $progress = document_progress();
 
         return view('student.documents', [
@@ -26,7 +22,8 @@ class DocumentController extends Controller
             'docs'     => user_documents(),
             'progress' => $progress,
             'ticket'   => get_ticket(),
-            'pct'      => (int) round($progress['uploaded'] / $progress['total'] * 100),
+            'pct'      => (int) round($progress['uploaded'] / max(1, $progress['total']) * 100),
+            'metas'    => required_documents(),
             'maxBytes' => (int) config('ereserve.doc_max_bytes'),
         ]);
     }
@@ -37,7 +34,7 @@ class DocumentController extends Controller
         $result = $this->documents->submit($request->user(), $type, $request->file('document'));
 
         if (!$result['ok']) {
-            return redirect(route('documents.index') . '#doc-' . ($this->documents->isType($type) ? $type : 'waiver'))
+            return redirect(route('documents.index') . '#doc-' . ($this->documents->isType($type) ? $type : array_key_first(required_documents())))
                 ->with('flash', flash('error', 'Could Not Upload', e($result['message'])));
         }
 

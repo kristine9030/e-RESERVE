@@ -82,20 +82,78 @@ class SscTeamTest extends TestCase
         $this->post(route('ssc.login.store'), ['email' => $user->email, 'password' => $m[1]])->assertRedirect(route('admin.dashboard'));
     }
 
-    public function test_cannot_use_a_student_email_a_bad_domain_or_someone_elses_address(): void
+    public function test_cannot_use_a_bad_domain_or_someone_elses_address(): void
     {
         $this->seed(SscRosterSeeder::class);
         $this->account('student', 'stu@g.batstate-u.edu.ph');
         [$a, $b] = [SscMember::where('position', 'President')->first(), SscMember::where('position', 'Auditor')->first()];
         $me = $this->actingAs($this->admin());
 
-        $me->post(route('admin.team.account', $a->id), ['email' => 'stu@g.batstate-u.edu.ph'])->assertSessionHas('flash.title', 'Email already in use');
         $me->post(route('admin.team.account', $a->id), ['email' => 'someone@gmail.com'])->assertSessionHas('flash.title', 'Check the email');
         $me->post(route('admin.team.account', $a->id), [])->assertSessionHas('flash.title', 'Check the email');
-        $this->assertSame('student', User::where('email', 'stu@g.batstate-u.edu.ph')->value('role'));   // untouched
 
         $me->post(route('admin.team.account', $a->id), ['email' => 'one@g.batstate-u.edu.ph']);
         $me->post(route('admin.team.account', $b->id), ['email' => 'one@g.batstate-u.edu.ph'])->assertSessionHas('flash.title', 'Email already in use');
+    }
+
+    public function test_a_registered_student_gets_ssc_access_on_the_same_account(): void
+    {
+        $this->seed(SscRosterSeeder::class);
+        $stu  = $this->account('student', 'stu@g.batstate-u.edu.ph');
+        $pass = $stu->password;
+        $pres = SscMember::where('position', 'President')->first();
+
+        $this->actingAs($this->admin())->post(route('admin.team.account', $pres->id), ['email' => 'stu@g.batstate-u.edu.ph'])
+            ->assertSessionHas('flash.title', 'SSC access given');
+
+        $stu->refresh();
+        $this->assertSame('student', $stu->role);          // still a student
+        $this->assertTrue((bool) $stu->ssc_access);
+        $this->assertSame($pass, $stu->password);          // password untouched
+        $this->assertSame($stu->id, $pres->fresh()->user_id);
+
+        // /login lands on the student side; /ssc lands on the SSC panel; switching works.
+        auth()->logout();
+        $this->post(route('login.store'), ['email' => $stu->email, 'password' => 'Test-pass-123'])->assertRedirect(route('dashboard'));
+        $this->get(route('admin.dashboard'))->assertRedirect();
+        $this->post(route('mode.switch', 'ssc'))->assertRedirect(route('admin.dashboard'));
+        $this->get(route('admin.dashboard'))->assertOk();
+        $this->post(route('mode.switch', 'student'))->assertRedirect(route('dashboard'));
+
+        auth()->logout();
+        $this->post(route('ssc.login.store'), ['email' => $stu->email, 'password' => 'Test-pass-123'])->assertRedirect(route('admin.dashboard'));
+    }
+
+    public function test_unconfirmed_students_and_plain_students_cannot_switch_or_be_granted(): void
+    {
+        $this->seed(SscRosterSeeder::class);
+        $stu = $this->account('student', 'stu@g.batstate-u.edu.ph');
+        $stu->forceFill(['email_verified_at' => null])->save();
+        $pres = SscMember::where('position', 'President')->first();
+
+        $this->actingAs($this->admin())->post(route('admin.team.account', $pres->id), ['email' => $stu->email])
+            ->assertSessionHas('flash.title', 'Email not confirmed yet');
+        $this->assertFalse((bool) $stu->fresh()->ssc_access);
+
+        $stu->forceFill(['email_verified_at' => now()])->save();
+        $this->actingAs($stu)->post(route('mode.switch', 'ssc'))->assertNotFound();
+    }
+
+    public function test_turning_off_a_student_link_removes_only_ssc_access(): void
+    {
+        $this->seed(SscRosterSeeder::class);
+        $stu  = $this->account('student', 'stu@g.batstate-u.edu.ph');
+        $pres = SscMember::where('position', 'President')->first();
+        $admin = $this->actingAs($this->admin());
+        $admin->post(route('admin.team.account', $pres->id), ['email' => $stu->email]);
+
+        $admin->post(route('admin.team.access', $pres->id), ['action' => 'disable']);
+        $stu->refresh();
+        $this->assertFalse((bool) $stu->ssc_access);
+        $this->assertSame('active', $stu->status);          // student account still works
+
+        $admin->post(route('admin.team.access', $pres->id), ['action' => 'enable']);
+        $this->assertTrue((bool) $stu->fresh()->ssc_access);
     }
 
     public function test_reset_changes_the_password_and_access_can_be_turned_off_and_on(): void

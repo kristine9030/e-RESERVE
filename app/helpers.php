@@ -25,7 +25,76 @@ function flash(string $type, string $title, string $text = ''): array
 /** config('ereserve.…') shorthand. */
 function ev(string $key = '')
 {
+    if ($key === 'capacity') {
+        return \App\Services\TicketQuota::capacity();   // may be above the venue count when SSC chose so
+    }
+
     return config('ereserve.event' . ($key === '' ? '' : '.' . $key));
+}
+
+/**
+ * One CSS (or JS) file instead of many: the project's own files are joined (and CSS lightly
+ * minified) into assets/<type>/app.bundle.<type>. It is rebuilt automatically whenever one of the
+ * sources is newer, so editing a file still shows up on the next refresh. If the bundle cannot be
+ * written (read-only host), the individual files are used instead.
+ *
+ * @param  list<string> $files names without extension, in load order
+ * @return list<string> URLs to load
+ */
+function asset_bundle_urls(string $type, array $files): array
+{
+    $dir    = public_path("assets/$type");
+    $rel    = "assets/$type/app.bundle.$type";
+    $target = public_path($rel);
+    $latest = 0;
+    foreach ($files as $f) {
+        $latest = max($latest, (int) @filemtime("$dir/$f.$type"));
+    }
+
+    try {
+        if (!is_file($target) || filemtime($target) < $latest) {
+            $out = '';
+            foreach ($files as $f) {
+                $src = (string) file_get_contents("$dir/$f.$type");
+                if ($type === 'css') {
+                    $src = preg_replace('!/\*.*?\*/!s', '', $src);
+                    $src = preg_replace('/\s+/', ' ', (string) $src);
+                    $src = preg_replace('/\s*([{};])\s*/', '$1', (string) $src);
+                    $out .= trim((string) $src) . "\n";
+                } else {
+                    $out .= $src . "\n;\n";
+                }
+            }
+            if (file_put_contents($target, $out, LOCK_EX) === false) {
+                throw new RuntimeException('bundle not writable');
+            }
+            touch($target, max($latest, time()));
+            clearstatcache(true, $target);
+        }
+
+        return [asset($rel) . '?v=' . filemtime($target)];
+    } catch (Throwable) {
+        return array_map(fn ($f) => asset_v("assets/$type/$f.$type"), $files);
+    }
+}
+
+/** Greeting by hour of the day (0-23): morning 5-11, afternoon 12-17, evening 18-21, night 22-4. */
+function greeting_for(int $hour): string
+{
+    return match (true) {
+        $hour >= 5 && $hour < 12  => 'Good morning',
+        $hour >= 12 && $hour < 18 => 'Good afternoon',
+        $hour >= 18 && $hour < 22 => 'Good evening',
+        default                   => 'Good night',
+    };
+}
+
+/** asset() with the file's modified time, so browsers cache it hard but still pick up edits. */
+function asset_v(string $path): string
+{
+    $file = public_path($path);
+
+    return asset($path) . (is_file($file) ? '?v=' . filemtime($file) : '');
 }
 
 function ssc(string $key)
@@ -88,6 +157,27 @@ function has_ticket(): bool
     return $t !== null && $t['status'] !== 'void';
 }
 
+/** The documents the signed-in person must upload: key => config meta. */
+function required_documents(): array
+{
+    return \App\Support\DocumentSets::metaFor(Auth::user()?->member_type);
+}
+
+/**
+ * Ticket colour by who holds it: students yellow, faculty/staff blue, sponsors orange.
+ * Returns 'student' | 'faculty' | 'sponsor' (used for the CSS class and the JPG palette).
+ */
+function ticket_tier(?string $memberType): string
+{
+    $memberType = $memberType ?: 'student';
+
+    return match (true) {
+        $memberType === 'student' => 'student',
+        $memberType === 'sponsor' => 'sponsor',
+        default                   => 'faculty',
+    };
+}
+
 function ticket_qr_payload(array $ticket): string
 {
     return tickets()->qrPayload($ticket);
@@ -140,6 +230,10 @@ function status_badge(string $status): string
  */
 function qr_svg(string $payload, int $size = 190, array $options = []): string
 {
+    if (!empty($options['cache'])) {   // fixed content (the sample ticket): draw it once
+        return \Illuminate\Support\Facades\Cache::rememberForever('qr.' . md5($payload . '|' . $size . '|' . ($options['label'] ?? '')), fn () => qr_svg($payload, $size, array_diff_key($options, ['cache' => 1])));
+    }
+
     $writer = new Writer(new ImageRenderer(new RendererStyle($size, 1), new SvgImageBackEnd()));
     $svg    = $writer->writeString($payload);
     $svg    = preg_replace('/^<\?xml[^>]*\?>\s*/', '', $svg);
@@ -217,16 +311,16 @@ function tracking_timeline(): array
     $docs     = user_documents();
     $ticket   = get_ticket();
     $live     = $ticket && $ticket['status'] !== 'void';
-    $docCfg   = config('ereserve.documents');
+    $docCfg   = required_documents();
 
     $docDesc = $progress['missing']
         ? 'Still needed: ' . implode(', ', array_map(static fn($k) => $docCfg[$k]['short'], $progress['missing'])) . '.'
         : ($progress['blocked']
             ? 'A document was returned — replace it to restore your ticket.'
-            : 'Waiver, COR and school ID are all uploaded.');
+            : (count($docCfg) > 1 ? 'Waiver, COR and school ID are all uploaded.' : 'Your ' . strtolower(reset($docCfg)['short']) . ' is uploaded.'));
 
     $reviewDesc = $progress['all_approved']
-        ? 'SSC approved all three documents.'
+        ? (count($docCfg) > 1 ? 'SSC approved all three documents.' : 'SSC approved your document.')
         : ($progress['blocked']
             ? 'A returned document needs to be replaced.'
             : 'SSC is checking your files — ' . $progress['approved'] . ' of ' . $progress['total'] . ' approved so far.');
@@ -244,8 +338,8 @@ function tracking_timeline(): array
         ['key' => 'ticket', 'label' => 'Ticket Number Issued', 'icon' => 'fa-ticket',
          'desc' => $ticket ? 'Your ticket number is ' . $ticket['ticket_no'] . '.'
              : ($progress['all_approved']
-                 ? 'All ' . number_format((int) ev('capacity')) . ' tickets have been claimed. You will get one if a seat is released.'
-                 : 'Issued once SSC approves all three documents.'),
+                 ? 'All the tickets for your group have been claimed. You will get one if a seat is released or SSC opens more.'
+                 : (count($docCfg) > 1 ? 'Issued once SSC approves all three documents.' : 'Issued once SSC approves your document.')),
          'stamp' => $ticket['issued_at'] ?? null, 'done' => $live],
         ['key' => 'gate', 'label' => 'Scanned at the Gate', 'icon' => 'fa-qrcode',
          'desc' => 'Show your QR code at the ' . ev('venue') . ' entrance.',

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Setting;
 use App\Models\Sponsor;
 use App\Models\SponsorInquiry;
 use App\Models\User;
@@ -36,23 +37,41 @@ class SponsorsTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_the_landing_page_shows_the_form_and_demo_list_until_real_sponsors_exist(): void
+    public function test_sponsors_strip_and_slot_count_are_hidden_until_ssc_publishes_them(): void
     {
-        $this->get(route('home'))->assertOk()->assertSee('Want to sponsor SIGLA 2026?')->assertSee('sponsorModal', false)->assertSee('Jollibee');
-
         Sponsor::create(['name' => 'Real Partner Inc', 'website' => 'https://real.test']);
 
-        $this->get(route('home'))->assertOk()->assertSee('Real Partner Inc')->assertSee('https://real.test', false)->assertDontSee('Jollibee');
+        $this->get(route('home'))->assertOk()
+            ->assertSee('Want to sponsor SIGLA 2026?')->assertSee('sponsorModal', false)
+            ->assertDontSee('Real Partner Inc')->assertDontSee('With thanks to')->assertDontSee('Slots available')->assertDontSee('Jollibee');
+
+        $this->actingAs($this->admin());
+        $this->post(route('admin.settings.update'), ['key' => 'show_sponsors', 'on' => 1])->assertSessionHas('flash.type', 'success');
+        $this->post(route('admin.settings.update'), ['key' => 'show_slots', 'on' => 1]);
+
+        $this->get(route('home'))->assertOk()->assertSee('Real Partner Inc')->assertSee('https://real.test', false)->assertSee('Slots available');
+
+        $this->post(route('admin.settings.update'), ['key' => 'show_sponsors', 'on' => 0]);
+        $this->get(route('home'))->assertDontSee('Real Partner Inc');
     }
 
-    public function test_a_hidden_sponsor_is_not_shown_and_none_left_says_so(): void
+    public function test_a_published_strip_with_no_active_sponsor_says_so_and_hides_hidden_ones(): void
     {
-        config(['ereserve.sponsors' => []]);
+        Setting::put('show_sponsors', true);
         Sponsor::create(['name' => 'Quiet Partner', 'active' => false]);
-        $demo = Sponsor::forLanding();
 
-        $this->assertSame([], $demo);
+        $this->assertSame([], Sponsor::forLanding());
         $this->get(route('home'))->assertOk()->assertDontSee('Quiet Partner')->assertSee('Sponsors will be announced soon');
+    }
+
+    public function test_only_ssc_can_change_site_settings_and_only_known_keys(): void
+    {
+        $this->post(route('admin.settings.update'), ['key' => 'show_slots', 'on' => 1])->assertRedirect();
+        $this->assertFalse(Setting::enabled('show_slots'));
+
+        $this->actingAs($this->admin());
+        $this->get(route('admin.settings'))->assertOk()->assertSee('Site settings');
+        $this->post(route('admin.settings.update'), ['key' => 'bogus', 'on' => 1])->assertStatus(422);
     }
 
     public function test_a_company_can_send_an_enquiry(): void
@@ -91,7 +110,8 @@ class SponsorsTest extends TestCase
 
         $s = Sponsor::firstOrFail();
         $this->assertFileExists(public_path($s->logo_path));
-        $this->get(route('admin.sponsors'))->assertOk()->assertSee('Acme Foods')->assertDontSee('demo sponsors');
+        $this->get(route('admin.sponsors'))->assertOk()->assertSee('Acme Foods');
+        Setting::put('show_sponsors', true);
         $this->get(route('home'))->assertSee($s->logo_path);
 
         $this->post(route('admin.sponsors.toggle', $s->id));

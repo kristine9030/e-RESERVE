@@ -7,7 +7,7 @@
 
     <div class="text-center mb-4">
         <a class="brand-lockup d-inline-flex" href="{{ route('home') }}">
-            <img class="brand-logo" src="{{ asset(ssc('logo')) }}" alt="Supreme Student Council seal">
+            <img class="brand-logo" src="{{ asset(ssc('logo_small')) }}" alt="Supreme Student Council seal">
             <span class="brand-text text-start">
                 <span class="brand-name d-block">e-<span>RESERVE</span></span>
                 <span class="brand-sub">SIGLA 2026</span>
@@ -28,11 +28,7 @@
                 and your account is ready.
             </p>
             <div class="d-flex flex-wrap gap-2 justify-content-center mt-4">
-                @if (!empty($user['is_employee']))
-                    <a href="{{ route('ticket') }}" class="btn btn-gold"><i class="fa-solid fa-ticket"></i> Open my ticket</a>
-                @else
-                    <a href="{{ route('documents.index') }}" class="btn btn-gold"><i class="fa-solid fa-file-arrow-up"></i> Upload my documents</a>
-                @endif
+                <a href="{{ route('documents.index') }}" class="btn btn-gold"><i class="fa-solid fa-file-arrow-up"></i> Upload my {{ count(required_documents()) > 1 ? 'documents' : 'document' }}</a>
                 <a href="{{ route('dashboard') }}" class="btn btn-ghost">Go to dashboard</a>
             </div>
 

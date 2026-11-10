@@ -11,7 +11,7 @@ class User extends Authenticatable
 {
     use Notifiable;
 
-    protected $guarded = ['id', 'role', 'member_type'];   // role and member type are never mass-assigned
+    protected $guarded = ['id', 'role', 'member_type', 'ssc_access'];   // role, member type and SSC access are never mass-assigned
 
     protected $hidden = ['password', 'remember_token', 'verify_token_hash'];
 
@@ -37,9 +37,50 @@ class User extends Authenticatable
         ));
     }
 
+    /**
+     * The role this person acts as right now. A student account that also holds SSC
+     * access acts as `admin` only while it is in SSC mode (and only for the signed-in
+     * user, never for someone else's record loaded in the same request).
+     */
+    public function effectiveRole(): string
+    {
+        if ($this->role === 'student' && $this->ssc_access && $this->inSscMode()) {
+            return 'admin';
+        }
+
+        return (string) $this->role;
+    }
+
+    private function inSscMode(): bool
+    {
+        try {
+            return \Illuminate\Support\Facades\Auth::id() === $this->id && request()->hasSession() && (bool) session('ssc_mode');
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /** May open the SSC panel: a real SSC account, or a student account granted SSC access. */
+    public function canUseSsc(): bool
+    {
+        return $this->role === 'admin' || ($this->role === 'student' && (bool) $this->ssc_access);
+    }
+
+    /** A student/faculty/sponsor account that also has SSC access (can switch between the two). */
+    public function isDualAccount(): bool
+    {
+        return $this->role === 'student' && (bool) $this->ssc_access;
+    }
+
+    /** The system owner: sees every account, the activity log and system performance. */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'superadmin';
+    }
+
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->effectiveRole() === 'admin';
     }
 
     /** Gate staff: may scan tickets, nothing else. */
@@ -48,7 +89,7 @@ class User extends Authenticatable
         return $this->role === 'scanner';
     }
 
-    /** Faculty, instructor, staff or administration: no documents, a confirmed email is enough. */
+    /** Faculty, instructor, staff or sponsor: no documents, a confirmed email is enough. */
     public function isEmployee(): bool
     {
         return $this->role === 'student' && ($this->member_type ?? 'student') !== 'student';
@@ -64,6 +105,7 @@ class User extends Authenticatable
     public function homeRoute(): string
     {
         return match (true) {
+            $this->isSuperAdmin() => route('superadmin.dashboard'),
             $this->isAdmin()   => route('admin.dashboard'),
             $this->isScanner() => route('admin.checkin'),
             default            => route('dashboard'),
@@ -77,7 +119,7 @@ class User extends Authenticatable
 
     public function hasVerifiedEmail(): bool
     {
-        return $this->isAdmin() || $this->email_verified_at !== null;
+        return $this->isAdmin() || $this->isSuperAdmin() || $this->email_verified_at !== null;
     }
 
     public function documents(): HasMany
@@ -95,8 +137,9 @@ class User extends Authenticatable
     {
         return [
             'id'         => (int) $this->id,
-            'role'       => $this->role,
-            'name'       => $this->name,
+            'role'       => $this->effectiveRole(),
+            'dual'       => $this->isDualAccount(),
+            'name'     => $this->name,
             'email'      => $this->email,
             'member_type' => $this->member_type ?? 'student',
             'is_employee' => $this->isEmployee(),

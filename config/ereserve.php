@@ -38,27 +38,13 @@ return [
         'email'     => 'sscnasugbu@g.batstate-u.edu.ph',
         'messenger' => 'Supreme Student Council - Batangas State University ARASOF-Nasugbu Campus',
         'logo'      => 'assets/images/ssc-logo.png',
+        'logo_small' => 'assets/images/ssc-logo-sm.png',   // 240px copy for page headers (80 KB instead of 888 KB)
     ],
 
-    /**
-     * Sponsors shown in the landing-page strip: [name, logo path|null, icon|null].
-     * Leave empty to hide the section. Only add sponsors who have agreed to it.
-     */
-    /*
-     * !! DEMO SPONSORS !! These eight are placeholders so the strip can be seen. They have NOT agreed to
-     * sponsor SIGLA 2026 and their logos are their owners' trademarks. Replace this list with the real
-     * sponsors (and their own logo files in public/assets/images/sponsors/) before the site goes public.
-     */
-    'sponsors' => [
-        ['SM Supermalls', 'assets/images/sponsors/sm.png',         null],
-        ['Ayala Malls',   'assets/images/sponsors/ayala.png',      null],
-        ['Jollibee',      'assets/images/sponsors/jollibee.png',   null],
-        ['Globe',         'assets/images/sponsors/globe.png',      null],
-        ['Smart',         'assets/images/sponsors/smart.png',      null],
-        ['BDO',           'assets/images/sponsors/bdo.png',        null],
-        ['San Miguel',    'assets/images/sponsors/san-miguel.png', null],
-        ['Metrobank',     'assets/images/sponsors/metrobank.png',  null],
-    ],
+    /** Starting split of the tickets (SSC changes it in Site Settings). Should add up to event.capacity. */
+    'quotas' => ['student' => 2500, 'employee' => 200, 'sponsor' => 300],
+
+    // Sponsors are managed by the SSC in the panel (Sponsors + Site Settings), not here.
 
     'ticket' => [
         'prefix' => 'SIGLA-2026-',
@@ -72,7 +58,7 @@ return [
             'label' => 'Signed Waiver',
             'short' => 'Waiver',
             'icon'  => 'fa-file-signature',
-            'hint'  => 'Print the waiver, sign it, then scan or photograph it and save it as a PDF.',
+            'hint'  => 'Download the official waiver, print it, have your parent or guardian and you sign it, then scan it and save it as a PDF.',
             'rules' => ['Signed in ink by you', 'Every page included', 'Name matches your account'],
         ],
         'cor' => [
@@ -91,14 +77,36 @@ return [
             'hint'  => 'A clear scan or photo of the front of your BatStateU ID, saved as a PDF.',
             'rules' => ['Front side, face visible', 'Valid for this school year', 'No glare or filters'],
         ],
+        'employee_id' => [
+            'key'   => 'employee_id',
+            'label' => 'Employee ID',
+            'short' => 'Employee ID',
+            'icon'  => 'fa-id-badge',
+            'hint'  => 'A clear scan or photo of the front of your BatStateU employee ID, saved as one PDF.',
+            'rules' => ['Front side, face visible', 'Name matches your account', 'No glare or filters'],
+        ],
+        'sponsorship' => [
+            'key'   => 'sponsorship',
+            'label' => 'Proof of Sponsorship',
+            'short' => 'Proof of sponsorship',
+            'icon'  => 'fa-handshake',
+            'hint'  => 'The SSC letter, agreement or receipt that shows your sponsorship, saved as one PDF.',
+            'rules' => ['Shows the company or your name', 'Shows the SSC or the event', 'Readable, not cropped'],
+        ],
+    ],
+
+    /** Which of the documents above each kind of holder uploads. The ticket comes once all of them are approved. */
+    'document_sets' => [
+        'student'  => ['waiver', 'cor', 'id'],
+        'employee' => ['employee_id'],          // faculty, instructor, staff
+        'sponsor'  => ['sponsorship'],
     ],
 
     'doc_max_bytes' => 5 * 1024 * 1024,
 
     /** Who may hold an account. */
     'allowed_email_domains' => [
-        'g.batstate-u.edu.ph',   // students
-        'batstate-u.edu.ph',     // faculty and offices
+        'g.batstate-u.edu.ph',   // students // faculty and offices
     ],
 
     /**
@@ -115,7 +123,6 @@ return [
         'faculty'        => 'Faculty',
         'instructor'     => 'Instructor',
         'staff'          => 'Staff',
-        'administration' => 'Administration',
     ],
 
     /** Employee ID shape: letters, digits, dash or slash; 3 to 20 characters. */

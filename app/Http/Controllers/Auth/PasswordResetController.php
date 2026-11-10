@@ -30,7 +30,7 @@ class PasswordResetController extends Controller
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return back()->withInput()->with('reset_error', 'That does not look like a valid email address.');
         }
-        if (!$this->accounts->staffEmailAllowed($email)) {
+        if (!$this->accounts->loginEmailAllowed($email)) {
             return back()->withInput()->with('reset_error', $this->accounts->domainRejection($email));
         }
 

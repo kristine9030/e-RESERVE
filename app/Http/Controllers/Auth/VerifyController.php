@@ -26,9 +26,9 @@ class VerifyController extends Controller
             if ($result['ok']) {
                 session()->flash('flash', flash(
                     'success', 'Email confirmed!',
-                    ($result['user']?->isEmployee())
-                        ? 'Your account is verified and your ticket for ' . ev('name') . ' is ready. No documents needed.'
-                        : 'Your account is fully verified. Next, upload your waiver, COR and school ID to get your ticket for ' . ev('name') . '.'
+                    'Your account is fully verified. Next, upload your '
+                        . implode(', ', array_map(static fn ($m) => strtolower($m['label']), \App\Support\DocumentSets::metaFor($result['user']?->member_type)))
+                        . ' to get your ticket for ' . ev('name') . '.'
                 ));
             }
         } elseif (session()->has('verify_result')) {

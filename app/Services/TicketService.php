@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Database\UniqueConstraintViolationException;
+use App\Support\DocumentSets;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -62,7 +63,7 @@ class TicketService
         return $this->cache['docs'][$userId] = $out;
     }
 
-    /** Faculty, instructor, staff or administration: ticket after a confirmed email, no documents. */
+    /** Faculty, instructor, staff or sponsor (anyone who is not a student). */
     public function isEmployee(int $userId): bool
     {
         return $this->cache['emp'][$userId] ??= DB::table('users')->where('id', $userId)->where('role', 'student')->where('member_type', '<>', 'student')->exists();
@@ -71,13 +72,9 @@ class TicketService
     /** @return array{total:int,uploaded:int,approved:int,rejected:int,pending:int,missing:array,complete:bool,all_approved:bool,blocked:bool} */
     public function progress(int $userId): array
     {
-        if ($this->isEmployee($userId)) {      // faculty / staff: no documents at all
-            return ['total' => 0, 'uploaded' => 0, 'approved' => 0, 'rejected' => 0, 'pending' => 0, 'missing' => [],
-                    'complete' => true, 'all_approved' => true, 'blocked' => false];
-        }
-
-        $types    = array_keys(config('ereserve.documents'));
+        $types    = DocumentSets::keysFor(DB::table('users')->where('id', $userId)->value('member_type'));
         $docs     = $this->documents($userId);
+        $docs     = array_intersect_key($docs, array_flip($types));
         $missing  = array_values(array_diff($types, array_keys($docs)));
         $statuses = array_column($docs, 'status');
         $rejected = count(array_keys($statuses, 'rejected', true));
@@ -145,7 +142,7 @@ class TicketService
     {
         $taken = (int) DB::table('tickets')->where('status', '<>', 'void')->count();
 
-        return max(0, (int) config('ereserve.event.capacity') - $taken);
+        return max(0, TicketQuota::capacity() - $taken);
     }
 
     /** HMAC baked into the QR payload, keyed by the app key. */
@@ -234,8 +231,7 @@ class TicketService
         $existing = DB::table('tickets')->where('user_id', $userId)->first();
         $u        = DB::table('users')->where('id', $userId)->first(['status', 'email_verified_at']);
         $active   = ($u->status ?? '') === 'active';
-        // Employees have no documents to approve, so their proof is a confirmed email.
-        $eligible = $progress['all_approved'] && $active && (!$this->isEmployee($userId) || ($u->email_verified_at ?? null) !== null);
+        $eligible = $progress['all_approved'] && $active;
 
         if (!$eligible) {
             if ($existing && $existing->status === 'valid') {
@@ -257,14 +253,16 @@ class TicketService
                     'ticket_no' => $existing->ticket_no ?? null];
         }
 
-        $capacity = (int) config('ereserve.event.capacity');
+        $capacity = TicketQuota::capacity();
 
         // Make sure the counter row exists, outside any transaction: doing this inside
         // it deadlocks against the FOR UPDATE below when many requests arrive together.
         DB::table('sequences')->insertOrIgnore(['seq_key' => 'ticket', 'current_value' => 0]);
 
         try {
-            $outcome = DB::transaction(function () use ($userId, $capacity) {
+            $group = DocumentSets::setName(DB::table('users')->where('id', $userId)->value('member_type'));
+
+            $outcome = DB::transaction(function () use ($userId, $capacity, $group) {
                 // One lock serialises every issue/restore, so the count below is exact.
                 $seq = DB::table('sequences')->where('seq_key', 'ticket')->lockForUpdate()->first();
 
@@ -273,7 +271,8 @@ class TicketService
                 if ($row && $row->status !== 'void') {
                     return ['unchanged', $row->ticket_no];
                 }
-                if ($this->seatsTaken() >= $capacity) {
+                // full overall, or this group has used up the seats SSC allotted to it (unused seats of other groups stay held)
+                if ($this->seatsTaken() >= $capacity || TicketQuota::takenFor($group) >= TicketQuota::limit($group)) {
                     return ['full', $row->ticket_no ?? null];
                 }
                 if ($row) {
@@ -323,33 +322,30 @@ class TicketService
      */
     public function promoteWaiting(): int
     {
-        $free = $this->slotsRemaining();
-        if ($free <= 0) {
-            return 0;
-        }
-
-        $total = count(config('ereserve.documents'));
-        $ids   = DB::table('documents as d')
-            ->join('users as u', 'u.id', '=', 'd.user_id')
-            ->leftJoin('tickets as t', 't.user_id', '=', 'd.user_id')
-            ->where('u.role', 'student')->where('u.status', 'active')->whereNull('t.id')
-            ->groupBy('d.user_id')
-            ->havingRaw('COUNT(*) = ? AND SUM(d.status = "approved") = ?', [$total, $total])
-            ->orderByRaw('MAX(d.reviewed_at) ASC')->orderBy('d.user_id')
-            ->limit($free)->pluck('d.user_id');
-
-        // Confirmed employees waiting for a seat go after the students already in line.
-        $ids = $ids->concat(
-            DB::table('users as u')->leftJoin('tickets as t', 't.user_id', '=', 'u.id')
-                ->where('u.role', 'student')->where('u.member_type', '<>', 'student')->where('u.status', 'active')
-                ->whereNotNull('u.email_verified_at')->whereNull('t.id')
-                ->orderBy('u.email_verified_at')->orderBy('u.id')->limit($free)->pluck('u.id')
-        )->take($free);
-
+        $need   = DocumentSets::sqlRequired('u.member_type');
         $issued = 0;
-        foreach ($ids as $id) {
-            if ($this->sync((int) $id)['state'] === 'issued') {
-                $issued++;
+
+        // each group is filled only up to its own allotment
+        foreach (array_keys(TicketQuota::GROUPS) as $group) {
+            $free = min($this->slotsRemaining(), TicketQuota::limit($group) - TicketQuota::takenFor($group));
+            if ($free <= 0) {
+                continue;
+            }
+
+            $ids = DB::table('documents as d')
+                ->join('users as u', 'u.id', '=', 'd.user_id')
+                ->leftJoin('tickets as t', 't.user_id', '=', 'd.user_id')
+                ->where('u.role', 'student')->where('u.status', 'active')->whereNull('t.id')
+                ->whereRaw(TicketQuota::GROUP_SQL . ' = ?', [$group])
+                ->groupBy('d.user_id', 'u.member_type')
+                ->havingRaw("COUNT(*) = $need AND SUM(d.status = 'approved') = $need")
+                ->orderByRaw('MAX(d.reviewed_at) ASC')->orderBy('d.user_id')
+                ->limit($free)->pluck('d.user_id');
+
+            foreach ($ids as $id) {
+                if ($this->sync((int) $id)['state'] === 'issued') {
+                    $issued++;
+                }
             }
         }
 

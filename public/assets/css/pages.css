@@ -209,3 +209,36 @@
 .pw-toggle:hover { background: #EEF6FA; color: #2A8DB5; }
 .pw-toggle:focus-visible { outline: 2px solid #2A8DB5; outline-offset: 1px; }
 .form-control.is-invalid ~ .pw-toggle { right: 1.9rem; }
+
+/* ---- Sign in / Create account switcher and "new here" call-out -------------- */
+.auth-back { display: inline-flex; align-items: center; gap: .5rem; margin-bottom: 1rem; font-size: .74rem; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ink-muted); }
+.auth-back:hover { color: var(--green-900); }
+.auth-switch { display: grid; grid-template-columns: 1fr 1fr; gap: .3rem; padding: .3rem; margin-bottom: 1.4rem; border-radius: 16px; background: #E8F2F8; }
+.auth-switch a { display: flex; align-items: center; justify-content: center; gap: .5rem; padding: .7rem .5rem; border-radius: 12px; font-weight: 800; font-size: .9rem; color: var(--ink-soft); text-decoration: none; transition: background .2s ease, color .2s ease, box-shadow .2s ease; }
+.auth-switch a:hover { color: var(--green-900); background: rgba(255, 255, 255, .6); }
+.auth-switch a.is-active { background: #fff; color: var(--green-900); box-shadow: 0 4px 12px rgba(23, 59, 77, .12); }
+.auth-switch a.is-active i { color: #2A8DB5; }
+
+.auth-new { margin-top: 1.6rem; padding: 1.1rem 1.1rem 1rem; border-radius: 18px; background: linear-gradient(180deg, #FFF8EA, #FFF2D6); border: 1px solid #F2D9A0; display: flex; flex-direction: column; gap: .75rem; }
+.auth-new-text strong { display: block; font-size: .95rem; color: var(--green-900); }
+.auth-new-text span { font-size: .8rem; color: var(--ink-soft); line-height: 1.45; }
+.auth-new-alt { text-align: center; font-size: .78rem; color: var(--ink-soft); }
+.auth-new-alt b { color: #A8620A; }
+
+/* Wider sign-in card so it balances the artwork on the left */
+@media (min-width: 992px) {
+    .auth-card { max-width: 600px; padding: 2.6rem 2.8rem; }
+    .auth-card h3 { font-size: 1.75rem !important; }
+}
+@media (min-width: 1500px) { .auth-card { max-width: 640px; } }
+
+.who-ico-orange { background: linear-gradient(135deg, #F2761F, #D4560F); color: #fff; }
+
+/* ---- Landing: who can join ---- */
+.join-card { display: flex; flex-direction: column; align-items: flex-start; }
+.join-card p { flex: 1 1 auto; }
+.join-card .badge-soft { margin-bottom: .9rem; }
+.join-link { font-weight: 800; font-size: .88rem; color: #A8620A; text-decoration: none; }
+.join-link:hover { color: #7A4806; }
+.join-link i { margin-left: .25rem; transition: transform .2s ease; }
+.join-link:hover i { transform: translateX(3px); }

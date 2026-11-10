@@ -11,7 +11,7 @@
         <h5 class="mt-4">What we collect</h5>
         <ul class="text-soft">
             <li>Your name, SR-code, college, programme, year level, GSuite address and (optionally) mobile number.</li>
-            <li>The three documents you upload: signed waiver, Certificate of Registration and school ID.</li>
+            <li>The documents you upload: for students the signed waiver, Certificate of Registration and school ID; for faculty and staff your employee ID; for sponsors a proof of sponsorship.</li>
             <li>Sign-in and activity records (what was reviewed, issued or scanned, when, and by whom).</li>
         </ul>
 

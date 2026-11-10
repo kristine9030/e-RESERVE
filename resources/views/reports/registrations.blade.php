@@ -17,6 +17,8 @@
     </div>
 </div>
 
+@include('reports._filter')
+
 <div class="row g-3 mb-4 no-print">
     <?php foreach ($ds['summary'] as $i => [$label, $value, $type]):
         $tone = [0 => 'deep', 1 => 'green', 2 => 'orange', 3 => 'gold'][$i] ?? 'deep';

@@ -152,7 +152,7 @@ class AccountService
     }
 
     /**
-     * Faculty, instructor, staff or administration: name, employee ID, email and a password.
+     * Faculty, instructor, staff or sponsor: name, employee ID, email and a password.
      * No documents. The ticket is issued the moment the email is confirmed.
      *
      * @return array{ok:bool,message:string,field:?string,user:?User,mail_ok?:bool}
@@ -170,7 +170,7 @@ class AccountService
         $confirm   = (string) ($in['password_confirm'] ?? '');
 
         if (!isset(config('ereserve.employee_types')[$type])) {
-            return $fail('Choose whether you are faculty, an instructor, staff or administration.', 'member_type');
+            return $fail('Choose whether you are faculty, an instructor or staff.', 'member_type');
         }
         if (mb_strlen($name) < 3 || mb_strlen($name) > 160) {
             return $fail('Enter your full name.', 'name');
@@ -226,10 +226,82 @@ class AccountService
         request()->session()->regenerate();
         Audit::log('user.register', 'user', (string) $user->id, ['type' => $type]);
 
-        // Employees have no documents to approve, so the ticket is issued right now.
-        $this->tickets->sync((int) $user->id);
-
         return ['ok' => true, 'message' => 'Account created.', 'field' => null, 'user' => $user, 'mail_ok' => true];
+    }
+
+    /**
+     * Sponsors sign up with whatever email they have (they are not university members), so the
+     * address must be confirmed by link before the ticket is issued. No documents.
+     *
+     * @return array{ok:bool,message:string,field:?string,user:?User,mail_ok?:bool}
+     */
+    public function registerSponsor(array $in): array
+    {
+        $fail = static fn(string $m, ?string $f = null) => ['ok' => false, 'message' => $m, 'field' => $f, 'user' => null];
+
+        $name     = trim(preg_replace('/\s+/', ' ', (string) ($in['name'] ?? '')) ?? '');
+        $email    = strtolower(trim((string) ($in['email'] ?? '')));
+        $mobile   = trim((string) ($in['mobile'] ?? ''));
+        $password = (string) ($in['password'] ?? '');
+        $confirm  = (string) ($in['password_confirm'] ?? '');
+
+        if (mb_strlen($name) < 3 || mb_strlen($name) > 160) {
+            return $fail('Enter your company or your full name.', 'name');
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $fail('That does not look like a valid email address.', 'email');
+        }
+        if ($mobile !== '' && !preg_match('/^09\d{9}$/', preg_replace('/\D/', '', $mobile) ?? '')) {
+            return $fail('Enter your mobile number as 09XXXXXXXXX.', 'mobile');
+        }
+        if ($problem = $this->passwordProblem($password)) {
+            return $fail($problem, 'password');
+        }
+        if (!hash_equals($password, $confirm)) {
+            return $fail('The two passwords do not match.', 'password_confirm');
+        }
+
+        $key = 'register:' . request()->ip();
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            return $fail('Too many sign-up attempts. Please wait ' . RateLimiter::availableIn($key) . ' seconds.');
+        }
+        RateLimiter::hit($key, 900);
+
+        if (User::where('email', $email)->exists()) {
+            return $fail('An account already exists for that email. Sign in instead.', 'email');
+        }
+
+        do {
+            $sponsorNo = 'SPN-' . strtoupper(\Illuminate\Support\Str::random(5));
+        } while (User::where('student_no', $sponsorNo)->exists());
+
+        try {
+            $user = new User();
+            $user->forceFill([
+                'email' => $email, 'password' => $password, 'role' => 'student', 'member_type' => 'sponsor', 'name' => $name,
+                'initials' => $this->initials($name), 'student_no' => $sponsorNo, 'program' => 'Sponsor',
+                'year_level' => null, 'college_code' => null,
+                'mobile' => $mobile === '' ? null : preg_replace('/\D/', '', $mobile), 'status' => 'active',
+            ])->save();
+        } catch (UniqueConstraintViolationException) {
+            return $fail('An account with that email already exists.', 'email');
+        }
+
+        $this->tickets->forget();
+        Auth::login($user);
+        request()->session()->regenerate();
+        Audit::log('user.register', 'user', (string) $user->id, ['type' => 'sponsor']);
+
+        $mail = $this->sendVerification($user);
+
+        return ['ok' => true, 'message' => 'Account created.', 'field' => null, 'user' => $user, 'mail_ok' => $mail['ok']];
+    }
+
+    /** Who may sign in or reset a password: university addresses, listed staff, and existing sponsor accounts. */
+    public function loginEmailAllowed(string $email): bool
+    {
+        return $this->staffEmailAllowed($email)
+            || User::where('email', strtolower(trim($email)))->where('member_type', 'sponsor')->exists();
     }
 
     public function employeeIdValid(string $id): bool
@@ -440,11 +512,6 @@ class AccountService
         request()->session()->regenerate();
 
         Audit::log('email.verified', 'user', (string) $user->id);
-
-        // Employees have no documents: a confirmed email is their approval, so the ticket is issued now.
-        if ($user->isEmployee()) {
-            $this->tickets->sync((int) $user->id);
-        }
 
         return ['ok' => true, 'message' => 'Email confirmed.', 'user' => $user];
     }

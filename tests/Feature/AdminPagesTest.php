@@ -29,7 +29,7 @@ class AdminPagesTest extends TestCase
                 'email' => "stu$i@g.batstate-u.edu.ph", 'name' => "Student $i", 'password' => 'secret-pass-1',
                 'student_no' => sprintf('26-%05d', $i), 'college_code' => $i % 2 ? 'CICS' : 'CAS', 'status' => 'active',
             ]);
-            foreach (array_keys(config('ereserve.documents')) as $type) {
+            foreach (config('ereserve.document_sets.student') as $type) {
                 Document::create([
                     'user_id' => $u->id, 'doc_type' => $type, 'original_name' => "$type.pdf",
                     'stored_name' => '20261108-' . bin2hex(random_bytes(16)) . '.pdf', 'size_bytes' => 1000,
@@ -62,12 +62,12 @@ class AdminPagesTest extends TestCase
         $this->students(30);    // 30 students, 90 pending documents
         $this->actingAs($this->admin());
 
-        $this->get(route('admin.documents'))->assertOk()->assertSee('30 in the queue')->assertSee('Showing 1–20 of 30');
-        $this->get(route('admin.documents', ['college' => 'CAS']))->assertOk()->assertSee('15 in the queue');
-        $this->get(route('admin.documents', ['q' => '26-00007']))->assertOk()->assertSee('1 in the queue')->assertSee('Student 7');
+        $this->get(route('admin.documents'))->assertOk()->assertSee('30 students waiting')->assertSee('Showing 1–20 of 30');
+        $this->get(route('admin.documents', ['college' => 'CAS']))->assertOk()->assertSee('15 students waiting');
+        $this->get(route('admin.documents', ['q' => '26-00007']))->assertOk()->assertSee('1 student waiting')->assertSee('Student 7');
     }
 
-    public function test_college_cards_show_the_numbers_per_college(): void
+    public function test_college_numbers_are_correct_and_review_page_is_one_table(): void
     {
         $students = $this->students(4);      // CICS: 1,3   CAS: 2,4
         Document::where('user_id', $students[0]->id)->update(['status' => 'approved']);                          // student 1 fully cleared
@@ -82,7 +82,7 @@ class AdminPagesTest extends TestCase
         $this->assertSame(1, $c['CAS']['returned']);
         $this->assertSame(50, (int) $c['CICS']['done']);
 
-        $this->actingAs($this->admin())->get(route('admin.documents'))->assertOk()->assertSee('By college')->assertSee('CICS');
+        $this->actingAs($this->admin())->get(route('admin.documents'))->assertOk()->assertSee('Needs review')->assertDontSee('By college');
     }
 
     public function test_a_student_page_shows_all_three_documents_and_next_student(): void
@@ -91,7 +91,7 @@ class AdminPagesTest extends TestCase
         $this->actingAs($this->admin());
 
         $res = $this->get(route('admin.documents.student', $students[0]->id))->assertOk()->assertSee('Student 1');
-        foreach (config('ereserve.documents') as $m) {
+        foreach (\App\Support\DocumentSets::metaFor('student') as $m) {
             $res->assertSee($m['label']);
         }
         $res->assertSee('Approve all waiting (3)')->assertSee(route('admin.documents.student', $students[1]->id), false);

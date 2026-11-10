@@ -44,6 +44,24 @@ class EmployeeRegistrationTest extends TestCase
         return $u->fresh();
     }
 
+    /** The employee-ID PDF row, in the given status. */
+    private function idDocument(User $u, string $status = 'submitted'): \App\Models\Document
+    {
+        return \App\Models\Document::create([
+            'user_id' => $u->id, 'doc_type' => 'employee_id', 'original_name' => 'employee-id.pdf',
+            'stored_name' => '20261108-' . bin2hex(random_bytes(16)) . '.pdf', 'size_bytes' => 1000,
+            'status' => $status, 'uploaded_at' => now(), 'reviewed_at' => $status === 'approved' ? now() : null,
+        ]);
+    }
+
+    private function admin(): User
+    {
+        $a = User::create(['email' => 'boss' . random_int(100, 999) . '@g.batstate-u.edu.ph', 'name' => 'Boss', 'password' => 'Test-pass-123']);
+        $a->forceFill(['role' => 'admin', 'status' => 'active', 'email_verified_at' => now()])->save();
+
+        return $a;
+    }
+
     private function employee(string $email = 'a.employee@batstate-u.edu.ph', string $no = 'EMP-001', string $type = 'staff'): User
     {
         $u = User::create(['email' => $email, 'name' => 'Ana Employee', 'password' => 'Test-pass-123']);
@@ -55,40 +73,65 @@ class EmployeeRegistrationTest extends TestCase
 
     public function test_the_first_step_asks_who_you_are_and_each_choice_has_its_own_form(): void
     {
-        $this->get(route('register'))->assertOk()->assertSee('I’m a student')->assertSee('faculty, an instructor, staff or administration')
+        $this->get(route('register'))->assertOk()->assertSee('I’m a student')->assertSee('faculty, an instructor or staff')->assertSee('I’m a sponsor')->assertDontSee('administration')
             ->assertDontSee('Employee ID', false);
         $this->get(route('register', ['as' => 'student']))->assertOk()->assertSee('SR-Code')->assertSee('College');
-        $this->get(route('register', ['as' => 'employee']))->assertOk()->assertSee('Employee ID')->assertSee('Administration')->assertDontSee('SR-Code');
+        $this->get(route('register', ['as' => 'employee']))->assertOk()->assertSee('Employee ID')->assertDontSee('Administration')->assertDontSee('SR-Code');
     }
 
-    public function test_an_employee_registers_with_just_a_name_and_employee_id(): void
+
+    public function test_an_employee_registers_then_uploads_only_the_employee_id(): void
     {
-        $this->register()->assertRedirect(route('dashboard'));
+        $this->register()->assertRedirect(route('documents.index'));
 
         $u = User::where('email', 'maria.reyes@batstate-u.edu.ph')->firstOrFail();
-        $this->assertSame('student', $u->role);
         $this->assertSame('faculty', $u->member_type);
         $this->assertSame('2015-0123', $u->student_no);
-        $this->assertSame('Faculty', $u->program);
-        $this->assertTrue($u->isEmployee());
-        $this->assertNotNull($u->email_verified_at, 'employees skip the confirmation email');
-        $this->assertSame(1, DB::table('tickets')->where('user_id', $u->id)->where('status', 'valid')->count(), 'ticket is issued on sign-up');
+        $this->assertNotNull($u->email_verified_at, 'faculty skip the confirmation email');
+        $this->assertSame(0, DB::table('tickets')->where('user_id', $u->id)->count(), 'no ticket until SSC approves the ID');
         Mail::assertNotQueued(\App\Mail\ConfirmEmail::class);
+
+        $this->get(route('documents.index'))->assertOk()->assertSee('Employee ID')->assertDontSee('Signed Waiver')
+            ->assertDontSee('Certificate of Registration');
+        $this->assertSame(['employee_id'], \App\Support\DocumentSets::keysFor('faculty'));
     }
 
-    public function test_confirming_the_email_issues_the_ticket_with_no_documents(): void
+
+    public function test_the_ticket_comes_when_ssc_approves_the_employee_id(): void
     {
         $this->register();
-        $u = $this->confirm(User::where('email', 'maria.reyes@batstate-u.edu.ph')->first());
+        $u  = User::where('email', 'maria.reyes@batstate-u.edu.ph')->first();
+        $id = $this->idDocument($u);
+        $this->assertSame(0, DB::table('tickets')->where('user_id', $u->id)->count());
 
-        $this->assertNotNull($u->email_verified_at);
+        $res = app(\App\Services\DocumentService::class)->review($this->admin(), $id->id, 'approved');
+        $this->assertTrue($res['ok']);
+
         $t = DB::table('tickets')->where('user_id', $u->id)->first();
         $this->assertNotNull($t);
         $this->assertSame('valid', $t->status);
-        $this->assertSame(0, DB::table('documents')->where('user_id', $u->id)->count());
         $this->assertDatabaseHas('notices', ['user_id' => $u->id, 'type' => 'ticket']);
-        Mail::assertQueued(\App\Mail\StudentNotice::class, fn ($m) => $m->hasTo($u->email) && str_contains($m->subjectLine, 'ticket is ready')
-            && str_contains($m->render(), 'Employee ID') && !str_contains($m->render(), 'SR-code'));
+    }
+
+    public function test_a_returned_employee_id_holds_the_ticket_and_a_fix_restores_it(): void
+    {
+        $u  = $this->employee();
+        $id = $this->idDocument($u);
+        $svc = app(\App\Services\DocumentService::class);
+        $svc->review($this->admin(), $id->id, 'approved');
+        $this->assertSame('valid', DB::table('tickets')->where('user_id', $u->id)->value('status'));
+
+        DB::table('documents')->where('id', $id->id)->update(['status' => 'submitted']);
+        $svc->review($this->admin(), $id->id, 'rejected', 'The photo is too dark, retake it');
+        $this->assertSame('void', DB::table('tickets')->where('user_id', $u->id)->value('status'));
+    }
+
+    public function test_an_employee_cannot_upload_student_documents(): void
+    {
+        $u = $this->employee();
+        $r = app(\App\Services\DocumentService::class)->submit($u, 'waiver', \Illuminate\Http\UploadedFile::fake()->create('w.pdf', 10, 'application/pdf'));
+        $this->assertFalse($r['ok']);
+        $this->assertSame(0, DB::table('documents')->where('user_id', $u->id)->count());
     }
 
     public function test_bad_employee_details_are_refused(): void
@@ -106,7 +149,7 @@ class EmployeeRegistrationTest extends TestCase
 
     public function test_duplicates_are_refused_across_students_and_employees(): void
     {
-        $this->register()->assertRedirect(route('dashboard'));
+        $this->register()->assertRedirect(route('documents.index'));
         auth()->logout();
 
         $this->register(['email' => 'other@batstate-u.edu.ph'])->assertSessionHas('register_error.field', 'employee_no');
@@ -124,75 +167,78 @@ class EmployeeRegistrationTest extends TestCase
         $this->assertSame(0, User::count());
     }
 
-    public function test_the_employee_dashboard_has_no_document_steps(): void
+
+    public function test_the_employee_dashboard_asks_for_one_document(): void
     {
         $u = $this->employee();
-        DB::table('tickets')->insert(['user_id' => $u->id, 'ticket_no' => 'SIGLA-2026-000777', 'status' => 'valid', 'issued_at' => now(),
-            'verify_hash' => app(\App\Services\TicketService::class)->verifyHash('SIGLA-2026-000777', $u->id)]);
 
-        $this->actingAs($u)->get(route('dashboard'))->assertOk()->assertSee('Employee ID')->assertSee('Your ticket is ready')
-            ->assertDontSee('Upload your documents')->assertDontSee('My Documents')->assertDontSee('Required documents');
-
-        $this->get(route('documents.index'))->assertRedirect(route('dashboard'));
-        $this->get(route('tracking'))->assertRedirect(route('dashboard'));
-        $this->post(route('documents.store'), ['doc_type' => 'waiver'])->assertRedirect();
-        $this->assertSame(0, DB::table('documents')->where('user_id', $u->id)->count());
+        $this->actingAs($u)->get(route('dashboard'))->assertOk()->assertSee('Required documents')->assertSee('Employee ID')
+            ->assertDontSee('Signed Waiver');
+        $this->get(route('documents.index'))->assertOk()->assertSee('Upload your Employee ID');
+        $this->get(route('tracking'))->assertOk();
     }
 
-    public function test_an_unconfirmed_employee_is_told_to_confirm_and_has_no_ticket(): void
+
+    public function test_an_employee_without_an_approved_id_has_no_ticket(): void
     {
         $u = $this->employee();
-        $u->forceFill(['email_verified_at' => null])->save();
+        $this->idDocument($u, 'submitted');
 
-        $this->actingAs($u)->get(route('dashboard'))->assertOk()->assertSee('Confirm your email');
-        $this->get(route('ticket'))->assertOk()->assertSee('No ticket has been issued yet')->assertSee('confirmation link');
+        $this->actingAs($u)->get(route('ticket'))->assertOk()->assertSee('No ticket has been issued yet')->assertSee('SSC approves');
     }
+
 
     public function test_the_employee_ticket_page_and_picture_say_employee_id(): void
     {
         $u = $this->employee();
-        $u->forceFill(['email_verified_at' => null])->save();
-        $this->confirm($u);
+        app(\App\Services\DocumentService::class)->review($this->admin(), $this->idDocument($u)->id, 'approved');
 
-        $this->actingAs($u)->get(route('ticket'))->assertOk()->assertSee('Employee ID')->assertSee('Category')->assertDontSee('SR-Code');
+        $this->actingAs($u)->get(route('ticket'))->assertOk()->assertSee('Employee ID')->assertSee('Category')->assertDontSee('SR-Code')
+            ->assertSee('tix-tier-faculty', false);
 
         $res = $this->get(route('ticket.image'))->assertOk();
         [$w, $h, $type] = getimagesizefromstring($res->getContent());
         $this->assertSame([1710, 870, IMAGETYPE_JPEG], [$w, $h, $type]);
     }
 
-    public function test_when_every_seat_is_taken_a_confirmed_employee_waits_and_gets_a_freed_seat(): void
+
+    public function test_when_every_seat_is_taken_an_approved_employee_waits_and_gets_a_freed_seat(): void
     {
         config(['ereserve.event.capacity' => 1]);
+        $svc   = app(\App\Services\TicketService::class);
+        $admin = $this->admin();
+        $docs  = app(\App\Services\DocumentService::class);
+
         $first = $this->employee('first@batstate-u.edu.ph', 'EMP-100');
-        app(\App\Services\TicketService::class)->sync($first->id);
+        $docs->review($admin, $this->idDocument($first)->id, 'approved');
         $this->assertSame('valid', DB::table('tickets')->where('user_id', $first->id)->value('status'));
 
         $second = $this->employee('second@batstate-u.edu.ph', 'EMP-200');
-        $this->assertSame('full', app(\App\Services\TicketService::class)->sync($second->id)['state']);
-        $this->assertSame(0, DB::table('tickets')->where('user_id', $second->id)->count());
+        $docs->review($admin, $this->idDocument($second)->id, 'approved');
+        $this->assertSame(0, DB::table('tickets')->where('user_id', $second->id)->count(), 'no seat left');
 
         $first->forceFill(['status' => 'disabled'])->save();           // frees the seat
-        app(\App\Services\TicketService::class)->sync($first->id);
+        $svc->sync($first->id);
 
         $this->assertSame('valid', DB::table('tickets')->where('user_id', $second->id)->value('status'), 'next in line gets it');
     }
 
-    public function test_ssc_sees_the_category_and_no_document_requirement(): void
-    {
-        $this->employee('boss.emp@batstate-u.edu.ph', 'EMP-300', 'administration');
-        $admin = User::create(['email' => 'boss@g.batstate-u.edu.ph', 'name' => 'Boss', 'password' => 'Test-pass-123']);
-        $admin->forceFill(['role' => 'admin', 'status' => 'active', 'email_verified_at' => now()])->save();
 
-        $this->actingAs($admin)->get(route('admin.registrations'))->assertOk()->assertSee('Administration')->assertSee('Not required');
-        $this->assertSame(0, app(\App\Services\Stats::class)->dashboard()['incomplete'], 'employees are never "missing documents"');
+    public function test_ssc_sees_the_category_and_the_single_document(): void
+    {
+        $u = $this->employee('boss.emp@batstate-u.edu.ph', 'EMP-300', 'staff');
+        $this->actingAs($this->admin())->get(route('admin.registrations'))->assertOk()->assertSee('Staff')->assertSee('Employee ID');
+        $this->assertSame(1, app(\App\Services\Stats::class)->dashboard()['incomplete'], 'an employee who has not uploaded yet is still uploading');
+
+        $this->idDocument($u);
+        $this->assertSame(0, app(\App\Services\Stats::class)->dashboard()['incomplete']);
     }
 
-    public function test_an_employee_edits_their_profile_and_asks_to_change_the_employee_id(): void
+    public function test_an_employee_edits_their_profile(): void
     {
         $u = $this->employee();
 
-        $this->actingAs($u)->get(route('profile'))->assertOk()->assertSee('Employee Information')->assertSee('Employee ID')->assertDontSee('Track My Progress');
+        $this->actingAs($u)->get(route('profile'))->assertOk()->assertSee('Employee Information')->assertSee('Employee ID');
 
         $this->post(route('profile.update'), ['name' => 'Ana B. Employee', 'member_type' => 'instructor', 'mobile' => '09171234567'])
             ->assertRedirect(route('profile'));
@@ -203,11 +249,6 @@ class EmployeeRegistrationTest extends TestCase
         $this->assertSame('EMP-001', $u->student_no, 'ID untouched');
 
         $this->post(route('profile.update'), ['name' => 'Ana', 'member_type' => 'nonsense'])->assertSessionHas('flash.title', 'Check your details');
-
-        // Employee ID change goes through SSC like an SR-code, with a format check instead of the masterlist.
-        $this->post(route('profile.change'), ['field' => 'student_no', 'new_value' => '#', 'reason' => 'I was given a new ID number.'])->assertSessionHas('flash.title', 'Could not send the request');
-        $this->post(route('profile.change'), ['field' => 'student_no', 'new_value' => 'EMP-002', 'reason' => 'I was given a new ID number.'])->assertSessionHas('flash.title', 'Request sent');
-        $this->assertSame('EMP-001', $u->fresh()->student_no);
     }
 
     public function test_student_signup_and_google_pending_still_show_the_student_form(): void

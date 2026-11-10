@@ -23,7 +23,10 @@ class TicketImage
     private const OUT = 1.5;          // output pixels per design unit (final 1710 x 870)
 
     /** Bump when the design changes so old saved pictures are redrawn. */
-    private const DESIGN = 3;
+    private const DESIGN = 4;
+
+    /** @var array<string,mixed> colours for the ticket being drawn */
+    private array $theme = [];
 
     private \GdImage $img;
 
@@ -61,6 +64,7 @@ class TicketImage
         $K = self::K;
         $this->img = imagecreatetruecolor(self::DW * $K, self::DH * $K);
         $this->palette();
+        $this->theme = $this->themeFor(ticket_tier($ticket['member_type'] ?? null));
 
         $void = ($ticket['status'] ?? '') === 'void';
         $used = !empty($ticket['checked_in']);
@@ -71,8 +75,8 @@ class TicketImage
         $card = [16, 8, 1124, 572];
         $this->roundRect($card[0] - 3, $card[1] + 1, $card[2] + 3, $card[3] + 9, 34, $this->c['shadow']);
         $this->fill(16, 8, 788, 572, $this->c['white']);
-        $this->vGradient(788, 8, 1124, 572, [0xF7, 0xFB, 0xFD], [0xE2, 0xEF, 0xF8]);
-        $this->hGradient(16, 8, 788, 88, [0x22, 0x79, 0xA3], [0x6C, 0xC6, 0xEA]);
+        $this->vGradient(788, 8, 1124, 572, $this->theme['stub'][0], $this->theme['stub'][1]);
+        $this->hGradient(16, 8, 788, 88, $this->theme['head'][0], $this->theme['head'][1]);
         $this->cutCorners($card, 30, $this->c['shadow']);
 
         // Notches where the stub tears off, and the dashed tear line.
@@ -103,11 +107,11 @@ class TicketImage
     private function header(): void
     {
         $this->logo(44, 23, 48);
-        $this->text(108, 46, (string) config('ereserve.event.org', 'Supreme Student Council'), 17, 'bold', $this->c['white']);
-        $this->text(108, 62, 'BatStateU TNEU · ARASOF-Nasugbu', 12, 'regular', $this->c['white_soft']);
+        $this->text(108, 46, (string) config('ereserve.event.org', 'Supreme Student Council'), 17, 'bold', $this->c[$this->theme['ink']]);
+        $this->text(108, 62, 'BatStateU TNEU · ARASOF-Nasugbu', 12, 'regular', $this->c[$this->theme['ink_soft']]);
 
         $this->roundRect(620, 29, 759, 66, 18, $this->c['white']);
-        $this->textCentered(689.5, 53, 'ADMIT ONE', 13, 'extra', $this->c['orange'], 1.6);
+        $this->textCentered(689.5, 53, 'ADMIT ONE', 13, 'extra', $this->c[$this->theme['admit']], 1.6);
     }
 
     private function main(array $t): void
@@ -116,7 +120,7 @@ class TicketImage
 
         // "SIGLA / A Student's Night / 2026", the middle line in the site's blue-to-gold gradient.
         $this->text(43, 178, 'SIGLA', 41, 'extra', $this->c['title']);
-        $this->gradientText(43, 219, "A Student’s Night", 41, [0x4F, 0xB0, 0xD8], [0xC9, 0xBA, 0x7E]);
+        $this->gradientText(43, 219, "A Student’s Night", 41, $this->theme['title'][0], $this->theme['title'][1]);
         $this->text(43, 260, '2026', 41, 'extra', $this->c['title']);
 
         // Date / time / venue
@@ -135,7 +139,7 @@ class TicketImage
         $this->text(43, 423, $this->fit((string) ($t['name'] ?? ''), 22, 'bold', 290), 22, 'bold', $this->c['deep']);
 
         $emp = ($t['member_type'] ?? 'student') !== 'student';
-        $this->text(348, 394, $emp ? 'EMPLOYEE ID' : 'SR-CODE', 11, 'bold', $this->c['label'], 1.4);
+        $this->text(348, 394, $emp ? (($t['member_type'] ?? '') === 'sponsor' ? 'SPONSOR ID' : 'EMPLOYEE ID') : 'SR-CODE', 11, 'bold', $this->c['label'], 1.4);
         $this->text(348, 417, (string) ($t['student_no'] ?? ''), 16, 'bold', $this->c['ink'], 1.0);
 
         $this->text(513, 394, $emp ? 'CATEGORY' : 'PROGRAM', 11, 'bold', $this->c['label'], 1.4);
@@ -156,7 +160,7 @@ class TicketImage
     {
         $cx = 956;
 
-        $this->textCentered($cx, 132, 'SCAN AT THE GATE', 12, 'bold', $this->c['blue'], 1.6);
+        $this->textCentered($cx, 132, 'SCAN AT THE GATE', 12, 'bold', $this->c[$this->theme['label']], 1.6);
 
         $this->roundRect(846, 148, 1060, 362, 24, $this->c['white']);
 
@@ -456,6 +460,35 @@ class TicketImage
             'danger_bg'  => $rgb(0xFB, 0xE0, 0xE0),
             'used_bg'    => $rgb(0xE5, 0xEA, 0xEE),
             'qr'         => $rgb(0x0B, 0x11, 0x15),
+            // header text on the yellow ticket, and the accent colours of the yellow / orange tickets
+            'brown'      => $rgb(0x3B, 0x2A, 0x05),
+            'brown_soft' => $rgb(0x6B, 0x4E, 0x12),
+            'amber'      => $rgb(0x8A, 0x5A, 0x00),
+            'orange_dk'  => $rgb(0xB8, 0x47, 0x0A),
+            'orange_adm' => $rgb(0xC2, 0x50, 0x0C),
+            'orange_soft' => $rgb(0xFF, 0xE9, 0xD6),
         ];
+    }
+
+    /** Header / stub / title colours for each kind of holder (see ticket_tier()). */
+    private function themeFor(string $tier): array
+    {
+        return match ($tier) {
+            'student' => [
+                'head' => [[0xE3, 0xA0, 0x12], [0xFF, 0xD9, 0x78]], 'stub' => [[0xFF, 0xFB, 0xEF], [0xFF, 0xF1, 0xCC]],
+                'title' => [[0xD9, 0x96, 0x0B], [0xF5, 0x86, 0x34]],
+                'ink' => 'brown', 'ink_soft' => 'brown_soft', 'admit' => 'amber', 'label' => 'amber',
+            ],
+            'sponsor' => [
+                'head' => [[0xD4, 0x56, 0x0F], [0xFF, 0xA5, 0x5C]], 'stub' => [[0xFF, 0xF8, 0xF1], [0xFF, 0xE6, 0xD0]],
+                'title' => [[0xE8, 0x64, 0x1B], [0xF4, 0xBC, 0x3A]],
+                'ink' => 'white', 'ink_soft' => 'orange_soft', 'admit' => 'orange_adm', 'label' => 'orange_dk',
+            ],
+            default => [
+                'head' => [[0x22, 0x79, 0xA3], [0x6C, 0xC6, 0xEA]], 'stub' => [[0xF7, 0xFB, 0xFD], [0xE2, 0xEF, 0xF8]],
+                'title' => [[0x4F, 0xB0, 0xD8], [0xC9, 0xBA, 0x7E]],
+                'ink' => 'white', 'ink_soft' => 'white_soft', 'admit' => 'orange', 'label' => 'blue',
+            ],
+        };
     }
 }

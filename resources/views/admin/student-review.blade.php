@@ -4,7 +4,7 @@
 @section('nav', 'documents')
 
 <?php
-    $types   = config('ereserve.documents');
+    $types   = \App\Support\DocumentSets::metaFor($user['member_type'] ?? 'student');
     $parse   = fn ($d) => $d ? (is_string($d['auto_checks'] ?? null) ? (json_decode($d['auto_checks'], true) ?: []) : ($d['auto_checks'] ?? [])) : [];
     $waiting = array_filter($docs, fn ($d) => $d && $d['status'] === 'submitted');
     $okIds   = array_filter($waiting, fn ($d) => !\App\Services\DocumentChecker::needsLook($parse($d)));
@@ -19,11 +19,7 @@
         <div class="col-lg-8">
             <span class="eyebrow on-dark"><i class="fa-solid fa-user-graduate"></i> Student review</span>
             <h2>{{ $user['name'] }}</h2>
-            <p>
-                {{ $user['student_no'] }} · {{ $user['program'] }}@if ($user['year_level']) · {{ $user['year_level'] }}@endif
-                @if ($user['college_code']) · <strong>{{ $user['college_code'] }}</strong>@endif
-                <br>{{ $user['email'] }}
-            </p>
+            <p>{{ $user['student_no'] }} · {{ $user['program'] }}@if ($user['year_level']) · {{ $user['year_level'] }}@endif @if ($user['college_code']) · {{ $user['college_code'] }}@endif · {{ $user['email'] }}</p>
         </div>
         <div class="col-lg-4 text-lg-end">
             <div class="d-flex flex-wrap gap-2 justify-content-lg-end">

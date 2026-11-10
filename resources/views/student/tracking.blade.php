@@ -5,7 +5,7 @@
 
 @section('content')
 @php [$stageLabel, $stageTone, $stageIcon] = $stage; @endphp
-<div class="page-hero fade-up">
+<div class="page-hero fade-up" data-live="hero">
     <div class="row align-items-center g-4">
         <div class="col-lg-8">
             <span class="eyebrow on-dark"><i class="fa-solid {{ $stageIcon }}"></i> {{ $stageLabel }}</span>
@@ -26,7 +26,7 @@
     </div>
 </div>
 
-<div class="row g-4">
+<div class="row g-4" data-live="track">
 
     <!-- ================= Timeline ================= -->
     <div class="col-lg-7">
@@ -81,7 +81,7 @@
         <div class="card-soft mb-4 fade-up d2">
             <div class="card-head"><h6 class="mb-0">Document Checklist</h6></div>
             <div class="card-body-p">
-                <?php foreach (config('ereserve.documents') as $key => $meta):
+                <?php foreach (required_documents() as $key => $meta):
                     $doc = $docs[$key] ?? null; ?>
                     <div class="receipt-row">
                         <span class="k"><i class="fa-solid {{ $meta['icon'] }} text-gold me-2"></i>{{ $meta['short'] }}</span>

@@ -41,7 +41,7 @@ class LoginController extends Controller
 
         // A one-letter slip in the domain (g.bastate-u… for g.batstate-u…) is fixed for them;
         // the password is still required, so this opens nothing up.
-        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) && !$this->accounts->staffEmailAllowed($email)
+        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) && !$this->accounts->loginEmailAllowed($email)
             && ($fixed = $this->accounts->suggestDomain($email))) {
             $email = substr($email, 0, (int) strrpos($email, '@')) . '@' . strtolower($fixed);
             $request->merge(['email' => $email]);
@@ -56,7 +56,7 @@ class LoginController extends Controller
         $user = Auth::user();
 
         return redirect()
-            ->to($user->isStaff() ? $user->homeRoute() : ($next === 'documents' ? route('documents.index') : route('dashboard')))
+            ->to($user->isStaff() || $user->isSuperAdmin() ? $user->homeRoute() : ($next === 'documents' ? route('documents.index') : route('dashboard')))
             ->with('flash', flash(
                 'success',
                 'Welcome, ' . e(explode(' ', $user->name)[0]) . '!',
@@ -70,8 +70,11 @@ class LoginController extends Controller
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return 'That does not look like a valid email address.';
         }
-        if (!$this->accounts->staffEmailAllowed($email)) {
-            return $this->accounts->domainRejection($email);
+        // The staff door also takes the super admin, whose email can be any address. For everyone else the
+        // wording stays generic there, so the form never reveals whether an outside address is a super admin.
+        $superAdmin = $staffOnly && User::where('email', $email)->where('role', 'superadmin')->exists();
+        if (!$superAdmin && !$this->accounts->loginEmailAllowed($email)) {
+            return $staffOnly ? 'Incorrect email or password.' : $this->accounts->domainRejection($email);
         }
 
         $key = 'login:' . $email . '|' . $request->ip();
@@ -97,11 +100,15 @@ class LoginController extends Controller
             RateLimiter::hit($key, 300);
             return $generic;
         }
+        if ($user->isSuperAdmin() && !$staffOnly) {
+            RateLimiter::hit($key, 300);   // never through the student sign-in
+            return $generic;
+        }
         if (!$user->isActive()) {
             return 'That account has been disabled. Please contact the SSC.';
         }
         // Password was right, but this door is for staff. Do not sign a student in here.
-        if ($staffOnly && !$user->isStaff()) {
+        if ($staffOnly && !$user->canUseSsc() && !$user->isScanner() && !$user->isSuperAdmin()) {
             return 'This page is for SSC staff. Students sign in from the main sign-in page.';
         }
 
@@ -109,6 +116,8 @@ class LoginController extends Controller
 
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();         // defeats session fixation
+        // A student account with SSC access enters the SSC panel from /ssc, the student side from /login.
+        session(['ssc_mode' => $staffOnly && $user->isDualAccount()]);
         $user->forceFill(['last_login_at' => now()])->save();
         session(['logged_in_at' => now()->toDateTimeString()]);
 
@@ -119,6 +128,9 @@ class LoginController extends Controller
 
     public function destroy(Request $request)
     {
+        if ($request->user()) {
+            Audit::log('logout', 'user', (string) $request->user()->id);
+        }
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

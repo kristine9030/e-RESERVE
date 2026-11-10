@@ -39,7 +39,7 @@ class TicketApprovalTest extends TestCase
     /** Give a student all three documents in the given status. */
     private function docs(User $u, string $status = 'submitted', ?string $reviewedAt = null): void
     {
-        foreach (array_keys(config('ereserve.documents')) as $type) {
+        foreach (config('ereserve.document_sets.student') as $type) {
             Document::create([
                 'user_id' => $u->id, 'doc_type' => $type, 'original_name' => "$type.pdf",
                 'stored_name' => "20261108-" . bin2hex(random_bytes(16)) . ".pdf", 'size_bytes' => 1000,
@@ -144,6 +144,53 @@ class TicketApprovalTest extends TestCase
         $this->review($admin, $s, 'approved');
 
         $this->assertSame(0, DB::table('tickets')->count());
+    }
+
+    public function test_scan_shows_up_in_the_live_log_at_once(): void
+    {
+        $admin = $this->admin();
+        $s     = $this->student(1);
+        $this->docs($s);
+        $this->review($admin, $s, 'approved');
+        $payload = app(TicketService::class)->qrPayload(app(TicketService::class)->ticketFor($s->id));
+
+        $this->actingAs($admin);
+        $before = $this->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])->get(route('admin.checkin'));
+        $before->assertOk()->assertDontSee('Student 1');
+
+        $this->postJson(route('admin.checkin.scan'), ['ticket_no' => $payload, 'gate' => 'Gate A'])->assertJson(['ok' => true]);
+
+        $after = $this->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])->get(route('admin.checkin'));
+        $after->assertOk()->assertSee('data-live="log"', false)->assertSee('Student 1');
+    }
+
+    public function test_manual_sr_code_admits_once_and_explains_problems(): void
+    {
+        $admin = $this->admin();
+        $s     = $this->student(1);
+        $this->docs($s);
+        $this->actingAs($admin);
+
+        // Registered but not approved yet: no ticket, nobody admitted.
+        $this->postJson(route('admin.checkin.manual'), ['sr_code' => '26-00001', 'gate' => 'Gate B'])
+            ->assertJson(['ok' => false, 'title' => 'No ticket yet']);
+
+        $this->review($admin, $s, 'approved');
+
+        // Unknown SR-code.
+        $this->postJson(route('admin.checkin.manual'), ['sr_code' => '99-99999', 'gate' => 'Gate B'])
+            ->assertJson(['ok' => false, 'title' => 'Not registered']);
+
+        // Typed without the dash, lower case spacing: still found, admitted at the chosen gate.
+        $this->postJson(route('admin.checkin.manual'), ['sr_code' => ' 2600001 ', 'gate' => 'Gate B'])
+            ->assertJson(['ok' => true]);
+        $this->assertSame('Gate B', DB::table('checkins')->value('gate'));
+        $this->assertSame(1, DB::table('checkins')->count());
+
+        // Same person again: refused, still one check-in.
+        $this->postJson(route('admin.checkin.manual'), ['sr_code' => '26-00001', 'gate' => 'Gate A'])
+            ->assertJson(['ok' => false, 'title' => 'Already checked in']);
+        $this->assertSame(1, DB::table('checkins')->count());
     }
 
     public function test_a_used_ticket_cannot_be_scanned_again(): void

@@ -29,7 +29,8 @@ class StudentNotice extends Mailable implements ShouldQueue
         public ?string $buttonLabel = null,
         public ?string $buttonUrl = null,
         public ?string $highlight = null,
-        public ?array $ticket = null,        // set only for the "ticket ready" mail: draws the ticket card + QR
+        public ?array $ticket = null,        // set only for the "ticket ready" mail: draws the ticket pass (no QR in email)
+        public string $kind = 'info',        // received | ticket | returned | waitlist: picks the icon and label
     ) {
     }
 
@@ -47,6 +48,7 @@ class StudentNotice extends Mailable implements ShouldQueue
             ],
             'Track my status',
             route('tracking'),
+            kind: 'received',
         );
     }
 
@@ -59,14 +61,14 @@ class StudentNotice extends Mailable implements ShouldQueue
             $restored ? 'Your ticket is valid again' : 'Your ticket is ready!',
             [
                 (($ticket['member_type'] ?? 'student') === 'student' ? 'SSC approved your waiver, COR and school ID. ' : 'Your email is confirmed. ')
-                    . 'Your ticket is below. Show the QR code at the gate; '
+                    . 'Your pass is below. Open it in e-RESERVE on the night and show the QR code at the gate; '
                     . 'it admits one person and is scanned once.',
-                'Save the attached picture of your ticket to your phone, so you can still get in if your signal is weak on the night.',
             ],
             'Open my ticket',
             route('ticket'),
             $ticketNo,
             $ticket,
+            'ticket',
         );
     }
 
@@ -83,23 +85,23 @@ class StudentNotice extends Mailable implements ShouldQueue
             ],
             'Fix my documents',
             route('documents.index'),
+            kind: 'returned',
         );
     }
 
     public static function waitlisted(string $name): self
     {
-        $cap = number_format((int) config('ereserve.event.capacity'));
-
         return new self(
             'Documents approved · no seat available yet',
             $name,
-            'Approved, but all ' . $cap . ' tickets are taken',
+            'Approved, but the tickets for your group are all taken',
             [
                 'All three of your documents are approved. Unfortunately all ' . $cap . ' tickets have already been issued.',
                 'You are in line: if a ticket is released, yours is issued automatically and we will email you.',
             ],
             'Check my status',
             route('tracking'),
+            kind: 'waitlist',
         );
     }
 
@@ -113,16 +115,9 @@ class StudentNotice extends Mailable implements ShouldQueue
         return new Content(view: 'emails.notice', text: 'emails.notice-text');
     }
 
-    /** The whole ticket as a picture, only on the ticket mail: save it straight to the phone. */
+    /** No attachments: the QR code is never sent by email, only shown inside e-RESERVE. */
     public function attachments(): array
     {
-        if (!$this->ticket) {
-            return [];
-        }
-
-        $jpg  = app(\App\Services\TicketImage::class)->jpg($this->ticket);
-        $name = 'ticket-' . preg_replace('/[^A-Za-z0-9\-]/', '', (string) $this->ticket['ticket_no']) . '.jpg';
-
-        return [Attachment::fromData(fn () => $jpg, $name)->withMime('image/jpeg')];
+        return [];
     }
 }

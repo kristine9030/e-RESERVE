@@ -9,10 +9,15 @@
     <div class="row align-items-center g-4">
         <div class="col-lg-8">
             <span class="eyebrow on-dark"><i class="fa-solid fa-file-arrow-up"></i> Step 2 of 4</span>
-            <h2>Upload your 3 documents</h2>
+            <h2>{{ count($metas) > 1 ? 'Upload your ' . count($metas) . ' documents' : 'Upload your ' . reset($metas)['label'] }}</h2>
             <p>
-                One PDF each — your signed waiver, your COR and your school ID.
-                <strong class="text-white">SSC reviews them, and your ticket number is issued once all three are approved.</strong>
+                @if (count($metas) > 1)
+                    One PDF each — your signed waiver, your COR and your school ID.
+                    <strong class="text-white">SSC reviews them, and your ticket number is issued once all three are approved.</strong>
+                @else
+                    One PDF — {{ reset($metas)['hint'] }}
+                    <strong class="text-white">SSC reviews it, and your ticket number is issued once it is approved.</strong>
+                @endif
             </p>
         </div>
         <div class="col-lg-4">
@@ -51,7 +56,7 @@
 
     <!-- ================= Upload cards ================= -->
     <div class="col-xl-8">
-        <?php foreach (config('ereserve.documents') as $key => $meta):
+        <?php foreach ($metas as $key => $meta):
             $doc     = $docs[$key] ?? null;
             $status  = $doc['status'] ?? 'missing';
             $locked  = $status === 'approved' || ($ticket['status'] ?? '') === 'used';
@@ -65,7 +70,7 @@
                 <div class="doc-head">
                     <span class="doc-icon"><i class="fa-solid {{ $meta['icon'] }}"></i></span>
                     <div class="flex-grow-1 min-w-0">
-                        <div class="doc-step">Document {{ array_search($key, array_keys(config('ereserve.documents')), true) + 1 }} of 3</div>
+                        <div class="doc-step">Document {{ array_search($key, array_keys($metas), true) + 1 }} of {{ count($metas) }}</div>
                         <h5 class="mb-0">{{ $meta['label'] }}</h5>
                     </div>
                     {!! status_badge($status) !!}
@@ -118,8 +123,8 @@
                             <i class="fa-solid fa-upload"></i> {{ $doc ? 'Replace file' : 'Upload' }}
                         </button>
                         @if ($key === 'waiver')
-                            <a href="{{ route('waiver') }}" target="_blank" rel="noopener" class="btn btn-outline-green btn-sm2">
-                                <i class="fa-solid fa-print"></i> Download waiver form
+                            <a href="{{ route('waiver') }}" class="btn btn-outline-green btn-sm2">
+                                <i class="fa-solid fa-download"></i> Download waiver form
                             </a>
                         @endif
                     </div>
@@ -135,8 +140,8 @@
             <div class="card-body-p">
                 <ul class="track-line">
                     <?php $next = [
-                        ['fa-file-arrow-up', 'Upload all three',  'Any order. Replace a file whenever you need to.'],
-                        ['fa-ticket',        'Ticket issued',     'Once SSC approves all three, with your own ticket number and QR. Limited to ' . number_format(ev('capacity')) . ' tickets.'],
+                        ['fa-file-arrow-up', count($metas) > 1 ? 'Upload all three' : 'Upload your PDF',  'Replace the file whenever you need to.'],
+                        ['fa-ticket',        'Ticket issued',     'Once SSC approves ' . (count($metas) > 1 ? 'all three' : 'it') . ', with your own ticket number and QR. Limited to ' . number_format(ev('capacity')) . ' tickets.'],
                         ['fa-user-shield',   'Staff review',      'SSC staff check each file. A returned file pauses your ticket until you fix it.'],
                         ['fa-qrcode',        'Scan at the gate',  'Show the QR on event night.'],
                     ];
@@ -196,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
             '<div><i class="fa-solid fa-envelope" style="width:1.4rem;color:#2A8DB5"></i> We will also email <strong>' +
             String(email).replace(/[<>&"]/g, '') + '</strong></div></div>' +
             {!! json_encode(collect(session('doc_warnings', []))->isEmpty() ? '' : ('<div style="margin-top:.85rem;text-align:left;background:#FFF6E3;border:1px solid #F4D79B;border-radius:12px;padding:.7rem .9rem;font-size:.85rem;color:#7A5410"><strong>Please double-check:</strong><br>' . collect(session('doc_warnings'))->map(fn ($w) => e($w))->implode('<br>') . '</div>')) !!} +
-            '<p style="margin:.85rem 0 0;font-size:.85rem;color:#5b6b75">Your ticket is issued once all three are approved.</p>',
+            '<p style="margin:.85rem 0 0;font-size:.85rem;color:#5b6b75">Your ticket is issued once SSC approves ' + {!! json_encode(count($metas) > 1 ? 'all three.' : 'it.') !!} + '</p>',
         confirmButtonText: 'Track my status',
         showCancelButton: true,
         cancelButtonText: 'Stay here',
