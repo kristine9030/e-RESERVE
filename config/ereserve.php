@@ -30,7 +30,7 @@ return [
 
     /** name, kind, icon, photo (null = placeholder) */
     'performers' => [
-        ['SIKLAB',      'Dance performance', 'fa-person-walking', 'assets/images/artists/siklab.jpg'],
+        ['SIKLAB',      'Dance performance', 'fa-person-walking', 'assets/images/901325882_1657853729154346_4410032169774603820_n.png'],
         ['UNO Band',    'Live band',         'fa-guitar',         'assets/images/artists/uno-band.jpg'],
         ['EXCESS Band', 'Live band',         'fa-guitar',         'assets/images/artists/excess-band.jpg'],
         ['FitterKarma', 'Live performance',  'fa-music',          'assets/images/[MAIN] fitterkarma Photo B (1).jpg'],
