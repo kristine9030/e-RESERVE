@@ -78,7 +78,7 @@
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
                         <input type="email" class="form-control{{ $bad('email') }}" id="email" name="email" value="{{ old('email') }}"
-                               placeholder="maria.reyes@batstate-u.edu.ph" autocomplete="email"
+                               placeholder="maria.reyes@g.batstate-u.edu.ph" autocomplete="email"
                                style="border-left:0;border-radius:0 var(--radius-xs) var(--radius-xs) 0;" required>
                     </div>
                 </div>
@@ -114,7 +114,7 @@
             <p class="text-center text-muted2 mt-4 mb-0" style="font-size:.74rem;">
                 <i class="fa-solid fa-shield-halved me-1"></i>
                 By registering you agree that the SSC may process your details for
-                SIGLA 2026 ticketing, under the BatStateU Data Privacy Policy.
+                SIGLA 2026 ticketing, under the <a href="{{ route('privacy') }}" class="text-gold fw-800">BatStateU Data Privacy Policy</a>.
             </p>
         </div>
     </main>

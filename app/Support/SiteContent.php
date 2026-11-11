@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Setting;
+use App\Services\StudentAccess;
 
 /** Static copy for the landing page and the dashboards. */
 class SiteContent
@@ -23,15 +24,14 @@ class SiteContent
 
     public static function guidelines(): array
     {
-        $domain      = config('ereserve.allowed_email_domains')[0];
-        $domainStaff = config('ereserve.allowed_email_domains')[1] ?? $domain;
+        $domain = config('ereserve.allowed_email_domains')[0];
 
         return [
             'eligibility' => [
                 'label' => 'Who can join', 'icon' => 'fa-user-graduate',
                 'items' => [
-                    ['fa-graduation-cap', 'Currently enrolled students', 'Enrolled at BatStateU TNEU – ARASOF-Nasugbu this semester. Sign up with your @' . $domain . ' account; your SR-code is checked against the registrar’s masterlist.'],
-                    ['fa-briefcase', 'Faculty, instructors and staff', 'BatStateU ARASOF-Nasugbu faculty, instructors and staff. Sign up with your @' . $domainStaff . ' email. No confirmation email is needed.'],
+                    ['fa-graduation-cap', 'Currently enrolled students', 'Enrolled at BatStateU The NEU ARASOF-Nasugbu this semester. Sign up with your @' . $domain . ' account; your SR-code is checked against the registrar’s masterlist.'],
+                    ['fa-briefcase', 'Faculty, instructors and staff', 'BatStateU The NEU ARASOF-Nasugbu faculty, instructors and staff. Sign up with your @' . $domain . ' email. No confirmation email is needed.'],
                     ['fa-handshake', 'Sponsors', 'Partners and companies supporting SIGLA 2026. Any email works, but you confirm it with the link we send.'],
                     ['fa-envelope', 'Use the right email', 'Students and employees must use their university email. Personal emails are only for sponsors.'],
                     ['fa-user-lock', 'One person, one ticket', 'Each person gets exactly one ticket. A second account or a shared ticket will be voided.'],
@@ -82,21 +82,33 @@ class SiteContent
     public static function faqs(): array
     {
         $limited = Setting::enabled('show_slots') ? 'limited to ' . number_format(\App\Services\TicketQuota::capacity()) : 'limited';
+        $domain  = '@' . config('ereserve.allowed_email_domains')[0];
 
-        return [
-            ['Who can get a ticket?', 'Currently enrolled students of BatStateU TNEU – ARASOF-Nasugbu, its faculty, instructors and staff, and sponsors of SIGLA 2026. Students and employees use their university email; sponsors can use any email they check.'],
+        $faqs = [
+            ['Who can get a ticket?', 'Currently enrolled students of BatStateU The NEU ARASOF-Nasugbu, its faculty, instructors and staff, and sponsors of SIGLA 2026. Students and employees sign up with their ' . $domain . ' GSuite account; sponsors can use any email they check.'],
+        ];
+
+        // The soft launch: while the doors are shut, say so.
+        if (! StudentAccess::open()) {
+            $faqs[] = ['When can I create an account?', 'This page is already live, but sign-in and account creation open on ' . StudentAccess::opensAtText() . '. You can already read the guidelines, the lineup and this FAQ while you wait.'];
+        }
+
+        return array_merge($faqs, [
             ['Do I have to pay?', 'No. Your ticket is free. It is issued after SSC approves your documents. There is nothing to send through GCash.'],
             ['What do I need to upload?', 'Students upload three PDFs: the signed waiver, the Certificate of Registration (COR) for this semester, and the front of the school ID. Faculty, instructors and staff upload one PDF of their employee ID. Sponsors upload one PDF as proof of sponsorship. Each file can be up to 5 MB.'],
-            ['I am faculty or staff. Do I need to confirm my email?', 'No. Sign up with your @batstate-u.edu.ph email and go straight to uploading your employee ID. Sponsors do confirm their email by a link, since they may use any address.'],
-            ['How do sponsors join?', 'Choose “I’m a sponsor” when you create your account, confirm your email, then upload one PDF as proof of sponsorship. Your ticket is issued once SSC approves it.'],
-            ['Where do I get the waiver? (students)', 'Sign in, open Documents and choose “Download waiver”. Print it, sign it in ink, scan it and upload the PDF.'],
+            ['Can I sign in with Google?', 'Yes. On the sign-in page, press “Continue with Google” and use your ' . $domain . ' account — no password to remember. You can also sign in with your email and password instead.'],
+            ['I am faculty or staff. Do I need to confirm my email?', 'No. Sign up with your ' . $domain . ' GSuite address, pick whether you are faculty, an instructor or staff, and enter your employee ID — then go straight to uploading it. Sponsors do confirm their email by a link, since they may use any address.'],
+            ['How do sponsors join?', 'Two ways. Not ready yet? Press “Become a sponsor” on this page and send your details — the SSC will reply to the email you give. Ready to register? Choose “I’m a sponsor” when you create your account, confirm your email, then upload one PDF as proof of sponsorship.'],
+            ['Where do I get the waiver? (students)', 'Sign in, open My Documents and press “Download waiver form”. Print it, have your parent or guardian and you sign it in ink, scan it and upload the PDF.'],
             ['How do I make a PDF from my phone?', 'Use any “scan to PDF” feature: Google Drive, Adobe Scan, Microsoft Lens, or the Notes app on iPhone. Photos can also be exported as PDF from your gallery’s print option.'],
-            ['When do I get my ticket number?', 'Once SSC has approved your required documents (all three for students, one for faculty, staff and sponsors), your ticket number and QR code appear on your dashboard. Tickets are ' . $limited . ', so upload early.'],
+            ['What if I forget my password?', 'Press “Forgot password?” on the sign-in page and enter your account email. We email you a link to pick a new password.'],
+            ['When do I get my ticket number?', 'Once SSC has approved your required documents (all three for students, one for faculty, staff and sponsors), your ticket number and QR code appear on your dashboard and on My Ticket. Tickets are ' . $limited . ', so upload early. If every ticket for your group is already claimed, you are placed on the waiting list and get one automatically the moment a seat is released.'],
             ['Why was my document returned?', 'SSC staff check every file. If something is unreadable, cropped, expired or unsigned, the file is returned with a note. Your ticket is paused until you upload a corrected copy, then it is restored with the same number.'],
+            ['How do I know where my registration stands?', 'Open the Track page: it lists every step — account created, email confirmed, documents uploaded, SSC approval, ticket issued and scanned at the gate — with the current one highlighted. The bell at the top of the app also pings you whenever a document is approved, returned, or your ticket is ready.'],
             ['How do I get in on event night?', 'Show the QR code on your ticket at the gate. It is scanned once and you are admitted. Bring your ID in case staff want to match it.'],
-            ['What if I lose my ticket?', 'Nothing is lost. Sign in to e-RESERVE any time and open My Ticket to see or print it again.'],
+            ['What if I lose my ticket?', 'Nothing is lost. Sign in to e-RESERVE any time and open My Ticket — show the QR on your phone, download it as a JPG, or print a copy.'],
             ['Can I give my ticket to a friend?', 'No. Tickets are tied to your name and ID, and a ticket can only be scanned once.'],
-        ];
+        ]);
     }
 
     public static function aboutHighlights(): array

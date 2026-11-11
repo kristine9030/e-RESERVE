@@ -59,7 +59,7 @@ define('EVENT_SUBTITLE',  'A flagship event of the 70th Founding Anniversary');
 define('EVENT_HOST',      'Batangas State University TNEU – ARASOF Nasugbu');
 define('EVENT_ORG',       'Supreme Student Council');
 define('EVENT_MOTTO',     'PUSO. DEDIKASYON. TALINO.');
-define('EVENT_VENUE',     'In front of HEB Grounds');
+define('EVENT_VENUE',     'HEB Grounds');
 define('EVENT_DATE_ISO',  '2026-11-24T17:00:00');   // countdown target
 define('EVENT_DATE_TEXT', 'November 24, 2026');
 define('EVENT_TIME_TEXT', '5:00 PM – 10:00 PM');
@@ -163,8 +163,7 @@ define('DEMO_STUDENT_PASSWORD', 'Student@2026');
  | only place the rule is written.
  * ------------------------------------------------------------------------ */
 define('ALLOWED_EMAIL_DOMAINS', [
-    'g.batstate-u.edu.ph',      // students
-    'batstate-u.edu.ph',        // faculty and offices
+    'g.batstate-u.edu.ph',      // students, faculty and offices
 ]);
 
 /* --------------------------------------------------------------------------
@@ -202,8 +201,8 @@ define('SMTP_TIMEOUT',    15);
  |   2. Authorised redirect URI:  http://localhost/e-RESERVE/google.php
  |      (use your real https URL when it goes live).
  |   3. Paste the client ID and secret below.
- | Only @g.batstate-u.edu.ph / @batstate-u.edu.ph accounts are accepted, whatever
- | Google itself allows.
+ | Only @g.batstate-u.edu.ph accounts are accepted, whatever Google
+ | itself allows.
  * ------------------------------------------------------------------------ */
 define('GOOGLE_CLIENT_ID',     '');
 define('GOOGLE_CLIENT_SECRET', '');

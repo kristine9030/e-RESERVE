@@ -22,9 +22,8 @@
                 </span>
 
                 <h1 class="hero-title fade-up d1">
-                    SIGLA
+                    SIGLA 2026:
                     <span class="accent">A Student's Night</span>
-                    <span class="hero-year">2026</span>
                 </h1>
 
                 <p class="hero-lead fade-up d2">
@@ -33,9 +32,16 @@
                 </p>
 
                 <div class="d-flex flex-wrap gap-3 fade-up d3">
-                    <a href="{{ $cta }}" class="btn btn-gold btn-lg2 btn-shine">
-                        <i class="fa-solid fa-ticket"></i> {{ is_logged_in() ? 'Continue my registration' : 'Get my ticket' }}
-                    </a>
+                    @if (is_logged_in() || student_access_open())
+                        <a href="{{ $cta }}" class="btn btn-gold btn-lg2 btn-shine">
+                            <i class="fa-solid fa-ticket"></i> {{ is_logged_in() ? 'Continue my registration' : 'Get my ticket' }}
+                        </a>
+                    @else
+                        <span class="btn btn-gold btn-lg2 btn-shine" style="opacity:.65;pointer-events:none;"
+                              title="Sign-in and account creation open on {{ student_access_opens_at() }}">
+                            <i class="fa-solid fa-hourglass-half"></i> Registration opens {{ student_access_opens_at('M j, Y') }}
+                        </span>
+                    @endif
                     <a href="#guidelines" class="btn btn-glass btn-lg2">
                         <i class="fa-solid fa-route"></i> How it works
                     </a>
@@ -90,7 +96,7 @@
 
                         <div class="t3-body">
                             <span class="t3-kicker">Official ticket</span>
-                            <div class="t3-title">SIGLA <em>A Student’s Night</em> 2026</div>
+                            <div class="t3-title">SIGLA 2026: <em>A Student’s Night</em></div>
 
                             <div class="t3-when">
                                 <div><span>Date</span><strong>Nov 26, 2026</strong></div>
@@ -138,8 +144,8 @@
 
         <div class="row g-3 g-lg-4 justify-content-center">
             @foreach ([
-                ['fa-user-graduate', 'Currently enrolled students', 'Students of BatStateU TNEU – ARASOF-Nasugbu who are enrolled this semester, with an active university GSuite account.', 'Upload: waiver, COR and school ID', ['as' => 'student'], 'Register as a student'],
-                ['fa-briefcase', 'Faculty, instructors & staff', 'BatStateU ARASOF-Nasugbu faculty, instructors and staff, using their university email.', 'Upload: your employee ID (one PDF)', ['as' => 'employee'], 'Register as faculty or staff'],
+                ['fa-user-graduate', 'Currently enrolled students', 'Students of BatStateU The NEU ARASOF-Nasugbu who are enrolled this semester, with an active university GSuite account.', 'Upload: waiver, COR and school ID', ['as' => 'student'], 'Register as a student'],
+                ['fa-briefcase', 'Faculty, instructors & staff', 'BatStateU The NEU ARASOF-Nasugbu faculty, instructors and staff, using their university email.', 'Upload: your employee ID (one PDF)', ['as' => 'employee'], 'Register as faculty or staff'],
                 ['fa-handshake', 'Sponsors', 'Companies and partners supporting SIGLA 2026. Any email works; you confirm it by link.', 'Upload: proof of sponsorship (one PDF)', ['as' => 'sponsor'], 'Register as a sponsor'],
             ] as $i => [$jIcon, $jTitle, $jDesc, $jUpload, $jQuery, $jCta])
                 <div class="col-md-4 reveal" style="transition-delay:{{ $i * 90 }}ms;">
@@ -148,7 +154,13 @@
                         <h5>{{ $jTitle }}</h5>
                         <p>{{ $jDesc }}</p>
                         <span class="badge-soft badge-gold"><i class="fa-solid fa-file-pdf"></i> {{ $jUpload }}</span>
-                        <a href="{{ route('register', $jQuery) }}" class="join-link">{{ $jCta }} <i class="fa-solid fa-arrow-right"></i></a>
+                        @if (student_access_open())
+                            <a href="{{ route('register', $jQuery) }}" class="join-link">{{ $jCta }} <i class="fa-solid fa-arrow-right"></i></a>
+                        @else
+                            <span class="join-link" style="cursor:default;opacity:.8">
+                                <i class="fa-solid fa-hourglass-half"></i> Opens {{ student_access_opens_at('M j, Y') }}
+                            </span>
+                        @endif
                     </div>
                 </div>
             @endforeach
@@ -215,12 +227,12 @@
                 <h3>Want to sponsor SIGLA 2026?</h3>
                 <p>
                     Put your brand in front of {!! $showSlots ? 'up to <strong>' . number_format(ev('capacity')) . '</strong>' : 'the' !!} students, faculty and staff
-                    on <strong>{{ ev('date_text') }}</strong> at {{ ev('venue') }}. Send the SSC a message and we will get back to you with the details.
+                    on <strong>{{ ev('date_text') }}</strong>, {{ lcfirst(ev('venue')) }}. Send the SSC a message, and we will get back to you with the details.
                 </p>
                 <ul class="bs-points">
-                    @if ($showSponsors)<li><i class="fa-solid fa-circle-check"></i> Your logo in the sponsors strip on this page</li>@endif
-                    <li><i class="fa-solid fa-circle-check"></i> Backing a 70th anniversary student night</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Straight to the SSC officers, no middleman</li>
+                    @if ($showSponsors)<li><i class="fa-solid fa-circle-check"></i> Your logo in the sponsor strip on this page</li>@endif
+                    <li><i class="fa-solid fa-circle-check"></i> Backing the 70th Founding Anniversary student night</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Direct line to the SSC officers — no middlemen</li>
                 </ul>
             </div>
             <div class="bs-actions">
@@ -242,11 +254,11 @@
         <form method="post" action="{{ route('sponsor.inquiry') }}" class="modal-content" style="border:0;border-radius:22px;">
             @csrf
             <div class="modal-header border-0">
-                <div><h5 class="modal-title mb-0">Become a sponsor</h5><span class="cell-sub">The SSC will reply to the email you give.</span></div>
+                <div><h5 class="modal-title mb-0">Become a sponsor</h5><span class="cell-sub">The SSC will reply to the email address you provide.</span></div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body pt-0">
-                <label class="form-label-sm d-block" for="sq-company">Company / organisation</label>
+                <label class="form-label-sm d-block" for="sq-company">Company / organization</label>
                 <input type="text" class="form-control" id="sq-company" name="company" value="{{ old('company') }}" maxlength="120" required>
 
                 <div class="row g-3 mt-0">
@@ -294,9 +306,8 @@
                 <h2 class="section-title">What is <span class="grad-text">SIGLA</span>?</h2>
                 <div class="divider-dot"></div>
                 <p class="section-lead">
-                    <strong class="text-deep">SIGLA: A Student's Night</strong> is the flagship student gathering of the
-                    70th Founding Anniversary of Batangas State University — The National Engineering University,
-                    ARASOF-Nasugbu Campus.
+                    <strong class="text-deep">SIGLA 2026: A Student's Night</strong> is the flagship student gathering of the
+                    70th Founding Anniversary of BatStateU The NEU ARASOF-Nasugbu.
                 </p>
                 <p class="text-soft" style="font-size:.9rem;">
                     Organised by the <strong>Supreme Student Council</strong>, the night brings every college, org and
@@ -510,9 +521,16 @@
                     </p>
                 </div>
                 <div class="col-lg-4 text-lg-end">
-                    <a href="{{ $cta }}" class="btn btn-gold btn-lg2 mb-2">
-                        <i class="fa-solid fa-ticket"></i> Get my ticket
-                    </a><br>
+                    @if (is_logged_in() || student_access_open())
+                        <a href="{{ $cta }}" class="btn btn-gold btn-lg2 mb-2">
+                            <i class="fa-solid fa-ticket"></i> Get my ticket
+                        </a><br>
+                    @else
+                        <span class="btn btn-gold btn-lg2 mb-2" style="opacity:.65;pointer-events:none;"
+                              title="Sign-in and account creation open on {{ student_access_opens_at() }}">
+                            <i class="fa-solid fa-hourglass-half"></i> Registration opens {{ student_access_opens_at('M j, Y') }}
+                        </span><br>
+                    @endif
                     <a href="{{ route('ssc.login') }}" class="btn btn-outline-light2 btn-sm2">
                         <i class="fa-solid fa-user-shield"></i> Staff / Admin Panel
                     </a>

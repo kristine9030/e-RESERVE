@@ -34,18 +34,22 @@ Route::get('/terms', [PageController::class, 'terms'])->name('terms');
 
 /* ---- Guests ------------------------------------------------------------ */
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [LoginController::class, 'show'])->name('login');
-    Route::post('/login', [LoginController::class, 'store'])->name('login.store');
+    // Soft launch: the student doors only open when the SSC says so (Site Settings).
+    // The staff door /ssc below stays open, so the SSC can test while students wait.
+    Route::middleware('student.access')->group(function () {
+        Route::get('/login', [LoginController::class, 'show'])->name('login');
+        Route::post('/login', [LoginController::class, 'store'])->name('login.store');
+
+        Route::get('/register', [RegisterController::class, 'show'])->name('register');
+        Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+
+        Route::get('/google', [GoogleController::class, 'redirect'])->name('google.redirect');
+        Route::get('/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
+    });
 
     // SSC staff have their own door; students never see a staff form at /login.
     Route::get('/ssc', [LoginController::class, 'showStaff'])->name('ssc.login');
     Route::post('/ssc', [LoginController::class, 'storeStaff'])->middleware('throttle:20,1')->name('ssc.login.store');
-
-    Route::get('/register', [RegisterController::class, 'show'])->name('register');
-    Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
-
-    Route::get('/google', [GoogleController::class, 'redirect'])->name('google.redirect');
-    Route::get('/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
 
     Route::get('/forgot-password', [PasswordResetController::class, 'request'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetController::class, 'email'])->name('password.email');
@@ -129,6 +133,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/sponsors/inquiries/{inquiry}', [SponsorController::class, 'inquiry'])->whereNumber('inquiry')->name('admin.sponsors.inquiry');
     Route::get('/settings', [SiteSettingsController::class, 'index'])->name('admin.settings');
     Route::post('/settings', [SiteSettingsController::class, 'update'])->name('admin.settings.update');
+    Route::post('/settings/access', [SiteSettingsController::class, 'access'])->name('admin.settings.access');
     Route::post('/settings/quotas', [SiteSettingsController::class, 'quotas'])->name('admin.settings.quotas');
     Route::post('/settings/quotas/move', [SiteSettingsController::class, 'transfer'])->name('admin.settings.transfer');
     Route::get('/team', [TeamController::class, 'index'])->name('admin.team');

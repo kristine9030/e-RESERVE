@@ -86,14 +86,14 @@
                     <img class="tix-logo" src="{{ asset(ssc('logo_small')) }}" alt="Supreme Student Council seal">
                     <div class="tix-org">
                         <span>{{ ev('org') }}</span>
-                        <span>BatStateU TNEU · ARASOF-Nasugbu</span>
+                        <span>BatStateU The NEU ARASOF-Nasugbu</span>
                     </div>
                     <span class="tix-admit">ADMIT ONE</span>
                 </header>
 
                 <div class="tix-title">
                     <span class="tix-kicker">Official Ticket · 70th Founding Anniversary</span>
-                    <h3>SIGLA <em>A Student’s Night</em> 2026</h3>
+                    <h3>SIGLA 2026: <em>A Student’s Night</em></h3>
                 </div>
 
                 <div class="tix-when">

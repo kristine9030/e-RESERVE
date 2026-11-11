@@ -25,7 +25,7 @@ class EmployeeRegistrationTest extends TestCase
     {
         return $over + [
             'as' => 'employee', 'member_type' => 'faculty', 'name' => 'Maria Santos Reyes', 'employee_no' => '2015-0123',
-            'email' => 'maria.reyes@batstate-u.edu.ph', 'mobile' => '', 'password' => 'Test-pass-123', 'password_confirm' => 'Test-pass-123',
+            'email' => 'maria.reyes@g.batstate-u.edu.ph', 'mobile' => '', 'password' => 'Test-pass-123', 'password_confirm' => 'Test-pass-123',
         ];
     }
 
@@ -62,7 +62,7 @@ class EmployeeRegistrationTest extends TestCase
         return $a;
     }
 
-    private function employee(string $email = 'a.employee@batstate-u.edu.ph', string $no = 'EMP-001', string $type = 'staff'): User
+    private function employee(string $email = 'a.employee@g.batstate-u.edu.ph', string $no = 'EMP-001', string $type = 'staff'): User
     {
         $u = User::create(['email' => $email, 'name' => 'Ana Employee', 'password' => 'Test-pass-123']);
         $u->forceFill(['role' => 'student', 'member_type' => $type, 'status' => 'active', 'student_no' => $no,
@@ -84,7 +84,7 @@ class EmployeeRegistrationTest extends TestCase
     {
         $this->register()->assertRedirect(route('documents.index'));
 
-        $u = User::where('email', 'maria.reyes@batstate-u.edu.ph')->firstOrFail();
+        $u = User::where('email', 'maria.reyes@g.batstate-u.edu.ph')->firstOrFail();
         $this->assertSame('faculty', $u->member_type);
         $this->assertSame('2015-0123', $u->student_no);
         $this->assertNotNull($u->email_verified_at, 'faculty skip the confirmation email');
@@ -100,7 +100,7 @@ class EmployeeRegistrationTest extends TestCase
     public function test_the_ticket_comes_when_ssc_approves_the_employee_id(): void
     {
         $this->register();
-        $u  = User::where('email', 'maria.reyes@batstate-u.edu.ph')->first();
+        $u  = User::where('email', 'maria.reyes@g.batstate-u.edu.ph')->first();
         $id = $this->idDocument($u);
         $this->assertSame(0, DB::table('tickets')->where('user_id', $u->id)->count());
 
@@ -152,7 +152,7 @@ class EmployeeRegistrationTest extends TestCase
         $this->register()->assertRedirect(route('documents.index'));
         auth()->logout();
 
-        $this->register(['email' => 'other@batstate-u.edu.ph'])->assertSessionHas('register_error.field', 'employee_no');
+        $this->register(['email' => 'other@g.batstate-u.edu.ph'])->assertSessionHas('register_error.field', 'employee_no');
         $this->register(['employee_no' => '2015-9999'])->assertSessionHas('register_error.field', 'email');
         $this->assertSame(1, User::count());
     }
@@ -161,7 +161,7 @@ class EmployeeRegistrationTest extends TestCase
     {
         // member_type is never mass-assigned: an "as=student" post cannot create an employee.
         $this->post(route('register.store'), ['as' => 'student', 'member_type' => 'faculty', 'name' => 'Sneaky Person', 'employee_no' => 'X-123',
-            'email' => 'sneaky@batstate-u.edu.ph', 'password' => 'Test-pass-123', 'password_confirm' => 'Test-pass-123'])
+            'email' => 'sneaky@g.batstate-u.edu.ph', 'password' => 'Test-pass-123', 'password_confirm' => 'Test-pass-123'])
             ->assertSessionHas('register_error');
 
         $this->assertSame(0, User::count());
@@ -209,11 +209,11 @@ class EmployeeRegistrationTest extends TestCase
         $admin = $this->admin();
         $docs  = app(\App\Services\DocumentService::class);
 
-        $first = $this->employee('first@batstate-u.edu.ph', 'EMP-100');
+        $first = $this->employee('first@g.batstate-u.edu.ph', 'EMP-100');
         $docs->review($admin, $this->idDocument($first)->id, 'approved');
         $this->assertSame('valid', DB::table('tickets')->where('user_id', $first->id)->value('status'));
 
-        $second = $this->employee('second@batstate-u.edu.ph', 'EMP-200');
+        $second = $this->employee('second@g.batstate-u.edu.ph', 'EMP-200');
         $docs->review($admin, $this->idDocument($second)->id, 'approved');
         $this->assertSame(0, DB::table('tickets')->where('user_id', $second->id)->count(), 'no seat left');
 
@@ -226,7 +226,7 @@ class EmployeeRegistrationTest extends TestCase
 
     public function test_ssc_sees_the_category_and_the_single_document(): void
     {
-        $u = $this->employee('boss.emp@batstate-u.edu.ph', 'EMP-300', 'staff');
+        $u = $this->employee('boss.emp@g.batstate-u.edu.ph', 'EMP-300', 'staff');
         $this->actingAs($this->admin())->get(route('admin.registrations'))->assertOk()->assertSee('Staff')->assertSee('Employee ID');
         $this->assertSame(1, app(\App\Services\Stats::class)->dashboard()['incomplete'], 'an employee who has not uploaded yet is still uploading');
 

@@ -25,7 +25,7 @@ class SponsorInquiryController extends Controller
         $message = trim((string) $request->input('message'));
 
         if (mb_strlen($company) < 2 || mb_strlen($company) > 120) {
-            return $bad('Enter the name of your company or organisation.');
+            return $bad('Enter the name of your company or organization.');
         }
         if (mb_strlen($contact) < 2 || mb_strlen($contact) > 120) {
             return $bad('Enter the name of the person we should contact.');

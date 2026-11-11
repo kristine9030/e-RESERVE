@@ -13,16 +13,19 @@ return [
     'version' => '2.0.0',
 
     'event' => [
-        'name'      => "SIGLA: A Student's Night 2026",
+        'name'      => "SIGLA 2026: A Student's Night",
         'subtitle'  => 'A flagship event of the 70th Founding Anniversary',
-        'host'      => 'Batangas State University TNEU – ARASOF Nasugbu',
+        'host'      => 'BatStateU The NEU ARASOF-Nasugbu',
         'org'       => 'Supreme Student Council',
         'motto'     => 'PUSO. DEDIKASYON. TALINO.',
-        'venue'     => 'In front of HEB Grounds',
+        'venue'     => 'HEB Grounds',
         'date_iso'  => '2026-11-26T17:00:00',
         'date_text' => 'November 26, 2026',
         'time_text' => '5:00 PM – 10:00 PM',
         'capacity'  => 3000,
+
+        /** Soft launch: when student sign-in & account creation open to the public (SSC overrides it in Site Settings). */
+        'registration_opens_at' => env('STUDENT_ACCESS_OPENS_AT', '2026-11-15T08:00:00'),
     ],
 
     /** name, kind, icon, photo (null = placeholder) */
@@ -31,12 +34,14 @@ return [
         ['UNO Band',    'Live band',         'fa-guitar',         'assets/images/artists/uno-band.jpg'],
         ['EXCESS Band', 'Live band',         'fa-guitar',         'assets/images/artists/excess-band.jpg'],
         ['FitterKarma', 'Live performance',  'fa-music',          'assets/images/artists/fitterkarma.jpg'],
+        ['Hiraya',      'Live performance',  'fa-music',          null],
+        ['DJ Chris',    'DJ set',            'fa-record-vinyl',   null],
     ],
 
     'ssc' => [
         'facebook'  => 'https://www.facebook.com/SSCARASOF',
         'email'     => 'sscnasugbu@g.batstate-u.edu.ph',
-        'messenger' => 'Supreme Student Council - Batangas State University ARASOF-Nasugbu Campus',
+        'messenger' => 'Supreme Student Council - BatStateU The NEU ARASOF-Nasugbu',
         'logo'      => 'assets/images/ssc-logo.png',
         'logo_small' => 'assets/images/ssc-logo-sm.png',   // 240px copy for page headers (80 KB instead of 888 KB)
     ],
@@ -106,7 +111,7 @@ return [
 
     /** Who may hold an account. */
     'allowed_email_domains' => [
-        'g.batstate-u.edu.ph',   // students // faculty and offices
+        'g.batstate-u.edu.ph',   // students, faculty and offices
     ],
 
     /**

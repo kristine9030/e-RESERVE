@@ -108,7 +108,7 @@ class TicketImage
     {
         $this->logo(44, 23, 48);
         $this->text(108, 46, (string) config('ereserve.event.org', 'Supreme Student Council'), 17, 'bold', $this->c[$this->theme['ink']]);
-        $this->text(108, 62, 'BatStateU TNEU · ARASOF-Nasugbu', 12, 'regular', $this->c[$this->theme['ink_soft']]);
+        $this->text(108, 62, 'BatStateU The NEU ARASOF-Nasugbu', 12, 'regular', $this->c[$this->theme['ink_soft']]);
 
         $this->roundRect(620, 29, 759, 66, 18, $this->c['white']);
         $this->textCentered(689.5, 53, 'ADMIT ONE', 13, 'extra', $this->c[$this->theme['admit']], 1.6);
@@ -118,10 +118,9 @@ class TicketImage
     {
         $this->text(43, 128, 'OFFICIAL TICKET · 70TH FOUNDING ANNIVERSARY', 12, 'bold', $this->c['label'], 1.5);
 
-        // "SIGLA / A Student's Night / 2026", the middle line in the site's blue-to-gold gradient.
-        $this->text(43, 178, 'SIGLA', 41, 'extra', $this->c['title']);
+        // "SIGLA 2026 / A Student's Night", the subtitle in the site's blue-to-gold gradient.
+        $this->text(43, 178, 'SIGLA 2026:', 41, 'extra', $this->c['title']);
         $this->gradientText(43, 219, "A Student’s Night", 41, $this->theme['title'][0], $this->theme['title'][1]);
-        $this->text(43, 260, '2026', 41, 'extra', $this->c['title']);
 
         // Date / time / venue
         foreach ([[43, 'DATE', $t['date_text'] ?? ''], [264, 'TIME', $t['time_text'] ?? ''], [490, 'VENUE', $t['venue'] ?? '']] as [$x, $label, $val]) {

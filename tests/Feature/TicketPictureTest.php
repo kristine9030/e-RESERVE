@@ -106,7 +106,7 @@ class TicketPictureTest extends TestCase
             'ticket_no' => 'SIGLA-2026-000999', 'name' => str_repeat('Maria Cristina ', 8), 'student_no' => '26-00999',
             'program' => 'Bachelor of Science in Information Technology Major in Everything', 'year' => '4th Year',
             'event' => "SIGLA: A Student's Night 2026 with a very very long subtitle that has to wrap",
-            'venue' => 'In front of HEB Grounds', 'date_text' => 'November 26, 2026', 'time_text' => '5:00 PM – 10:00 PM',
+            'venue' => 'HEB Grounds', 'date_text' => 'November 26, 2026', 'time_text' => '5:00 PM – 10:00 PM',
             'verify_hash' => hash('sha256', 'x'), 'status' => 'valid', 'checked_in' => false,
         ]);
 

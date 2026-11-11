@@ -28,7 +28,7 @@
                 <span class="who-ico"><i class="fa-solid fa-user-graduate"></i></span>
                 <span class="who-txt">
                     <strong>I’m a student</strong>
-                    <span>Enrolled at BatStateU ARASOF-Nasugbu. Upload your waiver, COR and school ID; your ticket comes once SSC approves them.</span>
+                    <span>Enrolled at BatStateU The NEU ARASOF-Nasugbu. Upload your waiver, COR and school ID; your ticket comes once SSC approves them.</span>
                 </span>
                 <i class="fa-solid fa-chevron-right who-go"></i>
             </a>
@@ -53,7 +53,7 @@
 
             <p class="text-center text-muted2 mt-4 mb-0" style="font-size:.74rem;">
                 <i class="fa-solid fa-shield-halved me-1"></i>
-                Your details are used only for SIGLA 2026 ticketing, under the BatStateU Data Privacy Policy.
+                Your details are used only for SIGLA 2026 ticketing, under the <a href="{{ route('privacy') }}" class="text-gold fw-800">BatStateU Data Privacy Policy</a>.
             </p>
         </div>
     </main>

@@ -14,7 +14,44 @@
     </div>
 </div>
 
-<div class="card-soft fade-up d1">
+<div class="card-soft fade-up">
+    <div class="card-head">
+        <div><h5 class="mb-0"><i class="fa-solid fa-hourglass-half"></i> Soft launch — student access</h5>
+            <span class="cell-sub">The landing page is already public. Student sign-in and account creation stay shut until you open them — your SSC door at <code>/ssc</code> always works, so you can keep testing.</span></div>
+        <span class="badge-soft badge-{{ $accessOpen ? 'success' : 'warning' }}">{{ $accessOpen ? 'Open' : 'Closed' }}</span>
+    </div>
+    <div class="card-body-p">
+        <form method="post" action="{{ route('admin.settings.access') }}">@csrf
+            <div class="d-flex flex-column gap-2 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="sa-auto" name="mode" value="auto" {{ $accessMode === 'auto' ? 'checked' : '' }}>
+                    <label class="form-check-label" for="sa-auto">Follow the schedule — students get in automatically on <strong>{{ $accessOpensAt }}</strong></label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="sa-open" name="mode" value="open" {{ $accessMode === 'open' ? 'checked' : '' }}>
+                    <label class="form-check-label" for="sa-open">Open now — anyone may sign in and register right away</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="sa-closed" name="mode" value="closed" {{ $accessMode === 'closed' ? 'checked' : '' }}>
+                    <label class="form-check-label" for="sa-closed">Closed until we say so — ignore the schedule</label>
+                </div>
+            </div>
+            <div class="row g-3 align-items-end">
+                <div class="col-sm-6">
+                    <label class="form-label-sm d-block" for="sa-opens">Scheduled opening (for “follow the schedule”)</label>
+                    <input type="datetime-local" class="form-control" id="sa-opens" name="opens_at"
+                           value="{{ old('opens_at', $accessOpensAtValue) }}" required>
+                </div>
+                <div class="col-sm-6">
+                    <button type="submit" class="btn btn-gold btn-sm2"><i class="fa-solid fa-floppy-disk"></i> Save student access</button>
+                    <span class="cell-sub">No one has to stay up: the doors open on their own once the moment passes.</span>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card-soft fade-up d1 mt-4">
     <div class="card-head"><h5 class="mb-0">What visitors can see</h5></div>
     <div class="card-body-p">
         @foreach ($switches as $key => $sw)

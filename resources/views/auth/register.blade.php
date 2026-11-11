@@ -170,7 +170,7 @@
             <p class="text-center text-muted2 mt-4 mb-0" style="font-size:.74rem;">
                 <i class="fa-solid fa-shield-halved me-1"></i>
                 By registering you agree that the SSC may process your details for
-                SIGLA 2026 ticketing, under the BatStateU Data Privacy Policy.
+                SIGLA 2026 ticketing, under the <a href="{{ route('privacy') }}" class="text-gold fw-800">BatStateU Data Privacy Policy</a>.
             </p>
         </div>
     </main>

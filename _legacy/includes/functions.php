@@ -240,7 +240,7 @@ function email_domain_allowed(string $email): bool
     return in_array($domain, array_map('strtolower', ALLOWED_EMAIL_DOMAINS), true);
 }
 
-/** "@g.batstate-u.edu.ph or @batstate-u.edu.ph" — for error messages. */
+/** "@g.batstate-u.edu.ph" — for error messages. */
 function allowed_domains_text(): string
 {
     $list = array_map(static fn(string $d): string => '@' . $d, ALLOWED_EMAIL_DOMAINS);

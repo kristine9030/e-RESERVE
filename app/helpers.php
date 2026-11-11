@@ -130,6 +130,18 @@ function is_email_verified(): bool
     return Auth::check() && Auth::user()->hasVerifiedEmail();
 }
 
+/** True once students may sign in and create accounts (soft-launch gate; the /ssc staff door always works). */
+function student_access_open(): bool
+{
+    return \App\Services\StudentAccess::open();
+}
+
+/** The scheduled opening moment as text, e.g. "Nov 15, 2026 · 8:00 AM". */
+function student_access_opens_at(string $format = 'M j, Y · g:i A'): string
+{
+    return \App\Services\StudentAccess::opensAtText($format);
+}
+
 function tickets(): TicketService
 {
     return app(TicketService::class);

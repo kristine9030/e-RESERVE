@@ -82,7 +82,7 @@
             </p>
             <p class="text-center text-muted2 mb-0" style="font-size:.74rem;">
                 <i class="fa-solid fa-shield-halved me-1"></i>
-                Protected by the BatStateU Data Privacy Policy
+                Protected by the <a href="{{ route('privacy') }}" class="text-gold fw-800">BatStateU Data Privacy Policy</a>
             </p>
         </div>
     </main>

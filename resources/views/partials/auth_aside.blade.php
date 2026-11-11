@@ -53,7 +53,7 @@
                 </div>
                 <div class="t3-body">
                     <span class="t3-kicker">Official ticket</span>
-                    <div class="t3-title">SIGLA <em>A Student’s Night</em> 2026</div>
+                    <div class="t3-title">SIGLA 2026: <em>A Student’s Night</em></div>
                     <div class="t3-when">
                         <div><span>Date</span><strong>Nov 26, 2026</strong></div>
                         <div><span>Time</span><strong>5 – 10 PM</strong></div>

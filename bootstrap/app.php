@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'staff'    => App\Http\Middleware\EnsureStaff::class,
             'superadmin' => App\Http\Middleware\EnsureSuperAdmin::class,
             'student'  => EnsureStudent::class,
+            'student.access' => App\Http\Middleware\EnsureStudentAccess::class,
             'verified' => EnsureVerified::class,
         ]);
 

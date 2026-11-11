@@ -32,9 +32,11 @@
                         <li><hr class="dropdown-divider"></li>
                         @if (is_logged_in())
                             <li><a class="dropdown-item fw-bold" href="{{ is_admin() ? route('admin.dashboard') : route('dashboard') }}"><i class="fa-solid fa-gauge-high me-2"></i>My Dashboard</a></li>
-                        @else
+                        @elseif (student_access_open())
                             <li><a class="dropdown-item" href="{{ route('login') }}"><i class="fa-solid fa-right-to-bracket me-2"></i>Sign In</a></li>
                             <li><a class="dropdown-item fw-bold nav-more-cta" href="{{ route('register') }}"><i class="fa-solid fa-ticket me-2"></i>Get my ticket</a></li>
+                        @else
+                            <li><span class="dropdown-item"><i class="fa-solid fa-hourglass-half me-2"></i>Registration opens {{ student_access_opens_at('M j, Y') }}</span></li>
                         @endif
                     </ul>
                 </li>
@@ -56,12 +58,19 @@
                         </button>
                     </form>
                 @else
-                    <a href="{{ route('login') }}" class="btn btn-ghost btn-sm2">
-                        <i class="fa-solid fa-right-to-bracket"></i> Sign In
-                    </a>
-                    <a href="{{ route('register') }}" class="btn btn-gold btn-sm2">
-                        Get my ticket <i class="fa-solid fa-arrow-right"></i>
-                    </a>
+                    @if (student_access_open())
+                        <a href="{{ route('login') }}" class="btn btn-ghost btn-sm2">
+                            <i class="fa-solid fa-right-to-bracket"></i> Sign In
+                        </a>
+                        <a href="{{ route('register') }}" class="btn btn-gold btn-sm2">
+                            Get my ticket <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    @else
+                        <span class="btn btn-gold btn-sm2" style="opacity:.65;pointer-events:none;"
+                              title="Sign-in and account creation open on {{ student_access_opens_at() }}">
+                            <i class="fa-solid fa-hourglass-half"></i> Registration opens {{ student_access_opens_at('M j, Y') }}
+                        </span>
+                    @endif
                 @endif
             </div>
         </div>

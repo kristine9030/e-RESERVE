@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Models\Sponsor;
 use App\Services\Audit;
+use App\Services\StudentAccess;
 use App\Services\TicketQuota;
 use App\Services\TicketService;
 use Illuminate\Http\Request;
@@ -29,7 +30,37 @@ class SiteSettingsController extends Controller
             'taken'        => TicketQuota::taken(),
             'capacity'     => TicketQuota::capacity(),
             'base'         => TicketQuota::baseCapacity(),
+
+            'accessMode'         => StudentAccess::mode(),
+            'accessOpen'         => StudentAccess::open(),
+            'accessOpensAt'     => StudentAccess::opensAtText(),
+            'accessOpensAtValue' => StudentAccess::opensAt()->format('Y-m-d\TH:i'),
         ]);
+    }
+
+    /** The soft-launch gate: when students may sign in and create accounts. */
+    public function access(Request $request)
+    {
+        $mode = (string) $request->input('mode');
+        abort_unless(in_array($mode, ['auto', 'open', 'closed'], true), 422);
+
+        $ts = strtotime((string) $request->input('opens_at'));
+        if ($ts === false) {
+            return back()->withInput()->with('flash', flash('error', 'Opening date not saved', 'Pick a valid date and time.'));
+        }
+        $opensAt = date('Y-m-d H:i:s', $ts);
+
+        Setting::store('student_access', $mode);
+        Setting::store('student_access_opens_at', $opensAt);
+        Audit::log('setting.student_access', 'setting', 'student_access', ['mode' => $mode, 'opens_at' => $opensAt]);
+
+        $text = match ($mode) {
+            'open'   => 'Anyone may sign in and create an account right now.',
+            'closed' => 'Student sign-in and registration stay closed until you change this.',
+            default  => 'Students get in automatically on ' . date('M j, Y \a\t g:i A', $ts) . '.',
+        };
+
+        return back()->with('flash', flash('success', 'Student access saved', $text));
     }
 
     public function update(Request $request)

@@ -37,11 +37,16 @@
             <div class="col-6 col-lg-2">
                 <h6>My Account</h6>
                 <ul class="footer-links">
-                    <li><a href="{{ route('login') }}">Sign In</a></li>
-                    <li><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                    <li><a href="{{ route('register') }}">Create Account</a></li>
-                    <li><a href="{{ route('documents.index') }}">Upload Documents</a></li>
-                    <li><a href="{{ route('ticket') }}">View My Ticket</a></li>
+                    @if (!is_logged_in() && !student_access_open())
+                        <li><i class="fa-solid fa-hourglass-half text-gold me-2"></i>
+                            Sign-in and account creation open on {{ student_access_opens_at('M j, Y') }}.</li>
+                    @else
+                        <li><a href="{{ route('login') }}">Sign In</a></li>
+                        <li><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                        <li><a href="{{ route('register') }}">Create Account</a></li>
+                        <li><a href="{{ route('documents.index') }}">Upload Documents</a></li>
+                        <li><a href="{{ route('ticket') }}">View My Ticket</a></li>
+                    @endif
                 </ul>
             </div>
 
@@ -50,7 +55,7 @@
                 <ul class="footer-links">
                     <li>
                         <i class="fa-solid fa-location-dot text-gold me-2"></i>
-                        BatStateU TNEU – ARASOF Nasugbu,<br>
+                        BatStateU The NEU ARASOF-Nasugbu,<br>
                         <span class="ms-4">R. Martinez St., Bucana, Nasugbu, Batangas</span>
                     </li>
                     <li><i class="fa-solid fa-envelope text-gold me-2"></i>
