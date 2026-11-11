@@ -310,7 +310,7 @@
                     70th Founding Anniversary of BatStateU The NEU ARASOF-Nasugbu.
                 </p>
                 <p class="text-soft" style="font-size:.9rem;">
-                    Organised by the <strong>Supreme Student Council</strong>, the night brings every college, org and
+                    Organized by the <strong>Supreme Student Council</strong>, the night brings every college, org and
                     year level under one roof for a celebration of talent, culture and campus pride — a living tribute to
                     the council's motto, <em class="text-gold fw-800">{{ ev('motto') }}</em>
                 </p>

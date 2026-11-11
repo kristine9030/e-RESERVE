@@ -44,7 +44,7 @@ require __DIR__ . '/layouts/head.php';
             <li>My ticket is issued in my name, admits <strong>one (1)</strong> person only, and may not be sold, lent or transferred.</li>
             <li>I will follow the instructions of the Supreme Student Council, the security personnel and university officials throughout the event.</li>
             <li>I will observe the university’s code of conduct. Possession of prohibited items — including alcohol, illegal drugs, weapons and flammable materials — is not allowed, and I consent to bag inspection at the gate.</li>
-            <li>I accept that attending a large public gathering carries inherent risks, and I take responsibility for my own safety and belongings. I release the organisers and the university from claims arising from my own negligence or from the acts of other attendees.</li>
+            <li>I accept that attending a large public gathering carries inherent risks, and I take responsibility for my own safety and belongings. I release the organizers and the university from claims arising from my own negligence or from the acts of other attendees.</li>
             <li>I consent to the collection and use of my personal data and of my documents by the Supreme Student Council for verification, ticketing and attendance purposes only, in line with the Data Privacy Act of 2012 (RA 10173).</li>
             <li>I allow photographs and video taken during the event, in which I may appear, to be used for the university’s official documentation and publicity.</li>
             <li>I understand that a ticket may be cancelled and entry refused if any information I gave is false or any document is invalid.</li>

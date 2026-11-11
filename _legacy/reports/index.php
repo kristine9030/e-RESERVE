@@ -70,7 +70,7 @@ require __DIR__ . '/../layouts/app_header.php';
             <div class="col-md-6">
                 <div class="receipt-row"><span class="k">Event</span><span class="v"><?= EVENT_NAME ?></span></div>
                 <div class="receipt-row"><span class="k">Date &amp; Venue</span><span class="v"><?= EVENT_DATE_TEXT ?> · <?= EVENT_VENUE ?></span></div>
-                <div class="receipt-row"><span class="k">Organiser</span><span class="v"><?= EVENT_ORG ?></span></div>
+                <div class="receipt-row"><span class="k">Organizer</span><span class="v"><?= EVENT_ORG ?></span></div>
                 <div class="receipt-row"><span class="k">Capacity</span><span class="v"><?= number_format(EVENT_CAPACITY) ?> students</span></div>
             </div>
             <div class="col-md-6">

@@ -53,7 +53,7 @@
             <div class="col-md-6">
                 <div class="receipt-row"><span class="k">Event</span><span class="v">{{ ev('name') }}</span></div>
                 <div class="receipt-row"><span class="k">Date &amp; Venue</span><span class="v">{{ ev('date_text') }} · {{ ev('venue') }}</span></div>
-                <div class="receipt-row"><span class="k">Organiser</span><span class="v">{{ ev('org') }}</span></div>
+                <div class="receipt-row"><span class="k">Organizer</span><span class="v">{{ ev('org') }}</span></div>
                 <div class="receipt-row"><span class="k">Capacity</span><span class="v">{{ number_format(ev('capacity')) }} students</span></div>
             </div>
             <div class="col-md-6">
