@@ -443,13 +443,13 @@
                 <div class="row g-3">
                     @php
                         $lineup = event_lineup();
-                        usort($lineup, static fn (array $a, array $b): int => ($a[0] === 'FitterKarma') <=> ($b[0] === 'FitterKarma'));
+                        usort($lineup, static fn (array $a, array $b): int => ($b[0] === 'FitterKarma') <=> ($a[0] === 'FitterKarma'));
                     @endphp
                     @foreach ($lineup as $i => [$name, $kind, $icon, $photo])
                         <div class="col-sm-6 reveal" style="transition-delay:{{ $i * 90 }}ms;">
                             <article class="artist-card tilt" data-tilt="7">
                                 @if ($photo)
-                                    <div class="artist-photo" style="background-image:url('{{ asset_v($photo) }}');" role="img" aria-label="{{ $name }}"></div>
+                                    <div class="artist-photo {{ $name === 'EXCESS Band' ? 'artist-photo-contain' : '' }}" style="background-image:url('{{ asset_v($photo) }}');" role="img" aria-label="{{ $name }}"></div>
                                 @else
                                     <div class="artist-photo artist-placeholder" role="img" aria-label="{{ $name }} — photo coming soon">
                                         <i class="fa-solid {{ $icon }}"></i><span>Photo coming soon</span>
@@ -517,7 +517,7 @@
         <div class="cta-band reveal">
             <div class="row align-items-center g-4 position-relative">
                 <div class="col-lg-8">
-                    <span class="eyebrow on-dark mb-3"><i class="fa-solid fa-bolt"></i> Free for every student</span>
+                    <span class="eyebrow on-dark mb-3"><i class="fa-solid fa-bolt"></i> Made for every student, faculty and staff</span>
                     <h2 class="mt-3 mb-2" style="font-size:clamp(1.6rem,3vw,2.4rem);">
                         Your ticket to SIGLA 2026 is a few uploads away.
                     </h2>

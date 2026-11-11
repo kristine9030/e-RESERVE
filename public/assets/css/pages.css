@@ -31,7 +31,14 @@
     position: absolute; inset: 0; background-size: cover; background-position: center;
     transform: scale(1.04); transition: transform .8s cubic-bezier(.22, 1, .36, 1);
 }
+.artist-photo-contain {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-color: #fff;
+    transform: none;
+}
 .artist-card:hover .artist-photo { transform: scale(1.1); }
+.artist-card:hover .artist-photo-contain { transform: none; }
 .artist-card::after {                       /* soft fade so the label reads on any photo */
     content: ''; position: absolute; inset: 0; pointer-events: none;
     background: linear-gradient(180deg, transparent 45%, rgba(23, 59, 77, .38) 100%);

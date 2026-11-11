@@ -114,7 +114,7 @@ class SiteContent
     public static function aboutHighlights(): array
     {
         return [
-            ['fa-people-group', 'Made for Every Student', 'A night for the whole campus, part of the 70th Founding Anniversary celebration.'],
+            ['fa-people-group', 'Made for every student, faculty and staff', 'A night for the whole campus, part of the 70th Founding Anniversary celebration.'],
             ['fa-file-pdf', 'Paperless Sign-up', 'Upload your required documents from your phone. No queues at the SSC office, no paper forms to hand in.'],
             ['fa-ticket', 'Free Ticket', 'Your ticket number is issued as soon as your documents are approved. No payment needed.'],
             ['fa-qrcode', 'Contactless Entry', 'Scan-and-go gates powered by signed QR codes — no printed manifest, no long lines.'],
