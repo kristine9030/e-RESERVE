@@ -226,13 +226,13 @@
                 <span class="eyebrow"><i class="fa-solid fa-handshake-angle"></i> Partner with us</span>
                 <h3>Want to sponsor SIGLA 2026?</h3>
                 <p>
-                    Put your brand in front of {!! $showSlots ? 'up to <strong>' . number_format(ev('capacity')) . '</strong>' : 'the' !!} students, faculty and staff
-                    on <strong>{{ ev('date_text') }}</strong>, {{ lcfirst(ev('venue')) }}. Send the SSC a message, and we will get back to you with the details.
+                    Put your brand in front of students, faculty and staff
+                    at <strong>{{ ev('venue') }}</strong> on <strong>{{ ev('date_text') }}</strong>. Send the SSC a message and we will get back to you with the details.
                 </p>
                 <ul class="bs-points">
                     @if ($showSponsors)<li><i class="fa-solid fa-circle-check"></i> Your logo in the sponsor strip on this page</li>@endif
-                    <li><i class="fa-solid fa-circle-check"></i> Backing the 70th Founding Anniversary student night</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Direct line to the SSC officers — no middlemen</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Your brand behind the 70th Founding Anniversary student night</li>
+                    <li><i class="fa-solid fa-circle-check"></i> A direct line to the SSC officers — no middlemen</li>
                 </ul>
             </div>
             <div class="bs-actions">
@@ -440,7 +440,11 @@
 
             <div class="col-lg-7">
                 <div class="row g-3">
-                    @foreach (event_lineup() as $i => [$name, $kind, $icon, $photo])
+                    @php
+                        $lineup = event_lineup();
+                        usort($lineup, static fn (array $a, array $b): int => ($a[0] === 'FitterKarma') <=> ($b[0] === 'FitterKarma'));
+                    @endphp
+                    @foreach ($lineup as $i => [$name, $kind, $icon, $photo])
                         <div class="col-sm-6 reveal" style="transition-delay:{{ $i * 90 }}ms;">
                             <article class="artist-card tilt" data-tilt="7">
                                 @if ($photo)

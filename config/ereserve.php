@@ -25,7 +25,7 @@ return [
         'capacity'  => 3000,
 
         /** Soft launch: when student sign-in & account creation open to the public (SSC overrides it in Site Settings). */
-        'registration_opens_at' => env('STUDENT_ACCESS_OPENS_AT', '2026-11-15T08:00:00'),
+        'registration_opens_at' => env('STUDENT_ACCESS_OPENS_AT', '2026-11-15T02:00:00'),
     ],
 
     /** name, kind, icon, photo (null = placeholder) */
@@ -33,9 +33,9 @@ return [
         ['SIKLAB',      'Dance performance', 'fa-person-walking', 'assets/images/artists/siklab.jpg'],
         ['UNO Band',    'Live band',         'fa-guitar',         'assets/images/artists/uno-band.jpg'],
         ['EXCESS Band', 'Live band',         'fa-guitar',         'assets/images/artists/excess-band.jpg'],
-        ['FitterKarma', 'Live performance',  'fa-music',          'assets/images/artists/fitterkarma.jpg'],
-        ['Hiraya',      'Live performance',  'fa-music',          null],
-        ['DJ Chris',    'DJ set',            'fa-record-vinyl',   null],
+        ['FitterKarma', 'Live performance',  'fa-music',          'assets/images/[MAIN] fitterkarma Photo B (1).jpg'],
+        ['Hiraya',      'Live performance',  'fa-music',          'assets/images/HIRAYA.jpg'],
+        ['DJ Chris',    'DJ set',            'fa-record-vinyl',   'assets/images/DJ Chris.jpg'],
     ],
 
     'ssc' => [
