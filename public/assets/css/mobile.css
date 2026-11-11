@@ -283,6 +283,8 @@ img, svg, video, canvas { max-width: 100%; }
 
     /* ---- Buttons: smaller, same weight as the text ---- */
     body.landing-page .btn { min-height: 41px; font-size: .86rem; font-weight: 800; padding: .45rem 1rem; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; }
+    body.landing-page .registration-cta { min-width: 0; font-size: .68rem; line-height: 1.2; padding: .35rem .45rem; white-space: normal; text-align: center; }
+    body.landing-page br.registration-break { display: block; }
     body.landing-page .hero .btn, body.landing-page .bs-actions .btn, body.landing-page .cta-band .btn { width: 100%; }
     body.landing-page .accordion-button { font-size: .86rem; padding: .9rem .95rem; }
     body.landing-page .accordion-body { font-size: .84rem; }
@@ -355,7 +357,10 @@ img, svg, video, canvas { max-width: 100%; }
     body.landing-page .section, body.landing-page .section-tight { padding: 3rem 0; }
     body.landing-page .row { --bs-gutter-y: 1rem; }
 }
+
+br.registration-break { display: none; }
 @media (max-width: 767.98px) {
+    body.landing-page br.registration-break { display: block; }
     body.landing-page .hero-chips { gap: .6rem; margin-top: 1.6rem; }
     body.landing-page .hero-chips .glass-chip { padding: .5rem .8rem; border-radius: 14px; min-height: 0; }
     body.landing-page .slot-meter { margin-top: 1.6rem; }
@@ -419,9 +424,9 @@ img, svg, video, canvas { max-width: 100%; }
    Landing on a phone: balanced button spacing, side-by-side hero buttons, no ticket in the hero
    ========================================================================== */
 @media (max-width: 767.98px) {
-    /* two buttons on one line */
+    /* Keep hero actions compact while allowing the registration label two lines. */
     body.landing-page .hero .d-flex.flex-wrap.gap-3 { flex-wrap: nowrap !important; gap: .6rem !important; margin-top: .2rem; }
-    body.landing-page .hero .d-flex.flex-wrap.gap-3 .btn { flex: 1 1 0; width: auto; min-width: 0; padding: .35rem .5rem; white-space: nowrap; }
+    body.landing-page .hero .d-flex.flex-wrap.gap-3 .btn { flex: 1 1 0; width: auto; min-width: 0; padding: .35rem .5rem; white-space: normal; }
 
     /* even rhythm between blocks (side margins untouched) */
     body.landing-page .hero-lead { margin-bottom: 1.4rem; }

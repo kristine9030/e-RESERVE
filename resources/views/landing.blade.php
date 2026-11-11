@@ -37,9 +37,10 @@
                             <i class="fa-solid fa-ticket"></i> {{ is_logged_in() ? 'Continue my registration' : 'Get my ticket' }}
                         </a>
                     @else
-                        <span class="btn btn-gold btn-lg2 btn-shine" style="opacity:.65;pointer-events:none;"
+                        <span class="btn btn-gold btn-lg2 btn-shine registration-cta" style="opacity:.65;pointer-events:none;"
                               title="Sign-in and account creation open on {{ student_access_opens_at() }}">
-                            <i class="fa-solid fa-hourglass-half"></i> Registration opens {{ student_access_opens_at('M j, Y') }}
+                            <i class="fa-solid fa-hourglass-half"></i>
+                            <span>Registration opens<br class="registration-break">{{ student_access_opens_at('M j, Y') }}</span>
                         </span>
                     @endif
                     <a href="#guidelines" class="btn btn-glass btn-lg2">
@@ -530,9 +531,10 @@
                             <i class="fa-solid fa-ticket"></i> Get my ticket
                         </a><br>
                     @else
-                        <span class="btn btn-gold btn-lg2 mb-2" style="opacity:.65;pointer-events:none;"
+                        <span class="btn btn-gold btn-lg2 mb-2 registration-cta" style="opacity:.65;pointer-events:none;"
                               title="Sign-in and account creation open on {{ student_access_opens_at() }}">
-                            <i class="fa-solid fa-hourglass-half"></i> Registration opens {{ student_access_opens_at('M j, Y') }}
+                            <i class="fa-solid fa-hourglass-half"></i>
+                            <span>Registration opens<br class="registration-break">{{ student_access_opens_at('M j, Y') }}</span>
                         </span><br>
                     @endif
                     <a href="{{ route('ssc.login') }}" class="btn btn-outline-light2 btn-sm2">
