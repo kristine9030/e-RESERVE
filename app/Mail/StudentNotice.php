@@ -96,7 +96,7 @@ class StudentNotice extends Mailable implements ShouldQueue
             $name,
             'Approved, but the tickets for your group are all taken',
             [
-                'All three of your documents are approved. Unfortunately all ' . $cap . ' tickets have already been issued.',
+                'All three of your documents are approved. Unfortunately all ' . number_format(\App\Services\TicketQuota::capacity()) . ' tickets have already been issued.',
                 'You are in line: if a ticket is released, yours is issued automatically and we will email you.',
             ],
             'Check my status',

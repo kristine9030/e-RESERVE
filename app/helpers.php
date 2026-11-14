@@ -136,8 +136,8 @@ function student_access_open(): bool
     return \App\Services\StudentAccess::open();
 }
 
-/** The scheduled opening moment as text, e.g. "Nov 15, 2026 · 8:00 AM". */
-function student_access_opens_at(string $format = 'M j, Y · g:i A'): string
+/** The scheduled opening moment as text, e.g. "Nov 15, 2026". */
+function student_access_opens_at(string $format = 'M j, Y'): string
 {
     return \App\Services\StudentAccess::opensAtText($format);
 }

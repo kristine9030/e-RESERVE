@@ -33,7 +33,7 @@ class SiteSettingsController extends Controller
 
             'accessMode'         => StudentAccess::mode(),
             'accessOpen'         => StudentAccess::open(),
-            'accessOpensAt'     => StudentAccess::opensAtText(),
+            'accessOpensAt'     => StudentAccess::opensAtText('M j, Y · g:i A'),   // staff still see the exact time
             'accessOpensAtValue' => StudentAccess::opensAt()->format('Y-m-d\TH:i'),
         ]);
     }

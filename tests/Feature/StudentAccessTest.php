@@ -58,7 +58,7 @@ class StudentAccessTest extends TestCase
     {
         config(['ereserve.event.registration_opens_at' => '2001-02-03T04:05:00']);
 
-        $this->assertSame('Feb 3, 2001 · 4:05 AM', StudentAccess::opensAtText());
+        $this->assertSame('Feb 3, 2001', StudentAccess::opensAtText());
     }
 
     public function test_ssc_saves_the_gate_from_site_settings(): void

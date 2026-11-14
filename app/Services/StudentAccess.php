@@ -46,8 +46,8 @@ class StudentAccess
         }
     }
 
-    /** The opening moment as text, e.g. "Nov 15, 2026 · 8:00 AM" — for buttons and notices. */
-    public static function opensAtText(string $format = 'M j, Y · g:i A'): string
+    /** The opening moment as text, e.g. "Nov 15, 2026" — for buttons and notices. */
+    public static function opensAtText(string $format = 'M j, Y'): string
     {
         return self::opensAt()->format($format);
     }
