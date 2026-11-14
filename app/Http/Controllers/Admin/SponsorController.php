@@ -9,7 +9,7 @@ use App\Models\SponsorInquiry;
 use App\Services\Audit;
 use Illuminate\Http\Request;
 
-/** SSC manages the landing-page sponsors and reads the enquiries companies send. */
+/** SSC manages the landing-page sponsors and reads the inquiries companies send. */
 class SponsorController extends Controller
 {
     private const LOGO_DIR = 'uploads/sponsors';

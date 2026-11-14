@@ -82,7 +82,7 @@
 
 <div class="card-soft fade-up d3 mt-4">
     <div class="card-head">
-        <div><h5 class="mb-0">Sponsor enquiries</h5><span class="cell-sub">Sent from “Want to sponsor SIGLA 2026?” on the landing page. Reply by email.</span></div>
+        <div><h5 class="mb-0">Sponsor inquiries</h5><span class="cell-sub">Sent from “Want to sponsor SIGLA 2026?” on the landing page. Reply by email.</span></div>
     </div>
     <div class="card-body-p">
         @forelse ($inquiries as $q)

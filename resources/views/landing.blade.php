@@ -249,7 +249,7 @@
     </div>
 </section>
 
-<!-- Sponsor enquiry form -->
+<!-- Sponsor inquiry form -->
 <div class="modal fade" id="sponsorModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <form method="post" action="{{ route('sponsor.inquiry') }}" class="modal-content" style="border:0;border-radius:22px;">
