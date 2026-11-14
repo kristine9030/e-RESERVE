@@ -56,9 +56,8 @@ Fill `MAIL_*` in `.env`, then:
 php artisan config:cache
 php artisan ereserve:mail-test you@example.com
 ```
-A normal Gmail/GSuite mailbox has a daily sending cap that ~3,000 students would exceed
-(confirmation mail + returned/ticket notices). Use a transactional service (Amazon SES is the
-cheapest; Brevo/Mailgun/Resend have free tiers with daily limits) and verify the sender domain/address.
+Email goes out through Amazon SES (SMTP); setup steps are in `deploy/SMTP.md`. Keep
+`QUEUE_CONNECTION=database` with the queue worker running.
 
 ## 7. Updating later
 ```bash

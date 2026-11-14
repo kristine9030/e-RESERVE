@@ -1,67 +1,66 @@
-# Setting up email (SMTP) for e-RESERVE
+# Email for e-RESERVE — Amazon SES (SMTP)
 
 e-RESERVE sends: the account confirmation link, "document returned", "ticket ready" and
-"approved, no seat left". Until SMTP is set, `MAIL_MAILER=log` writes mail to
-`storage/logs/laravel.log` and **nothing is delivered**.
+"approved, no seat left". It talks to Amazon SES over plain SMTP, so no extra package is needed.
+Until the SMTP values are filled in, nothing is delivered.
 
-## Option A — the SSC Google mailbox (recommended: no domain needed)
+## 1. In AWS (once)
 
-Uses `sscnasugbu@g.batstate-u.edu.ph` over Gmail SMTP. Mail really comes from Google, so it passes
-SPF/DKIM and lands in `@g.batstate-u.edu.ph` inboxes (same Workspace).
+1. **Pick a region** (top right), e.g. Asia Pacific (Singapore) `ap-southeast-1`.
+   Identities, the sandbox and SMTP credentials are all **per region** — stay in the same one.
+2. **SES → Configuration → Identities → Create identity.**
+   * **Domain** (recommended): add the 3 DKIM CNAME records SES shows to your DNS. Wait until it says *Verified*.
+   * **Email address** (works, but lands in spam more often): click the link SES emails you.
+   You can only send From an address/domain that is verified here.
+3. **Leave the sandbox:** SES → *Account dashboard* → **Request production access**
+   (mail type *Transactional*, website = the e-RESERVE URL, use case = "account confirmation and ticket
+   notices for ~3,000 registered students of one university event"). Takes about a day.
+   In the sandbox you can only send to verified addresses, 200 mails/day.
+4. **SES → SMTP settings → Create SMTP credentials → Create user.** Copy the **SMTP username** and
+   **SMTP password** now — the password is shown once. (These are *not* your AWS access keys.)
 
-1. Sign in to that mailbox → **Google Account → Security → 2-Step Verification → turn on**.
-2. **Security → App passwords** → name it `e-RESERVE` → copy the 16-character password.
-   *If "App passwords" is missing, the school's Workspace admin (ICT) has disabled it — ask them to
-   allow it for this account, or use Option B.*
-3. In `.env` (no spaces in the password):
-   ```
-   MAIL_MAILER=smtp
-   MAIL_SCHEME=smtp
-   MAIL_HOST=smtp.gmail.com
-   MAIL_PORT=587
-   MAIL_USERNAME=sscarasofnasugbu.ereserve@gmail.com
-   MAIL_PASSWORD=abcdefghijklmnop
-   MAIL_FROM_ADDRESS="sscarasofnasugbu.ereserve@gmail.com"
-   MAIL_FROM_NAME="e-RESERVE"
-   ```
-   The From address must equal the username; Gmail rewrites anything else.
-4. `php artisan config:clear` then `php artisan ereserve:mail-test your.name@g.batstate-u.edu.ph`
-5. Check the inbox (and Spam). Done.
+## 2. In `.env`
 
-**Limit:** about **2,000 recipients per day** per Workspace mailbox. With ~3,000 students that is fine
-if sign-ups spread over a few days, but not if everyone registers on day one. Beyond the cap Google
-rejects mail temporarily, so keep the queue on (`QUEUE_CONNECTION=database` + `queue:work`) so failed
-sends are retried rather than lost.
+```
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtp
+MAIL_HOST=email-smtp.ap-southeast-1.amazonaws.com   # same region as above
+MAIL_PORT=587
+MAIL_USERNAME=<SES SMTP username>
+MAIL_PASSWORD=<SES SMTP password>
+MAIL_FROM_ADDRESS="no-reply@yourdomain.com"         # must be a verified identity
+MAIL_FROM_NAME="e-RESERVE · Supreme Student Council"
 
-## Option B — a transactional provider (needs a domain you control)
+QUEUE_CONNECTION=database
+```
 
-Amazon SES (cheapest, ~$0.10 per 1,000), Brevo, Mailgun, Resend, SendGrid. You must verify a
-**sender domain** (add DNS records: SPF, DKIM). You cannot do that for `batstate-u.edu.ph` yourself —
-ICT would have to add the records — so this only helps if the SSC has its own domain or ICT cooperates.
-Never send "from" `@g.batstate-u.edu.ph` through a third party without that DNS setup: Google will
-treat it as spoofing and send it to spam or reject it.
+`MAIL_SCHEME` must be `smtp` (port 587) or `smtps` (port 465) — `tls`/`ssl` are not valid.
 
-Use the provider's SMTP host/user/password and `MAIL_SCHEME=smtp` with port 587
-(or `smtps` with 465). `tls` / `ssl` are not valid values for `MAIL_SCHEME`.
+## 3. Run it
 
-## Local development
-Keep `MAIL_MAILER=log` and read the messages in `storage/logs/laravel.log`, or run Mailpit/Mailtrap
-(`MAIL_HOST=127.0.0.1 MAIL_PORT=1025`).
+```
+php artisan migrate            # creates the jobs table if it is missing
+php artisan config:clear       # (config:cache on the server)
+php artisan queue:work --tries=3
+php artisan ereserve:mail-test you@example.com
+```
 
-## Queue
-Notifications are queued. Set `QUEUE_CONNECTION=database` and run the worker:
-* local: `php artisan queue:work`
+Mails are queued, so a **queue worker must be running** or nothing is sent:
+* local: keep `php artisan queue:work` open
 * server: `deploy/supervisor-queue.conf`
-With `QUEUE_CONNECTION=sync` (the current local default) mails are sent immediately inside the
-request, which works but makes the admin's Approve click wait for SMTP.
 
-Failed sends: `php artisan queue:failed` and `php artisan queue:retry all`.
+Failed sends: `php artisan queue:failed`, then `php artisan queue:retry all`.
 
-## Troubleshooting
+## 4. Troubleshooting
+
 | Symptom | Likely cause |
 |---|---|
-| `Username and Password not accepted (535)` | Used the normal password instead of the App Password, or 2-Step is off |
-| `Connection timed out` | Host blocks outbound 587; try port 465 + `MAIL_SCHEME=smtps`, or ask the VPS provider |
-| `The "tls" scheme is not supported` | `MAIL_SCHEME=tls`: change to `smtp` (587) or `smtps` (465) |
-| Arrives in Spam | Option B without SPF/DKIM, or From address differs from the SMTP user |
-| Nothing arrives, no error | `MAIL_MAILER=log`, or the queue worker is not running |
+| `Email address is not verified` | From address/domain not verified in this region, or you are still in the sandbox |
+| `535 Authentication Credentials Invalid` | Used AWS access keys instead of SES **SMTP** credentials, or wrong region host |
+| `Connection timed out` | Host blocks outbound 587; use port 465 with `MAIL_SCHEME=smtps` |
+| Nothing arrives, no error | `MAIL_MAILER=log`, or `queue:work` is not running |
+| Arrives in spam | Verify a domain (SPF/DKIM) instead of a single address |
+
+## Local development
+Keep `MAIL_MAILER=log` and read the messages in `storage/logs/laravel.log`, or run Mailpit
+(`MAIL_HOST=127.0.0.1 MAIL_PORT=1025`).

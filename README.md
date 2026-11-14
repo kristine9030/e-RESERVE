@@ -50,7 +50,7 @@ cannot self-register — create them with `ereserve:make-admin` (it prints a gen
 * **After changing .env, run php artisan config:cache.** Under XAMPP's multi-threaded Apache, reading .env on every request intermittently fails (~1 in 10 requests returns *Server Error 500 — No application encryption key*). The config is therefore cached; .env edits only take effect after re-running that command (php artisan config:clear while developing with php artisan serve).
 
 * **Email** — `MAIL_MAILER=log` writes confirmation and password-reset emails to `storage/logs/laravel.log` (the confirmation link is also shown on screen).
-  For real delivery set `MAIL_MAILER=smtp` and the `MAIL_*` values (Gmail/Workspace needs an App Password).
+  For real delivery set `MAIL_MAILER=smtp` and the `MAIL_*` values (Amazon SES over SMTP — see `deploy/SMTP.md`).
 * **Google sign-in** — set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and (optionally) `GOOGLE_REDIRECT_URI`
   (default `APP_URL/google/callback`; add it as an authorised redirect URI in Google Cloud). Only university
   domains are accepted whatever Google allows.
