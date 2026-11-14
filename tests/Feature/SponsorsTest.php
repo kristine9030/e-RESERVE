@@ -26,6 +26,7 @@ class SponsorsTest extends TestCase
     {
         return $this->post(route('sponsor.inquiry'), $over + [
             'company' => 'Acme Foods', 'contact_name' => 'Pat Cruz', 'email' => 'pat@acme.test', 'phone' => '09171234567', 'message' => 'We can give prizes.',
+            'form_token' => \Illuminate\Support\Facades\Crypt::encryptString((string) (time() - 60)),
         ]);
     }
 
@@ -90,6 +91,27 @@ class SponsorsTest extends TestCase
         $this->inquiry(['website_url' => 'http://spam.test']);          // the hidden trap field
 
         $this->assertSame(0, SponsorInquiry::count());
+    }
+
+    public function test_spam_is_dropped_before_it_reaches_the_ssc(): void
+    {
+        $this->inquiry(['message' => 'List e-reserve.online in Google today: siteindex.pro'])->assertSessionHas('flash.type', 'error');
+        $this->inquiry(['message' => 'See https://spam.test'])->assertSessionHas('flash.type', 'error');
+        $this->inquiry(['form_token' => \Illuminate\Support\Facades\Crypt::encryptString((string) time())]);   // posted instantly
+        $this->inquiry(['form_token' => 'forged']);
+        $this->post(route('sponsor.inquiry'), ['company' => 'Acme', 'contact_name' => 'Pat', 'email' => 'p@acme.test']);   // no stamp at all
+
+        $this->assertSame(0, SponsorInquiry::count());
+    }
+
+    public function test_one_connection_cannot_flood_the_inbox(): void
+    {
+        foreach (range(1, 5) as $i) {
+            $this->inquiry(['email' => "p{$i}@acme.test"]);
+        }
+        $this->inquiry(['email' => 'p6@acme.test'])->assertSessionHas('flash.type', 'error');
+
+        $this->assertSame(5, SponsorInquiry::count());
     }
 
     public function test_the_same_email_cannot_flood_the_inbox(): void

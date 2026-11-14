@@ -279,6 +279,7 @@
                 <label class="form-label-sm d-block mt-3" for="sq-msg">How would you like to help? <span class="text-muted2">(optional)</span></label>
                 <textarea class="form-control" id="sq-msg" name="message" rows="3" maxlength="1000">{{ old('message') }}</textarea>
 
+                <input type="hidden" name="form_token" value="{{ \Illuminate\Support\Facades\Crypt::encryptString((string) time()) }}">
                 <input type="text" name="website_url" value="" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;height:0;width:0;opacity:0;">
             </div>
             <div class="modal-footer border-0">
