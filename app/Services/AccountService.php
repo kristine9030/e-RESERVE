@@ -195,7 +195,7 @@ class AccountService
         }
 
         $key = 'register:' . request()->ip();
-        if (RateLimiter::tooManyAttempts($key, 5)) {
+        if (RateLimiter::tooManyAttempts($key, (int) config('ereserve.register_limit'))) {
             return $fail('Too many sign-up attempts. Please wait ' . RateLimiter::availableIn($key) . ' seconds.');
         }
         RateLimiter::hit($key, 900);
@@ -262,7 +262,7 @@ class AccountService
         }
 
         $key = 'register:' . request()->ip();
-        if (RateLimiter::tooManyAttempts($key, 5)) {
+        if (RateLimiter::tooManyAttempts($key, (int) config('ereserve.register_limit'))) {
             return $fail('Too many sign-up attempts. Please wait ' . RateLimiter::availableIn($key) . ' seconds.');
         }
         RateLimiter::hit($key, 900);
@@ -343,7 +343,7 @@ class AccountService
         }
 
         $key = 'register:' . request()->ip();
-        if (RateLimiter::tooManyAttempts($key, 5)) {
+        if (RateLimiter::tooManyAttempts($key, (int) config('ereserve.register_limit'))) {
             return $fail('Too many sign-up attempts. Please wait ' . RateLimiter::availableIn($key) . ' seconds.');
         }
         RateLimiter::hit($key, 900);

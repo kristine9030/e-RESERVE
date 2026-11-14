@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function () {
         icon: 'success',
         title: 'All documents submitted!',
         html:
-            '<p style="margin:0 0 .85rem">Your waiver, COR and school ID are with SSC now. <strong>You can relax and wait for approval.</strong></p>' +
+            '<p style="margin:0 0 .85rem">' + {!! json_encode(count($metas) > 1 ? 'Your waiver, COR and school ID are with SSC now.' : 'Your ' . reset($metas)['short'] . ' is with SSC now.') !!} + ' <strong>You can relax and wait for approval.</strong></p>' +
             '<div style="text-align:left;background:#F2F8FB;border:1px solid #D6E8F0;border-radius:14px;padding:.85rem 1rem;font-size:.9rem;line-height:1.6">' +
             '<div><i class="fa-solid fa-bell" style="width:1.4rem;color:#2A8DB5"></i> Check the <strong>bell</strong> at the top for updates</div>' +
             '<div><i class="fa-solid fa-route" style="width:1.4rem;color:#2A8DB5"></i> Or open the <strong>Track</strong> page any time</div>' +

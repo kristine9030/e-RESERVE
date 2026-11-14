@@ -123,6 +123,12 @@ return [
     /** Hours a confirmation link stays usable. */
     'verify_token_hours' => 24,
 
+    /**
+     * Sign-ups allowed per IP address every 15 minutes. Keep it high: a whole campus WiFi shares one
+     * public IP, so a low number locks out students during the launch rush. Override with REGISTER_LIMIT.
+     */
+    'register_limit' => (int) env('REGISTER_LIMIT', 150),
+
     /** Employees who may register without documents: a confirmed email is enough for a ticket. */
     'employee_types' => [
         'faculty'        => 'Faculty',
