@@ -90,7 +90,7 @@ class SiteContent
 
         // The soft launch: while the doors are shut, say so.
         if (! StudentAccess::open()) {
-            $faqs[] = ['When can I create an account?', 'This page is already live, but sign-in and account creation open on ' . StudentAccess::opensAtText('M j, Y') . '. You can already read the guidelines, the lineup and this FAQ while you wait.'];
+            $faqs[] = ['When can I create an account?', 'This page is already live, but sign-in and account creation are not open yet. Please check back soon. You can already read the guidelines, the lineup and this FAQ while you wait.'];
         }
 
         return array_merge($faqs, [

@@ -21,8 +21,8 @@ class EnsureStudentAccess
 
         return redirect()->route('home')->with('flash', flash(
             'info',
-            'Registration opens ' . StudentAccess::opensAtText('M j, Y'),
-            'Sign-in and account creation open on ' . StudentAccess::opensAtText('M j, Y') . '. See you then!'
+            'Registration opens soon',
+            'Sign-in and account creation are not open yet. Please check back soon!'
         ));
     }
 }

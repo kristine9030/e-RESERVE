@@ -36,7 +36,7 @@
                             <li><a class="dropdown-item" href="{{ route('login') }}"><i class="fa-solid fa-right-to-bracket me-2"></i>Sign In</a></li>
                             <li><a class="dropdown-item fw-bold nav-more-cta" href="{{ route('register') }}"><i class="fa-solid fa-ticket me-2"></i>Get my ticket</a></li>
                         @else
-                            <li><span class="dropdown-item"><i class="fa-solid fa-hourglass-half me-2"></i>Registration opens {{ student_access_opens_at('M j, Y') }}</span></li>
+                            <li><span class="dropdown-item"><i class="fa-solid fa-hourglass-half me-2"></i>Registration opens soon</span></li>
                         @endif
                     </ul>
                 </li>
@@ -67,8 +67,8 @@
                         </a>
                     @else
                         <span class="btn btn-gold btn-sm2" style="opacity:.65;pointer-events:none;"
-                              title="Sign-in and account creation open on {{ student_access_opens_at() }}">
-                            <i class="fa-solid fa-hourglass-half"></i> Registration opens {{ student_access_opens_at('M j, Y') }}
+                              title="Registration opens soon">
+                            <i class="fa-solid fa-hourglass-half"></i> Registration opens soon
                         </span>
                     @endif
                 @endif

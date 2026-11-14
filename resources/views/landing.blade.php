@@ -38,9 +38,9 @@
                         </a>
                     @else
                         <span class="btn btn-gold btn-lg2 btn-shine registration-cta" style="opacity:.65;pointer-events:none;"
-                              title="Sign-in and account creation open on {{ student_access_opens_at() }}">
+                              title="Registration opens soon">
                             <i class="fa-solid fa-hourglass-half"></i>
-                            <span>Registration opens<br class="registration-break">{{ student_access_opens_at('M j, Y') }}</span>
+                            <span>Registration<br class="registration-break">opens soon</span>
                         </span>
                     @endif
                     <a href="#guidelines" class="btn btn-glass btn-lg2">
@@ -159,7 +159,7 @@
                             <a href="{{ route('register', $jQuery) }}" class="join-link">{{ $jCta }} <i class="fa-solid fa-arrow-right"></i></a>
                         @else
                             <span class="join-link" style="cursor:default;opacity:.8">
-                                <i class="fa-solid fa-hourglass-half"></i> Opens {{ student_access_opens_at('M j, Y') }}
+                                <i class="fa-solid fa-hourglass-half"></i> Opens soon
                             </span>
                         @endif
                     </div>
@@ -532,9 +532,9 @@
                         </a><br>
                     @else
                         <span class="btn btn-gold btn-lg2 mb-2 registration-cta" style="opacity:.65;pointer-events:none;"
-                              title="Sign-in and account creation open on {{ student_access_opens_at() }}">
+                              title="Registration opens soon">
                             <i class="fa-solid fa-hourglass-half"></i>
-                            <span>Registration opens<br class="registration-break">{{ student_access_opens_at('M j, Y') }}</span>
+                            <span>Registration<br class="registration-break">opens soon</span>
                         </span><br>
                     @endif
                     <a href="{{ route('ssc.login') }}" class="btn btn-outline-light2 btn-sm2">

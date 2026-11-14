@@ -39,7 +39,7 @@
                 <ul class="footer-links">
                     @if (!is_logged_in() && !student_access_open())
                         <li><i class="fa-solid fa-hourglass-half text-gold me-2"></i>
-                            Sign-in and account creation open on {{ student_access_opens_at('M j, Y') }}.</li>
+                            Sign-in and account creation open soon.</li>
                     @else
                         <li><a href="{{ route('login') }}">Sign In</a></li>
                         <li><a href="{{ route('dashboard') }}">Dashboard</a></li>

@@ -25,7 +25,10 @@ return [
         'capacity'  => 3000,
 
         /** Soft launch: when student sign-in & account creation open to the public (SSC overrides it in Site Settings). */
-        'registration_opens_at' => env('STUDENT_ACCESS_OPENS_AT', '2026-11-15T02:00:00'),
+        /** What applies before the SSC saves anything in Site Settings: closed = the SSC opens it by hand. */
+        'student_access_default' => env('STUDENT_ACCESS_DEFAULT', 'closed'),
+
+        'registration_opens_at' => env('STUDENT_ACCESS_OPENS_AT', '2026-11-15T19:00:00'),
     ],
 
     /** name, kind, icon, photo (null = placeholder) */

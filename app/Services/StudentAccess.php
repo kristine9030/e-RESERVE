@@ -11,9 +11,9 @@ use Carbon\Carbon;
  * SSC keeps testing everything through their own door at /ssc.
  *
  * Modes, kept in the student_access setting:
- *   auto   — follow the schedule: open once the opening moment passes (default)
+ *   auto   — follow the schedule: open once the opening moment passes
  *   open   — open right now, whatever the schedule says
- *   closed — shut until the SSC changes this, whatever the schedule says
+ *   closed — shut until the SSC changes this, whatever the schedule says (default when nothing is saved)
  */
 class StudentAccess
 {
@@ -21,7 +21,14 @@ class StudentAccess
     {
         $mode = Setting::read('student_access');
 
-        return in_array($mode, ['auto', 'open', 'closed'], true) ? $mode : 'auto';
+        if (in_array($mode, ['auto', 'open', 'closed'], true)) {
+            return $mode;
+        }
+
+        // Nothing saved yet: stay shut until the SSC opens it (STUDENT_ACCESS_DEFAULT overrides, e.g. in tests).
+        $default = (string) config('ereserve.event.student_access_default');
+
+        return in_array($default, ['auto', 'open', 'closed'], true) ? $default : 'closed';
     }
 
     /** True once students may sign in and create accounts. */
