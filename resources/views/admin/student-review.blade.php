@@ -5,6 +5,9 @@
 
 <?php
     $types   = \App\Support\DocumentSets::metaFor($user['member_type'] ?? 'student');
+    $kind    = $user['member_type'] ?? 'student';
+    $kindLbl = ['faculty' => 'Faculty', 'instructor' => 'Instructor', 'staff' => 'Staff', 'sponsor' => 'Sponsor'][$kind] ?? 'Student';
+    $kindIco = ['faculty' => 'fa-chalkboard-user', 'instructor' => 'fa-chalkboard-user', 'staff' => 'fa-id-badge', 'sponsor' => 'fa-handshake'][$kind] ?? 'fa-user-graduate';
     $parse   = fn ($d) => $d ? (is_string($d['auto_checks'] ?? null) ? (json_decode($d['auto_checks'], true) ?: []) : ($d['auto_checks'] ?? [])) : [];
     $waiting = array_filter($docs, fn ($d) => $d && $d['status'] === 'submitted');
     $okIds   = array_filter($waiting, fn ($d) => !\App\Services\DocumentChecker::needsLook($parse($d)));
@@ -17,7 +20,7 @@
 <div class="page-hero fade-up">
     <div class="row align-items-center g-3">
         <div class="col-lg-8">
-            <span class="eyebrow on-dark"><i class="fa-solid fa-user-graduate"></i> Student review</span>
+            <span class="eyebrow on-dark"><i class="fa-solid {{ $kindIco }}"></i> {{ $kindLbl }} review</span>
             <h2>{{ $user['name'] }}</h2>
             <p>{{ $user['student_no'] }} · {{ $user['program'] }}@if ($user['year_level']) · {{ $user['year_level'] }}@endif @if ($user['college_code']) · {{ $user['college_code'] }}@endif · {{ $user['email'] }}</p>
         </div>
