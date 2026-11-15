@@ -444,7 +444,9 @@ button.aud-main { width: 100%; border: 0; background: transparent; text-align: l
 .gs-note i, .gs-warn i { margin-top: .15rem; }
 
 /* ---- Review documents: one "Needs review" table ---- */
-.rq-filter { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(150px, 220px) auto; gap: .65rem; padding: 0 1.5rem 1.15rem; align-items: center; }
+.rq-filter { display: grid; grid-template-columns: minmax(170px, 1.4fr) repeat(3, minmax(120px, 190px)) auto; gap: .65rem; padding: 0 1.5rem 1.15rem; align-items: center; }
+.rq-filter .form-control, .rq-filter .form-select { max-width: none; width: 100%; }
+.rq-filter .stu-search, .rq-filter .stu-filter-actions { grid-column: auto; }
 .rq-n small { color: var(--ink-muted); font-weight: 700; }
 .rq-table tr.needs-look td:first-child { box-shadow: inset 3px 0 0 #F58634; }
 @media (min-width: 768px) {
@@ -454,3 +456,14 @@ button.aud-main { width: 100%; border: 0; background: transparent; text-align: l
     .rq-table th:nth-child(4) { width: 14%; }
 }
 @media (max-width: 767.98px) { .rq-filter { grid-template-columns: 1fr; padding: 0 1rem 1rem; } .rq-card .card-head { padding-left: 1rem; padding-right: 1rem; } }
+
+/* Records > Faculty & staff: search, category, documents, ticket and the buttons stay on ONE row
+   (the grid only had room for three fields, so the Filter button dropped onto a line of its own).
+   It only stacks on phones and small tablets. */
+.stu-filter:not(:has(#sfProgram)):has(select[name="type"]) { grid-template-columns: minmax(170px, 1.6fr) repeat(3, minmax(110px, 1fr)) auto; }
+.stu-filter:not(:has(#sfProgram)):has(select[name="type"]) .stu-search, .stu-filter:not(:has(#sfProgram)):has(select[name="type"]) .stu-filter-actions { grid-column: auto; }
+@media (max-width: 767.98px) {
+    .stu-filter:not(:has(#sfProgram)):has(select[name="type"]) { grid-template-columns: 1fr 1fr; }
+    .stu-filter:not(:has(#sfProgram)):has(select[name="type"]) .stu-search, .stu-filter:not(:has(#sfProgram)):has(select[name="type"]) .stu-filter-actions { grid-column: 1 / -1; }
+}
+@media (max-width: 575.98px) { .stu-filter:not(:has(#sfProgram)):has(select[name="type"]) { grid-template-columns: 1fr; } }
