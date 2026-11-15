@@ -130,6 +130,6 @@ class AdminPagesTest extends TestCase
     public function test_dashboard_still_renders(): void
     {
         $this->students(3);
-        $this->actingAs($this->admin())->get(route('admin.dashboard'))->assertOk()->assertSee('9 documents waiting');
+        $this->actingAs($this->admin())->get(route('admin.dashboard'))->assertOk()->assertSee('3 people waiting');   // 3 students with 3 files each: counted by person, not by file
     }
 }

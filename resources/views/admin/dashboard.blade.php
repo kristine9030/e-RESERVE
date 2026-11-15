@@ -302,7 +302,7 @@
             <div class="card-head">
                 <div>
                     <h5 class="mb-0">Document review queue</h5>
-                    <span class="cell-sub">{{ number_format($waiting) }} document{{ $waiting === 1 ? '' : 's' }} waiting</span>
+                    <span class="cell-sub">{{ number_format($waiting) }} {{ $waiting === 1 ? 'person' : 'people' }} waiting · first submitted first</span>
                 </div>
                 <a href="{{ route('admin.documents') }}" class="btn btn-gold btn-sm2">Open queue <i class="fa-solid fa-arrow-right"></i></a>
             </div>
@@ -310,14 +310,14 @@
                 @if (!$queue)
                     <p class="cell-sub mb-0 py-3 text-center"><i class="fa-solid fa-circle-check text-green me-1"></i> Nothing waiting. Nice work.</p>
                 @endif
-                <?php foreach (array_slice($queue, 0, 6) as $d): $meta = config('ereserve.documents')[$d['doc_type']]; ?>
+                <?php foreach (array_slice($queue, 0, 6) as $d): ?>
                     <div class="info-row">
-                        <span class="info-icon"><i class="fa-solid {{ $meta['icon'] }}"></i></span>
+                        <span class="info-icon"><i class="fa-solid fa-user-clock"></i></span>
                         <div class="flex-grow-1 min-w-0">
-                            <div class="info-value" style="font-size:.88rem;">{{ $d['student_name'] }} · {{ $meta['short'] }}</div>
-                            <div class="cell-sub">{{ $d['student_no'] }} · {{ pretty_date($d['uploaded_at'], 'M d · g:i A') }}</div>
+                            <div class="info-value" style="font-size:.88rem;">{{ $d['name'] }} · {{ $d['waiting'] }} file{{ $d['waiting'] === 1 ? '' : 's' }} waiting</div>
+                            <div class="cell-sub">{{ $d['student_no'] }} · since {{ pretty_date($d['waiting_since'], 'M d · g:i A') }}</div>
                         </div>
-                        <a href="{{ document_url((int) $d['id']) }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm2"><i class="fa-solid fa-eye"></i></a>
+                        <a href="{{ route('admin.documents.student', $d['id']) }}" class="btn btn-ghost btn-sm2" title="Review"><i class="fa-solid fa-folder-open"></i></a>
                     </div>
                 <?php endforeach; ?>
             </div>

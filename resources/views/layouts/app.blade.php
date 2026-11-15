@@ -12,7 +12,7 @@
             @php
                 $stUser    = current_user() ?? [];
                 $stScanner = ($stUser['role'] ?? '') === 'scanner';
-                $stDocs    = $stScanner ? 0 : waiting_documents();
+                $stDocs    = $stScanner ? 0 : waiting_people();
                 $stInq     = $stScanner ? 0 : \App\Models\SponsorInquiry::where('status', 'new')->count();
                 $stTodo    = $stDocs + $stInq;
             @endphp
@@ -35,7 +35,7 @@
                         <div class="dropdown-menu dropdown-menu-end app-drop st-menu shadow border-0 mt-2">
                             <div class="st-menu-head">Needs your attention</div>
                             @foreach ([
-                                ['fa-file-circle-check', 'Documents to review', $stDocs, route('admin.documents')],
+                                ['fa-file-circle-check', 'People to review', $stDocs, route('admin.documents')],
                                 ['fa-handshake', 'Sponsor inquiries', $stInq, route('admin.sponsors')],
                             ] as [$ic, $lb, $ct, $hr])
                                 <a class="dropdown-item app-drop-item" href="{{ $hr }}"><i class="fa-solid {{ $ic }}"></i><span>{{ $lb }}</span><b class="st-count {{ $ct ? 'on' : '' }}">{{ $ct }}</b></a>

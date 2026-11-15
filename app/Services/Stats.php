@@ -119,8 +119,11 @@ class Stats
             default   => null,
         };
 
-        $page = $q->orderByDesc('u.created_at')->orderByDesc('u.id')
-            ->select('u.id', 'u.name', 'u.email', 'u.student_no', 'u.college_code', 'u.program', 'u.year_level',
+        // First submitted first, whatever the filter: the person whose first file came in earliest is at the top.
+        // People who have not submitted anything yet follow, in the order they registered.
+        $page = $q->selectSub('SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id', 'first_submitted')
+            ->orderByRaw('first_submitted IS NULL')->orderBy('first_submitted')->orderBy('u.created_at')->orderBy('u.id')
+            ->addSelect('u.id', 'u.name', 'u.email', 'u.student_no', 'u.college_code', 'u.program', 'u.year_level',
                      'u.created_at', 'u.email_verified_at', 'u.email_bounced_at', 'u.email_bounce_type', 'u.sponsor_type', 'u.sponsor_tier', 'u.status as account_status', 'u.member_type')
             ->paginate($perPage)->withQueryString();
 
@@ -630,8 +633,11 @@ class Stats
         );
     }
 
-    public function waitingDocuments(): int
+    /** How many PEOPLE have at least one file waiting for review (a person with three files counts once). */
+    public function waitingPeople(): int
     {
-        return (int) DB::table('documents')->where('status', 'submitted')->count();
+        return (int) DB::table('documents as d')->join('users as u', 'u.id', '=', 'd.user_id')
+            ->where('u.role', 'student')->where('d.status', 'submitted')
+            ->distinct()->count('d.user_id');
     }
 }

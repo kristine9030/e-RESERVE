@@ -3,7 +3,7 @@
     $ssRole      = $ssUser['role'] ?? 'admin';
     $ssScanner   = $ssRole === 'scanner';
     $ssActive    = trim($__env->yieldContent('nav'));
-    $ssWaiting   = $ssScanner ? 0 : waiting_documents();
+    $ssWaiting   = $ssScanner ? 0 : waiting_people();
     $ssCatalog   = $ssScanner ? [] : report_catalog();
     $ssInquiries = $ssScanner ? 0 : \App\Models\SponsorInquiry::where('status', 'new')->count();
     $ssReportKeys = array_merge(['reports'], array_column($ssCatalog, 'nav'));

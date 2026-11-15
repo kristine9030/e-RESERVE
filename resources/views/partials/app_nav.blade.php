@@ -6,7 +6,7 @@
     $isScanner = $role === 'scanner';
     $progress  = $isStudent ? document_progress() : null;
     $docBadge  = $isStudent ? ($progress['complete'] ? '' : ($progress['blocked'] ? '!' : $progress['uploaded'] . '/' . $progress['total'])) : '';
-    $waiting   = ($isStudent || $isScanner) ? 0 : waiting_documents();
+    $waiting   = ($isStudent || $isScanner) ? 0 : waiting_people();
     $catalog   = ($isStudent || $isScanner) ? [] : report_catalog();
     $notices   = $isStudent ? \App\Models\Notice::where('user_id', auth()->id())->orderByDesc('id')->limit(8)->get() : collect();
     $unread    = $isStudent ? \App\Models\Notice::where('user_id', auth()->id())->whereNull('read_at')->count() : 0;

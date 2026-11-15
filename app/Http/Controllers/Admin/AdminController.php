@@ -25,11 +25,11 @@ class AdminController extends Controller
 
         return view('admin.dashboard', [
             'stats'    => $stats,
-            'waiting'  => (int) $stats['docs_pending'],
+            'waiting'  => $this->stats->waitingPeople(),
             'regs'     => $this->stats->registrations(20),
             'audience' => $this->stats->audienceBreakdown(),
             'colleges' => collect($this->stats->collegeBreakdown())->sortByDesc('students')->values()->all(),
-            'queue'    => $this->documents->pending(6),
+            'queue'    => $this->stats->pendingStudentsPage([], 6)->items(),   // people, first submitted first
             'programsBy' => $this->stats->programsByCollege(),
             'groupDetail' => $this->stats->groupDetails(),
         ]);

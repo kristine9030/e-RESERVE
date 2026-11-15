@@ -416,8 +416,8 @@ function event_lineup(): array
     return config('ereserve.performers');
 }
 
-/** Staff-side nav badge: documents waiting for review. */
-function waiting_documents(): int
+/** Staff-side nav badge: people (not files) waiting for a document review. */
+function waiting_people(): int
 {
-    return app(\App\Services\Stats::class)->waitingDocuments();
+    return app(\App\Services\Stats::class)->waitingPeople();
 }

@@ -117,6 +117,59 @@ class ReviewListAndKpiTest extends TestCase
         $this->actingAs($this->admin())->get(route('admin.registrations'))->assertOk()->assertSee('<th>Name</th>', false)->assertDontSee('<th>Student</th>', false);
     }
 
+    public function test_the_review_badge_counts_people_not_files(): void
+    {
+        $three = $this->person('Three Files');
+        $this->allDocs($three, 'submitted', '2026-11-15 11:00:00');          // 3 files waiting, 1 person
+        $one = $this->person('One File');
+        $this->doc($one, 'waiver', 'submitted', '2026-11-15 11:05:00');       // 1 file waiting, 1 person
+        $done = $this->person('All Approved');
+        $this->allDocs($done, 'approved', '2026-11-15 10:00:00');             // nobody waiting
+
+        $this->assertSame(2, app(Stats::class)->waitingPeople(), '4 files, but 2 people');
+        $this->assertSame(2, waiting_people());
+
+        // and that is what the staff sidebar and the top menu show
+        $html = $this->actingAs($this->admin())->get(route('admin.dashboard'))->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/Review Documents.{0,300}?>\s*2\s*</s', $html);
+        $this->assertStringNotContainsString('Documents to review', $html);
+        $this->assertStringContainsString('People to review', $html);
+    }
+
+    public function test_records_put_whoever_submitted_first_at_the_top_under_any_filter(): void
+    {
+        // registered in this order, but submitted in a different one
+        $a = $this->person('Registered First Submitted Last');
+        $b = $this->person('Registered Second Submitted First');
+        $c = $this->person('Never Submitted');
+        $d = $this->person('Middle Submitter');
+        $this->doc($a, 'waiver', 'submitted', '2026-11-15 12:00:00');
+        $this->doc($b, 'waiver', 'submitted', '2026-11-15 09:00:00');
+        $this->doc($d, 'waiver', 'submitted', '2026-11-15 10:00:00');
+        $admin = $this->admin();
+
+        $order = ['Registered Second Submitted First', 'Middle Submitter', 'Registered First Submitted Last', 'Never Submitted'];
+        $this->actingAs($admin)->get(route('admin.registrations'))->assertOk()->assertSeeInOrder($order);
+        $this->actingAs($admin)->get(route('admin.registrations', ['type' => 'student']))->assertOk()->assertSeeInOrder($order);
+        $this->actingAs($admin)->get(route('admin.registrations', ['q' => 'e']))->assertOk()->assertSeeInOrder(['Registered Second Submitted First', 'Registered First Submitted Last']);
+        $this->actingAs($admin)->get(route('admin.registrations', ['docs' => 'pending']))->assertOk()
+            ->assertSeeInOrder(['Registered Second Submitted First', 'Middle Submitter', 'Registered First Submitted Last'])->assertDontSee('Never Submitted');
+    }
+
+    public function test_the_dashboard_queue_lists_and_counts_people_not_files(): void
+    {
+        $late = $this->person('Late Lara');
+        $this->allDocs($late, 'submitted', '2026-11-15 11:30:00');            // 3 files, one person
+        $early = $this->person('Early Ella');
+        $this->doc($early, 'waiver', 'submitted', '2026-11-15 08:00:00');
+
+        $html = $this->actingAs($this->admin())->get(route('admin.dashboard'))->assertOk()
+            ->assertSee('2 people waiting')->assertDontSee('documents waiting')
+            ->assertSeeInOrder(['Early Ella', 'Late Lara'])->getContent();
+        $this->assertStringContainsString('Late Lara · 3 files waiting', $html);
+        $this->assertStringContainsString('Early Ella · 1 file waiting', $html);
+    }
+
     /* ------------------------------------------------------------- KPI tiles */
 
     private function world(): void
