@@ -56,8 +56,10 @@ Fill `MAIL_*` in `.env`, then:
 php artisan config:cache
 php artisan ereserve:mail-test you@example.com
 ```
-Email goes out through Amazon SES (SMTP); setup steps are in `deploy/SMTP.md`. Keep
-`QUEUE_CONNECTION=database` with the queue worker running.
+Email currently goes out through Gmail SMTP (App Password); setup steps are in `deploy/SMTP.md`.
+Keep `QUEUE_CONNECTION=database` with the queue worker running. A Gmail account caps at ~500
+emails/day, so switch to Amazon SES (steps at the bottom of `deploy/SMTP.md`) before ~3,000
+students receive mail.
 
 ## 7. Updating later
 ```bash
