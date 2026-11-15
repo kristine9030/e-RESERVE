@@ -49,6 +49,9 @@ return [
         'logo_small' => 'assets/images/ssc-logo-sm.png',   // 240px copy for page headers (80 KB instead of 888 KB)
     ],
 
+    /** Where a new sponsor inquiry is emailed. Defaults to the SSC email above; SPONSOR_INQUIRY_EMAIL overrides it. */
+    'inquiry_notify_to' => env('SPONSOR_INQUIRY_EMAIL') ?: 'sscnasugbu@g.batstate-u.edu.ph',
+
     /** Starting split of the tickets (SSC changes it in Site Settings). Should add up to event.capacity. */
     'quotas' => ['student' => 2500, 'employee' => 200, 'sponsor' => 300],
 

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\SponsorInquiryReceived;
 use App\Models\SponsorInquiry;
 use App\Services\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Mail;
 
 /** "Want to sponsor?" form on the landing page: saved for SSC, no account needed. */
 class SponsorInquiryController extends Controller
@@ -66,12 +68,19 @@ class SponsorInquiryController extends Controller
             return $bad('We already have your message. The SSC will reply to ' . $email . ' soon.');
         }
 
-        SponsorInquiry::create([
+        $inquiry = SponsorInquiry::create([
             'company' => $company, 'contact_name' => $contact, 'email' => $email,
             'phone' => $phone === '' ? null : $phone, 'message' => $message === '' ? null : $message,
             'ip' => substr((string) $request->ip(), 0, 45), 'created_at' => now(),
         ]);
         Audit::log('sponsor.inquiry', 'sponsor', $company);
+
+        // Tell the SSC by email (Reply goes straight to the sponsor). Never lets a mail problem fail the form.
+        try {
+            Mail::to(config('ereserve.inquiry_notify_to'))->queue(new SponsorInquiryReceived($inquiry));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return redirect(route('home') . '#become-a-sponsor')->with('flash', flash(
             'success', 'Thank you, ' . e(explode(' ', $contact)[0]) . '!', 'The SSC received your message and will reply to <strong>' . e($email) . '</strong>.'

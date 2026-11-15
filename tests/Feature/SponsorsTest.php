@@ -82,6 +82,29 @@ class SponsorsTest extends TestCase
         $this->assertDatabaseHas('sponsor_inquiries', ['company' => 'Acme Foods', 'email' => 'pat@acme.test', 'status' => 'new']);
     }
 
+    public function test_the_ssc_is_emailed_with_reply_going_to_the_sponsor(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+
+        $this->inquiry();
+
+        \Illuminate\Support\Facades\Mail::assertQueued(\App\Mail\SponsorInquiryReceived::class, function ($mail) {
+            return $mail->hasTo(config('ereserve.inquiry_notify_to'))
+                && $mail->hasReplyTo('pat@acme.test')
+                && str_contains($mail->envelope()->subject, 'Acme Foods');
+        });
+    }
+
+    public function test_bots_and_refused_enquiries_send_no_email(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+
+        $this->inquiry(['website_url' => 'http://spam.test']);
+        $this->inquiry(['email' => 'nope']);
+
+        \Illuminate\Support\Facades\Mail::assertNothingQueued();
+    }
+
     public function test_bad_enquiries_are_refused_and_bots_are_ignored(): void
     {
         $this->inquiry(['company' => ''])->assertSessionHas('flash.type', 'error');
