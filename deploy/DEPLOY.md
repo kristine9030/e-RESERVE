@@ -56,10 +56,10 @@ Fill `MAIL_*` in `.env`, then:
 php artisan config:cache
 php artisan ereserve:mail-test you@example.com
 ```
-Email currently goes out through Gmail SMTP (App Password); setup steps are in `deploy/SMTP.md`.
-Keep `QUEUE_CONNECTION=database` with the queue worker running. A Gmail account caps at ~500
-emails/day, so switch to Amazon SES (steps at the bottom of `deploy/SMTP.md`) before ~3,000
-students receive mail.
+Email goes out through Amazon SES (SMTP, Sydney region, sender `noreply@e-reserve.online`); the
+full setup, including the IAM policy and DNS records, is in `deploy/SMTP.md`.
+Keep `QUEUE_CONNECTION=database` with the queue worker running, and watch SES → Reputation metrics
+(bounces and complaints) when registration opens.
 
 ## 7. Updating later
 ```bash
