@@ -126,7 +126,7 @@
                         <span class="avatar">{{ $user['initials'] ?? 'ST' }}</span>
                         <span class="nav-user-meta d-none d-xxl-block">
                             <span class="u-name">{{ $user['name'] ?? 'Guest' }}</span>
-                            <span class="u-role">{{ $role === 'admin' ? 'SSC Staff' : ($role === 'scanner' ? 'Gate Scanner' : 'Student') }}</span>
+                            <span class="u-role">{{ $role === 'admin' ? 'SSC Staff' : ($role === 'scanner' ? 'Gate Scanner' : portal_label()) }}</span>
                         </span>
                         <i class="fa-solid fa-chevron-down nav-user-caret d-none d-xxl-block"></i>
                     </button>

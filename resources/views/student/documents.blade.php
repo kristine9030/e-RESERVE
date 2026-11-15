@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title', 'My Documents')
-@section('crumb', 'Student Portal')
+@section('crumb', portal_label() . ' Portal')
 @section('nav', 'documents')
 
 @section('content')

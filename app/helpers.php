@@ -120,6 +120,24 @@ function current_user(): ?array
     return $u?->toSessionArray();
 }
 
+/**
+ * What to call the signed-in person on the participant side: Student, Faculty,
+ * Instructor, Staff or Sponsor — from their member type, so the portal title and
+ * the badge under their name match who they actually are.
+ */
+function portal_label(): string
+{
+    $type = (string) (current_user()['member_type'] ?? 'student');
+
+    return match ($type) {
+        'faculty'    => 'Faculty',
+        'instructor' => 'Instructor',
+        'staff'      => 'Staff',
+        'sponsor'    => 'Sponsor',
+        default      => 'Student',
+    };
+}
+
 function is_admin(): bool
 {
     return Auth::check() && Auth::user()->isAdmin();

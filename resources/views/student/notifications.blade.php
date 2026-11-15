@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Notifications')
-@section('crumb', 'Student Portal')
+@section('crumb', portal_label() . ' Portal')
 @section('nav', 'notifications')
 
 <?php $icons = ['submitted' => 'fa-paper-plane', 'approved' => 'fa-circle-check', 'returned' => 'fa-rotate-left', 'ticket' => 'fa-ticket', 'waitlist' => 'fa-hourglass-half'];

@@ -69,7 +69,7 @@
             <table class="table table-stack stu-table rq-table" style="width:100%;">
                 <thead>
                     <tr>
-                        <th>Student</th>
+                        <th>User</th>
                         <th>College / group</th>
                         <th>Documents</th>
                         <th>Waiting</th>
