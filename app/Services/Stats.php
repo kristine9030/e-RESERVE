@@ -121,7 +121,7 @@ class Stats
 
         $page = $q->orderByDesc('u.created_at')->orderByDesc('u.id')
             ->select('u.id', 'u.name', 'u.email', 'u.student_no', 'u.college_code', 'u.program', 'u.year_level',
-                     'u.created_at', 'u.email_verified_at', 'u.status as account_status', 'u.member_type')
+                     'u.created_at', 'u.email_verified_at', 'u.email_bounced_at', 'u.email_bounce_type', 'u.status as account_status', 'u.member_type')
             ->paginate($perPage)->withQueryString();
 
         $ids  = $page->pluck('id')->all();
@@ -143,6 +143,7 @@ class Stats
                 'member_type' => $u->member_type ?? 'student',
                 'registered_at' => $u->created_at, 'verified' => $u->email_verified_at !== null,
                 'account_status' => $u->account_status,
+                'email_bounced_at' => $u->email_bounced_at, 'email_bounce_type' => $u->email_bounce_type,
                 'docs' => collect(['waiver', 'cor', 'id', 'employee_id', 'sponsorship'])->mapWithKeys(
                     fn (string $k) => [$k => $d($k) + ['applicable' => in_array($k, DocumentSets::keysFor($u->member_type), true)]]
                 )->all(),

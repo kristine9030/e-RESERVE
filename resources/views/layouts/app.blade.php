@@ -127,6 +127,19 @@
 
         <main class="app-content">
             <div class="app-container">
+                @if (auth()->user()?->email_bounced_at)
+                    <div class="alert d-flex align-items-start gap-2 mb-3" role="alert"
+                         style="background:rgba(217,72,59,.08);border:1px solid rgba(217,72,59,.22);border-radius:14px;color:#A8352A;font-size:.88rem;">
+                        <i class="fa-solid fa-envelope-circle-check mt-1"></i>
+                        <span><strong>We could not deliver email to {{ auth()->user()->email }}.</strong>
+                            @if (auth()->user()->email_bounce_type === 'complaint')
+                                The address reported our message as spam, so we stopped emailing it.
+                            @else
+                                The address may be wrong or no longer exists, so we stopped emailing it.
+                            @endif
+                            You can still see every update here in e-RESERVE (check the bell and the Track page). If the address should be working, please ask the SSC to look at it.</span>
+                    </div>
+                @endif
                 @yield('content')
             </div>
         </main>

@@ -445,6 +445,11 @@ class AccountService
             return ['ok' => false, 'code' => 'already', 'message' => 'That address is already confirmed.', 'link' => null];
         }
 
+        if ($user->email_bounced_at !== null) {
+            return ['ok' => false, 'code' => 'bounced', 'link' => null,
+                    'message' => 'Email to ' . $user->email . ' could not be delivered, so we stopped sending. Check the address on My Profile, or ask the SSC to fix it.'];
+        }
+
         if ($user->verify_sent_at !== null && $user->verify_sent_at->gt(now()->subSeconds(60))) {
             $wait = 60 - (int) $user->verify_sent_at->diffInSeconds(now());
             return ['ok' => false, 'code' => 'throttled', 'link' => null,

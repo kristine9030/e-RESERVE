@@ -103,6 +103,35 @@ Confirmation links stay valid for 24 hours, so retry soon after an outage.
 
 ---
 
+## Bounces and complaints reach the app (Amazon SES → SNS → e-RESERVE)
+
+SES tells e-RESERVE when an email could not be delivered (a **permanent bounce**) or was reported as spam
+(a **complaint**). The account is then flagged: the SSC sees an *Email bounced* badge on Records and on the
+review page, the student sees a notice in the app, and e-RESERVE stops emailing that address.
+Temporary bounces (full mailbox, busy server) are ignored. The endpoint is `POST /webhooks/ses`; it accepts
+nothing unless the message carries a valid Amazon SNS signature **and** comes from the one topic in
+`SES_SNS_TOPIC_ARN`. It can only flag an existing student-side account by its exact email — it cannot
+change anything else and never touches SSC accounts.
+
+Set it up once, in this order:
+
+1. **SNS → Topics → Create topic** — type *Standard*, name `ereserve-ses-feedback`, region **Sydney**
+   (`ap-southeast-2`). Copy the topic **ARN**.
+2. **Put the ARN in the server `.env`** (`SES_SNS_TOPIC_ARN=arn:aws:sns:ap-southeast-2:…:ereserve-ses-feedback`),
+   then `sudo -u ereserve php artisan config:cache`. Do this *before* step 3, otherwise the webhook refuses
+   Amazon's confirmation message.
+3. **SNS → the topic → Create subscription** — protocol **HTTPS**, endpoint `https://e-reserve.online/webhooks/ses`.
+   The status should flip to **Confirmed** by itself within a few seconds (refresh the list).
+4. **SES → Identities → e-reserve.online → Notifications → Feedback notifications → Edit** — set **Bounce
+   feedback** and **Complaint feedback** to the SNS topic from step 1. Leave *Include original email headers* off.
+5. Check: send a mail to `bounce@simulator.amazonses.com` (free, does not count against your reputation). The
+   server log (`storage/logs/laravel.log`) then shows `SES bounce report: 1 address(es), 0 account(s) flagged`
+   (0, because that address is not a student). A real student address that bounces shows `1 account(s) flagged`.
+
+When an address was flagged by mistake, or the mailbox has since been fixed: open the student on **Review
+Documents** and press the red *Email bounced · clear* badge. If Amazon still refuses it, also remove it under
+**SES → Suppression list**.
+
 ## Keeping the account healthy
 
 AWS pauses sending if too many emails bounce or are reported as spam:
@@ -116,7 +145,8 @@ AWS pauses sending if too many emails bounce or are reported as spam:
 * SES automatically puts a bounced address on its **Suppression list** and never retries it. A student
   who mistyped their mailbox therefore stops receiving mail; if the address was actually correct,
   remove it under **SES → Suppression list**.
-* The app does not read bounces yet, so it cannot tell the SSC that an email did not arrive.
+* Students cannot change their own SR-code or email, so a flagged account is fixed by the SSC outside
+  the app for now.
 * Pricing is about US$0.10 per 1,000 emails — a few dollars for the whole event.
 * The AWS account is on the Free Plan with credits until **May 10, 2027**; upgrade the plan before then
   if e-RESERVE must keep running.

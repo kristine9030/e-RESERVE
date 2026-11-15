@@ -52,6 +52,12 @@ return [
     /** Where a new sponsor inquiry is emailed. Defaults to the SSC email above; SPONSOR_INQUIRY_EMAIL overrides it. */
     'inquiry_notify_to' => env('SPONSOR_INQUIRY_EMAIL') ?: 'sscnasugbu@g.batstate-u.edu.ph',
 
+    /**
+     * The Amazon SNS topic that carries SES bounce and complaint reports to /webhooks/ses.
+     * Empty = the webhook accepts nothing. See deploy/SMTP.md.
+     */
+    'ses_sns_topic_arn' => (string) env('SES_SNS_TOPIC_ARN', ''),
+
     /** Starting split of the tickets (SSC changes it in Site Settings). Should add up to event.capacity. */
     'quotas' => ['student' => 2500, 'employee' => 200, 'sponsor' => 300],
 

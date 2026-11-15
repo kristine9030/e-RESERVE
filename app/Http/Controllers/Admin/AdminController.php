@@ -88,6 +88,22 @@ class AdminController extends Controller
      * Disable or re-enable a student account. Disabling signs them out on their
      * next request and puts a valid ticket on hold; enabling restores it.
      */
+    /** The SSC says this address is fine after all: let e-RESERVE email it again. */
+    public function clearEmailFlag(User $user)
+    {
+        abort_if($user->isStaff(), 403);
+
+        if ($user->email_bounced_at !== null) {
+            $user->forceFill(['email_bounced_at' => null, 'email_bounce_type' => null])->save();
+            Audit::log('email.flag_cleared', 'user', (string) $user->id, ['student' => $user->name]);
+        }
+
+        return back()->with('flash', flash(
+            'success', 'Email cleared',
+            e($user->name) . '’s address will receive email again. If Amazon still blocks it, it also has to be removed from the SES suppression list.'
+        ));
+    }
+
     public function setStatus(Request $request, User $user, TicketService $tickets)
     {
         abort_if($user->isStaff(), 403, 'Staff accounts are managed with artisan.');

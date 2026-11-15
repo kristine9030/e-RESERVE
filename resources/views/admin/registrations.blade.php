@@ -164,7 +164,7 @@ $viewerData = static function (array $r): string {
                     @php $isStudent = ($r['member_type'] ?? 'student') === 'student'; $off = $r['account_status'] === 'disabled'; @endphp
                     <tr class="{{ $off ? 'is-off' : '' }}">
                         <td>
-                            <div class="cell-strong">{{ $r['name'] }}@if ($isStudent && $curType === 'all') <span class="badge-soft badge-info ms-1">Student</span>@endif @if (!$isStudent) <span class="badge-soft badge-gold ms-1">{{ $r['member_type'] === 'sponsor' ? 'Sponsor' : (config('ereserve.employee_types')[$r['member_type']] ?? 'Employee') }}</span>@endif @if ($off)<span class="badge-soft badge-muted ms-1">Disabled</span>@endif</div>
+                            <div class="cell-strong">{{ $r['name'] }}@if ($isStudent && $curType === 'all') <span class="badge-soft badge-info ms-1">Student</span>@endif @if (!$isStudent) <span class="badge-soft badge-gold ms-1">{{ $r['member_type'] === 'sponsor' ? 'Sponsor' : (config('ereserve.employee_types')[$r['member_type']] ?? 'Employee') }}</span>@endif @if ($off)<span class="badge-soft badge-muted ms-1">Disabled</span>@endif @if (!empty($r['email_bounced_at']))<span class="badge-soft badge-danger ms-1" title="Email could not be delivered">Email {{ ($r['email_bounce_type'] ?? '') === 'complaint' ? 'spam report' : 'bounced' }}</span>@endif</div>
                             <div class="cell-sub mono">{{ $r['student_no'] }}</div>
                             <div class="cell-sub stu-email" title="{{ $r['email'] }}">{{ $r['email'] }}</div>
                         </td>

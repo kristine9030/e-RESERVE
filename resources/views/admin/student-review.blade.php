@@ -27,6 +27,15 @@
         <div class="col-lg-4 text-lg-end">
             <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
                 <span class="badge-soft badge-gold"><i class="fa-solid fa-circle-check"></i> {{ $counts['approved'] }}/{{ count($types) }} approved</span>
+                @if (!empty($user['email_bounced_at']))
+                    <form method="post" action="{{ route('admin.students.email-ok', $user['id']) }}" class="d-inline"
+                          onsubmit="return confirm('Mark this email as working again and let e-RESERVE email it? Only do this if the address is correct.');">
+                        @csrf
+                        <button type="submit" class="badge-soft badge-danger border-0" title="Emails to this address bounced. Click to clear after the address is fixed.">
+                            <i class="fa-solid fa-envelope-circle-check"></i> Email {{ ($user['email_bounce_type'] ?? '') === 'complaint' ? 'spam report' : 'bounced' }} · clear
+                        </button>
+                    </form>
+                @endif
                 @if ($ticket)<span class="badge-soft badge-gold"><i class="fa-solid fa-ticket"></i> {{ $ticket['ticket_no'] }}</span>@endif
             </div>
         </div>

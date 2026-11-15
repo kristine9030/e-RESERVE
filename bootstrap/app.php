@@ -23,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => EnsureVerified::class,
         ]);
 
+        // Amazon SNS posts here without a browser session; the message signature is checked instead.
+        $middleware->validateCsrfTokens(except: ['webhooks/ses']);
+
         // One row per request for the super admin's Performance tab.
         $middleware->appendToGroup('web', App\Http\Middleware\CaptureMetrics::class);
 
