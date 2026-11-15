@@ -14,8 +14,8 @@
                 Your ticket number appears once SSC approves {{ count(required_documents()) > 1 ? 'your waiver, COR and school ID' : 'your ' . strtolower(collect(required_documents())->first()['label']) }}.
                 You have uploaded <strong>{{ $progress['uploaded'] }} of {{ $progress['total'] }}</strong>
                 and <strong>{{ $progress['approved'] }}</strong> {{ $progress['approved'] === 1 ? 'is' : 'are' }} approved so far.
-                @if ($progress['all_approved'])
-                    All the tickets for your group are already taken. If a seat is released, you are next in line automatically.
+                @if (ticket_waiting_state() === 'waiting' || $progress['all_approved'])
+                    The tickets for your group are full. We cannot promise you a ticket. Please wait for the SSC’s announcement.
                 @endif
             </p>
             <a href="{{ route('documents.index') }}" class="btn btn-gold"><i class="fa-solid fa-file-arrow-up"></i> Upload documents</a>

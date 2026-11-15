@@ -58,7 +58,7 @@ class TicketQuotaTest extends TestCase
         $this->assertFalse($this->has($b), 'students are at their limit even though sponsors have seats unused');
     }
 
-    public function test_ssc_moves_unused_sponsor_seats_to_students_and_the_waiting_student_gets_a_ticket(): void
+    public function test_ssc_moves_unused_sponsor_seats_to_students_and_then_releases_the_waiting_student(): void
     {
         Setting::store('quota_student', '1');
         $a = $this->approvedStudent(1);
@@ -68,6 +68,9 @@ class TicketQuotaTest extends TestCase
         $this->post(route('admin.settings.transfer'), ['from' => 'sponsor', 'to' => 'student', 'count' => 5])->assertSessionHas('flash.type', 'success');
 
         $this->assertSame(['student' => 6, 'employee' => 200, 'sponsor' => 295], TicketQuota::limits());
+        $this->assertFalse($this->has($b), 'moving seats does not give them to the waiting student by itself');
+
+        $this->post(route('admin.settings.release'), ['group' => 'student', 'count' => 1])->assertSessionHas('flash.type', 'success');
         $this->assertTrue($this->has($b));
         $this->post(route('admin.settings.transfer'), ['from' => 'sponsor', 'to' => 'student', 'count' => 9999])->assertSessionHas('flash.type', 'error');
     }

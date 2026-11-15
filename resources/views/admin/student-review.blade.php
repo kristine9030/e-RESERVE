@@ -27,6 +27,9 @@
         <div class="col-lg-4 text-lg-end">
             <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
                 <span class="badge-soft badge-gold"><i class="fa-solid fa-circle-check"></i> {{ $counts['approved'] }}/{{ count($types) }} approved</span>
+                @if (!empty($user['waitlisted_at']))
+                    <span class="badge-soft badge-warning" title="Told the tickets are full. Approving does not issue a ticket until you release seats in Site Settings."><i class="fa-solid fa-hourglass-half"></i> Waiting for SSC</span>
+                @endif
                 @if (!empty($user['email_bounced_at']))
                     <form method="post" action="{{ route('admin.students.email-ok', $user['id']) }}" class="d-inline"
                           onsubmit="return confirm('Mark this email as working again and let e-RESERVE email it? Only do this if the address is correct.');">

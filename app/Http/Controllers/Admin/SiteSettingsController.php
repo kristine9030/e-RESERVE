@@ -28,6 +28,9 @@ class SiteSettingsController extends Controller
             'groups'       => TicketQuota::GROUPS,
             'limits'       => TicketQuota::limits(),
             'taken'        => TicketQuota::taken(),
+            'waitingBy'    => array_map(fn ($g) => \App\Services\WaitingList::waitingFor($g), array_combine(array_keys(TicketQuota::GROUPS), array_keys(TicketQuota::GROUPS))),
+            'openBy'       => array_map(fn ($g) => \App\Services\WaitingList::openSeats($g), array_combine(array_keys(TicketQuota::GROUPS), array_keys(TicketQuota::GROUPS))),
+            'reservedBy'   => array_map(fn ($g) => \App\Services\WaitingList::reservedFor($g), array_combine(array_keys(TicketQuota::GROUPS), array_keys(TicketQuota::GROUPS))),
             'capacity'     => TicketQuota::capacity(),
             'base'         => TicketQuota::baseCapacity(),
 
@@ -109,9 +112,30 @@ class SiteSettingsController extends Controller
 
         TicketQuota::save($limits);
         Audit::log('quota.set', 'setting', 'quota', $limits);
-        $issued = $tickets->promoteWaiting();   // raised allotments release people already waiting
+        $issued = $tickets->promoteWaiting();   // approved people whose seat was only missing (not the waiting list)
 
-        return back()->with('flash', flash('success', 'Tickets updated', 'The split is saved.' . ($issued ? ' ' . $issued . ' waiting ' . ($issued === 1 ? 'person' : 'people') . ' got a ticket.' : '')));
+        return back()->with('flash', flash('success', 'Tickets updated', 'The split is saved. People on the waiting list stay there until you release seats for them.' . ($issued ? ' ' . $issued . ' approved ' . ($issued === 1 ? 'person' : 'people') . ' got a ticket.' : '')));
+    }
+
+    /** Let some of the people waiting for a seat in. Only the SSC does this; nothing does it by itself. */
+    public function release(Request $request, \App\Services\WaitingList $waiting)
+    {
+        $group = (string) $request->input('group');
+        $count = (int) $request->input('count');
+        abort_unless(isset(TicketQuota::GROUPS[$group]), 422);
+
+        $open = \App\Services\WaitingList::openSeats($group);
+        if ($count < 1 || $open < 1) {
+            return back()->with('flash', flash('error', 'Nothing released', $open < 1
+                ? e(TicketQuota::GROUPS[$group]) . ' have no open seats. Raise their allotment, or move unused seats to them, first.'
+                : 'Type how many to release.'));
+        }
+
+        $r = $waiting->release($group, $count, $request->user());
+
+        return back()->with('flash', flash('success', 'Released', $r['released']
+            ? $r['released'] . ' of ' . e(TicketQuota::GROUPS[$group]) . ' let in. ' . $r['ticketed'] . ' got a ticket now; the others were told and still need approval.'
+            : 'Nobody was waiting in ' . e(TicketQuota::GROUPS[$group]) . '.'));
     }
 
     /** Hand unused held seats from one group to another. */
@@ -123,7 +147,7 @@ class SiteSettingsController extends Controller
         abort_unless(isset(TicketQuota::GROUPS[$from], TicketQuota::GROUPS[$to]) && $from !== $to, 422);
 
         $limits = TicketQuota::limits();
-        $held   = $limits[$from] - TicketQuota::takenFor($from);
+        $held   = $limits[$from] - max(TicketQuota::takenFor($from), \App\Services\WaitingList::reservedFor($from));   // seats nobody has a ticket for or has uploaded for
         if ($count < 1 || $count > $held) {
             return back()->with('flash', flash('error', 'Not moved', e(TicketQuota::GROUPS[$from]) . ' have only ' . max(0, $held) . ' unused seats to give.'));
         }
@@ -134,6 +158,6 @@ class SiteSettingsController extends Controller
         Audit::log('quota.transfer', 'setting', 'quota', ['from' => $from, 'to' => $to, 'count' => $count]);
         $issued = $tickets->promoteWaiting();
 
-        return back()->with('flash', flash('success', 'Seats moved', $count . ' unused seats now belong to ' . e(TicketQuota::GROUPS[$to]) . '.' . ($issued ? ' ' . $issued . ' waiting got a ticket.' : '')));
+        return back()->with('flash', flash('success', 'Seats moved', $count . ' unused seats now belong to ' . e(TicketQuota::GROUPS[$to]) . '. Release them for the waiting list below when you are ready.' . ($issued ? ' ' . $issued . ' approved got a ticket.' : '')));
     }
 }

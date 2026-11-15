@@ -208,6 +208,33 @@ function ticket_tier(?string $memberType): string
     };
 }
 
+/**
+ * Is the signed-in person affected by "the tickets are full"?
+ *   'waiting' → they finished uploading after the tickets ran out, and wait for the SSC's announcement
+ *   'full'    → their group is already full and they have not finished uploading yet
+ *   null      → neither
+ */
+function ticket_waiting_state(): ?string
+{
+    static $memo = [];
+
+    $u = Auth::user();
+    if (!$u || $u->role !== 'student') {
+        return null;
+    }
+
+    return $memo[$u->id] ??= (function () use ($u): ?string {
+        if ($u->waitlisted_at !== null) {
+            return 'waiting';
+        }
+        if ($u->upload_completed_at === null && \App\Services\WaitingList::isFull(\App\Services\WaitingList::groupOf($u->member_type)) && !tickets()->ticketFor((int) $u->id)) {
+            return 'full';
+        }
+
+        return null;
+    })();
+}
+
 function ticket_qr_payload(array $ticket): string
 {
     return tickets()->qrPayload($ticket);

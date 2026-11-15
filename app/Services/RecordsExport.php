@@ -52,7 +52,7 @@ class RecordsExport
                 (string) ($r['year'] ?? ''),
                 implode(' · ', $docs),
                 (string) ($r['ticket_no'] ?? ''),
-                $r['ticket_status'] ? ucfirst((string) $r['ticket_status']) : 'No ticket',
+                $r['ticket_status'] ? ucfirst((string) $r['ticket_status']) : (!empty($r['waitlisted']) ? 'Waiting for SSC' : 'No ticket'),
                 $r['checked_in'] ? 'Yes' : 'No',
                 $r['account_status'] === 'disabled' ? 'Disabled' : 'Active',
                 $r['registered_at'] ? date('Y-m-d H:i', strtotime((string) $r['registered_at'])) : '',

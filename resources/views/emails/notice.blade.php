@@ -4,7 +4,7 @@
 
 @php
     $icons   = ['received' => '✓', 'ticket' => '★', 'returned' => '!', 'waitlist' => '…', 'deleted' => 'i'];
-    $labels  = ['received' => 'Documents received', 'ticket' => 'Your ticket', 'returned' => 'Action needed', 'waitlist' => 'You are in line', 'deleted' => 'Account deleted'];
+    $labels  = ['received' => 'Documents received', 'ticket' => 'Your ticket', 'returned' => 'Action needed', 'waitlist' => 'Tickets are full', 'deleted' => 'Account deleted'];
 @endphp
 @section('icon', $icons[$kind] ?? '@')
 @section('eyebrow', $labels[$kind] ?? 'Notice')

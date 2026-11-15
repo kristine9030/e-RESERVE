@@ -84,6 +84,9 @@ class TicketQuota
             if ($limits[$g] < ($taken[$g] ?? 0)) {
                 return $label . ' already hold ' . ($taken[$g] ?? 0) . ' tickets, so their allotment cannot go below that.';
             }
+            if ($limits[$g] < ($spoken = WaitingList::reservedFor($g))) {
+                return $spoken . ' people in ' . $label . ' have already finished uploading, so their allotment cannot go below that.';
+            }
         }
         return null;
     }

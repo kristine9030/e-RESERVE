@@ -217,7 +217,8 @@ class TicketService
      * Bring a student's ticket in line with their documents.
      *
      *   all three APPROVED, seat free → issue a ticket, or re-validate a void one
-     *   all three approved, no seat   → `full` (they keep their place in the queue)
+     *   all three approved, no seat   → `full`: they go on the waiting list and wait for the SSC (see WaitingList)
+     *   on the waiting list           → `waiting`: no ticket until the SSC releases seats
      *   anything not approved         → void a valid ticket (a used one stays used)
      *
      * Seat counting happens while holding a lock on the `ticket` sequence row,
@@ -230,9 +231,10 @@ class TicketService
         $this->forget();
         $progress = $this->progress($userId);
         $existing = DB::table('tickets')->where('user_id', $userId)->first();
-        $u        = DB::table('users')->where('id', $userId)->first(['status', 'email_verified_at']);
+        $u        = DB::table('users')->where('id', $userId)->first(['status', 'email_verified_at', 'waitlisted_at']);
         $active   = ($u->status ?? '') === 'active';
-        $eligible = $progress['all_approved'] && $active;
+        $waiting  = ($u->waitlisted_at ?? null) !== null;   // told the tickets are full: no ticket until the SSC releases seats
+        $eligible = $progress['all_approved'] && $active && !$waiting;
 
         if (!$eligible) {
             if ($existing && $existing->status === 'valid') {
@@ -250,7 +252,8 @@ class TicketService
                 }
             }
 
-            return ['state' => $progress['missing'] === [] && !$progress['blocked'] ? 'none' : 'unchanged',
+            return ['state' => $waiting && $progress['all_approved'] && $active ? 'waiting'
+                        : ($progress['missing'] === [] && !$progress['blocked'] ? 'none' : 'unchanged'),
                     'ticket_no' => $existing->ticket_no ?? null];
         }
 
@@ -304,6 +307,13 @@ class TicketService
         [$state, $ticketNo] = $outcome;
         $this->forget();
 
+        if ($state === 'full') {
+            // Approved but no seat: onto the waiting list. Nothing is promised, and only the SSC lets them in.
+            DB::table('users')->where('id', $userId)->whereNull('waitlisted_at')->update(['waitlisted_at' => now()]);
+            DB::table('users')->where('id', $userId)->whereNull('upload_completed_at')->update(['upload_completed_at' => now()]);
+            Audit::log('waiting.add', 'user', (string) $userId, ['group' => $group ?? null, 'reason' => 'approved with no seat']);
+        }
+
         if ($state === 'issued') {
             Audit::log('ticket.issue', 'ticket', $ticketNo, ['user_id' => $userId]);
             Notifier::ticketReady($userId, (string) $ticketNo);
@@ -316,8 +326,9 @@ class TicketService
     }
 
     /**
-     * Hand freed seats to students whose three documents are approved but who
-     * have no ticket yet, in the order they finished (earliest approval first).
+     * Hand freed seats to people whose files are approved and who have no ticket yet, in the order they
+     * finished (earliest approval first). People on the waiting list are never included: only the SSC
+     * releases seats for them (WaitingList::release).
      *
      * @return int tickets issued
      */
@@ -336,7 +347,7 @@ class TicketService
             $ids = DB::table('documents as d')
                 ->join('users as u', 'u.id', '=', 'd.user_id')
                 ->leftJoin('tickets as t', 't.user_id', '=', 'd.user_id')
-                ->where('u.role', 'student')->where('u.status', 'active')->whereNull('t.id')
+                ->where('u.role', 'student')->where('u.status', 'active')->whereNull('u.waitlisted_at')->whereNull('t.id')
                 ->whereRaw(TicketQuota::GROUP_SQL . ' = ?', [$group])
                 ->groupBy('d.user_id', 'u.member_type')
                 ->havingRaw("COUNT(*) = $need AND SUM(d.status = 'approved') = $need")

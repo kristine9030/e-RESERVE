@@ -136,7 +136,7 @@ $viewerData = static function (array $r): string {
         </select>
         <select name="ticket" class="form-select">
             <option value="">Any ticket</option>
-            @foreach (['held' => 'Has a ticket', 'issued' => 'Ticket issued', 'used' => 'Checked in', 'none' => 'No ticket'] as $k => $label)
+            @foreach (['held' => 'Has a ticket', 'issued' => 'Ticket issued', 'used' => 'Checked in', 'none' => 'No ticket', 'waiting' => 'Waiting for SSC (tickets full)'] as $k => $label)
                 <option value="{{ $k }}" @selected(($filters['ticket'] ?? '') === $k)>{{ $label }}</option>
             @endforeach
         </select>
@@ -170,7 +170,7 @@ $viewerData = static function (array $r): string {
                     @php $isStudent = ($r['member_type'] ?? 'student') === 'student'; $off = $r['account_status'] === 'disabled'; @endphp
                     <tr class="{{ $off ? 'is-off' : '' }}">
                         <td>
-                            <div class="cell-strong">{{ $r['name'] }}@if ($isStudent && $curType === 'all') <span class="badge-soft badge-info ms-1">Student</span>@endif @if (!$isStudent) <span class="badge-soft badge-gold ms-1">{{ $r['member_type'] === 'sponsor' ? 'Sponsor' : (config('ereserve.employee_types')[$r['member_type']] ?? 'Employee') }}</span>@endif @if ($off)<span class="badge-soft badge-muted ms-1">Disabled</span>@endif @if (!empty($r['email_bounced_at']))<span class="badge-soft badge-danger ms-1" title="Email could not be delivered">Email {{ ($r['email_bounce_type'] ?? '') === 'complaint' ? 'spam report' : 'bounced' }}</span>@endif</div>
+                            <div class="cell-strong">{{ $r['name'] }}@if ($isStudent && $curType === 'all') <span class="badge-soft badge-info ms-1">Student</span>@endif @if (!$isStudent) <span class="badge-soft badge-gold ms-1">{{ $r['member_type'] === 'sponsor' ? 'Sponsor' : (config('ereserve.employee_types')[$r['member_type']] ?? 'Employee') }}</span>@endif @if ($off)<span class="badge-soft badge-muted ms-1">Disabled</span>@endif @if (!empty($r['waitlisted']))<span class="badge-soft badge-warning ms-1" title="Told the tickets are full. No ticket until you release seats.">Waiting for SSC</span>@endif @if (!empty($r['email_bounced_at']))<span class="badge-soft badge-danger ms-1" title="Email could not be delivered">Email {{ ($r['email_bounce_type'] ?? '') === 'complaint' ? 'spam report' : 'bounced' }}</span>@endif</div>
                             <div class="cell-sub mono">{{ $r['student_no'] }}</div>
                             <div class="cell-sub stu-email" title="{{ $r['email'] }}">{{ $r['email'] }}</div>
                             @if (!empty($r['sponsorship']))<div class="cell-sub"><i class="fa-solid fa-handshake"></i> {{ $r['sponsorship'] }}</div>@endif

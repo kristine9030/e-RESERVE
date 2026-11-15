@@ -211,10 +211,15 @@ class DocumentService
         $this->tickets->forget();
         Audit::log('document.upload', 'document', $type, ['user_id' => $user->id, 'file' => $stored['original']]);
 
+        // The first time everything is in: their seat is spoken for, or the group is already full and they
+        // are told so (and promised nothing).
+        $waiting = app(WaitingList::class)->afterUpload($user);
+
         $sync = $this->tickets->sync($user->id);
 
         $progress = $this->tickets->progress($user->id);
         $message  = match (true) {
+            $waiting                      => 'Your files are in, but the tickets for your group are already full. We cannot promise you a ticket. Please wait for the SSC’s announcement.',
             $sync['state'] === 'issued'   => 'Your ticket number is ' . $sync['ticket_no'] . '.',
             $sync['state'] === 'restored' => 'Thanks — your ticket ' . $sync['ticket_no'] . ' is valid again.',
             $progress['missing'] === []   => $label . ' uploaded.' . ($progress['total'] > 1 ? ' All ' . $progress['total'] . ' are in.' : '') . ' SSC will review ' . ($progress['total'] > 1 ? 'them' : 'it') . ', and your ticket is issued once approved.',
@@ -222,7 +227,7 @@ class DocumentService
         };
 
         // Everything is in and nothing is waiting on the student: tell them to sit tight.
-        $allIn = $progress['missing'] === [] && !$progress['blocked'] && !$progress['all_approved'];
+        $allIn = $progress['missing'] === [] && !$progress['blocked'] && !$progress['all_approved'] && !$waiting;
         if ($allIn) {
             Notifier::submitted((int) $user->id);
         }
@@ -233,7 +238,7 @@ class DocumentService
             array_filter($verdict['checks'], fn ($c) => ($c['s'] ?? '') === 'warn' && !empty($c['student']))
         ));
 
-        return ['ok' => true, 'message' => $message, 'ticket' => $sync['state'], 'all_in' => $allIn, 'warnings' => $warnings];
+        return ['ok' => true, 'message' => $message, 'ticket' => $sync['state'], 'all_in' => $allIn, 'waiting' => $waiting, 'warnings' => $warnings];
     }
 
     /**
@@ -297,14 +302,15 @@ class DocumentService
         if ($decision === 'rejected') {
             Notifier::documentReturned((int) $doc->user_id, (string) $doc->doc_type, $note);
         } elseif ($sync['state'] === 'full') {
-            Notifier::waitlisted((int) $doc->user_id);
+            Notifier::ticketsFull((int) $doc->user_id);   // the first time only: after this they are on the waiting list
         } elseif ($sync['state'] !== 'issued') {
             Notifier::documentApproved((int) $doc->user_id, (string) $doc->doc_type);   // 'issued' sends its own ticket notice
         }
         $extra = match ($sync['state']) {
             'voided' => ' Their ticket was voided until they upload a corrected file.',
             'issued' => ' All three are approved, so their ticket ' . $sync['ticket_no'] . ' was issued.',
-            'full'   => ' All three are approved, but there are no seats left for their group.',
+            'full'   => ' All three are approved, but there are no seats left for their group: they are on the waiting list.',
+            'waiting' => ' All three are approved, but they are on the waiting list, so no ticket until you release seats in Site Settings.',
             default  => '',
         };
 

@@ -112,7 +112,7 @@ class TicketApprovalTest extends TestCase
         $this->assertSame(0, app(TicketService::class)->slotsRemaining());
     }
 
-    public function test_rejecting_voids_the_ticket_and_the_freed_seat_goes_to_the_next_student(): void
+    public function test_rejecting_voids_the_ticket_and_the_freed_seat_waits_for_the_ssc_to_release_it(): void
     {
         config(['ereserve.event.capacity' => 1]);
         $admin = $this->admin();
@@ -131,6 +131,9 @@ class TicketApprovalTest extends TestCase
         app(DocumentService::class)->review($admin, $doc->id, 'rejected', 'Unreadable scan, retake it');
 
         $this->assertSame('void', DB::table('tickets')->where('user_id', $first->id)->value('status'));
+        $this->assertNull(DB::table('tickets')->where('user_id', $waiting->id)->first(), 'the seat is not handed on by itself');
+
+        app(\App\Services\WaitingList::class)->release('student', 1);   // only the SSC lets the waiting student in
         $this->assertSame('valid', DB::table('tickets')->where('user_id', $waiting->id)->value('status'));
         $this->assertSame(1, DB::table('tickets')->where('status', '<>', 'void')->count());
     }

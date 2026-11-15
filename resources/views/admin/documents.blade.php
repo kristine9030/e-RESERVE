@@ -100,7 +100,7 @@
                         ?>
                         <tr class="{{ $look ? 'needs-look' : '' }}">
                             <td>
-                                <div class="cell-strong">{{ $s['name'] }}</div>
+                                <div class="cell-strong">{{ $s['name'] }}@if (!empty($s['waitlisted_at'])) <span class="badge-soft badge-warning ms-1" title="Tickets are full for this person's group">Waiting for SSC</span>@endif</div>
                                 <div class="cell-sub mono">{{ $s['student_no'] }}</div>
                                 <div class="cell-sub stu-email" title="{{ $s['email'] }}">{{ $s['email'] }}</div>
                             </td>

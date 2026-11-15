@@ -202,7 +202,7 @@ class EmployeeRegistrationTest extends TestCase
     }
 
 
-    public function test_when_every_seat_is_taken_an_approved_employee_waits_and_gets_a_freed_seat(): void
+    public function test_when_every_seat_is_taken_an_approved_employee_waits_until_the_ssc_releases_a_seat(): void
     {
         config(['ereserve.event.capacity' => 1]);
         $svc   = app(\App\Services\TicketService::class);
@@ -220,7 +220,12 @@ class EmployeeRegistrationTest extends TestCase
         $first->forceFill(['status' => 'disabled'])->save();           // frees the seat
         $svc->sync($first->id);
 
-        $this->assertSame('valid', DB::table('tickets')->where('user_id', $second->id)->value('status'), 'next in line gets it');
+        $this->assertSame(0, DB::table('tickets')->where('user_id', $second->id)->count(), 'a freed seat is not handed on by itself');
+        $this->assertNotNull($second->fresh()->waitlisted_at, 'they were told the tickets are full and wait for the SSC');
+
+        $r = app(\App\Services\WaitingList::class)->release('employee', 1);   // the SSC lets them in
+        $this->assertSame(['released' => 1, 'ticketed' => 1], $r);
+        $this->assertSame('valid', DB::table('tickets')->where('user_id', $second->id)->value('status'));
     }
 
 

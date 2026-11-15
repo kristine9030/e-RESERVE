@@ -140,6 +140,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/settings', [SiteSettingsController::class, 'update'])->name('admin.settings.update');
     Route::post('/settings/access', [SiteSettingsController::class, 'access'])->name('admin.settings.access');
     Route::post('/settings/quotas', [SiteSettingsController::class, 'quotas'])->name('admin.settings.quotas');
+    Route::post('/settings/waiting/release', [SiteSettingsController::class, 'release'])->name('admin.settings.release');
     Route::post('/settings/quotas/move', [SiteSettingsController::class, 'transfer'])->name('admin.settings.transfer');
     Route::get('/team', [TeamController::class, 'index'])->name('admin.team');
     Route::post('/team/{member}/account', [TeamController::class, 'account'])->whereNumber('member')->name('admin.team.account');

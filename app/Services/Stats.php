@@ -113,6 +113,7 @@ class Stats
         }
         match ((string) ($f['ticket'] ?? '')) {
             'held'    => $q->whereRaw('EXISTS (SELECT 1 FROM tickets t WHERE t.user_id = u.id AND t.status <> "void")'),
+            'waiting' => $q->whereNotNull('u.waitlisted_at'),   // told the tickets are full, waiting for the SSC
             'issued'  => $q->whereRaw('EXISTS (SELECT 1 FROM tickets t WHERE t.user_id = u.id AND t.status = "valid")'),
             'used'    => $q->whereRaw('EXISTS (SELECT 1 FROM tickets t WHERE t.user_id = u.id AND t.status = "used")'),
             'none'    => $q->whereRaw('NOT EXISTS (SELECT 1 FROM tickets t WHERE t.user_id = u.id AND t.status <> "void")'),
@@ -127,7 +128,7 @@ class Stats
         $page = $q->selectSub('SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id', 'first_submitted')
             ->orderByRaw('first_submitted IS NULL')->orderBy('first_submitted', $dir)->orderBy('u.created_at', $dir)->orderBy('u.id', $dir)
             ->addSelect('u.id', 'u.name', 'u.email', 'u.student_no', 'u.college_code', 'u.program', 'u.year_level',
-                     'u.created_at', 'u.email_verified_at', 'u.email_bounced_at', 'u.email_bounce_type', 'u.sponsor_type', 'u.sponsor_tier', 'u.ssc_access', 'u.status as account_status', 'u.member_type')
+                     'u.created_at', 'u.email_verified_at', 'u.email_bounced_at', 'u.email_bounce_type', 'u.sponsor_type', 'u.sponsor_tier', 'u.ssc_access', 'u.waitlisted_at', 'u.status as account_status', 'u.member_type')
             ->paginate($perPage)->withQueryString();
 
         $ids  = $page->pluck('id')->all();
@@ -150,7 +151,7 @@ class Stats
                 'registered_at' => $u->created_at, 'first_submitted' => $u->first_submitted, 'verified' => $u->email_verified_at !== null,
                 'account_status' => $u->account_status,
                 'email_bounced_at' => $u->email_bounced_at, 'email_bounce_type' => $u->email_bounce_type,
-                'sponsorship' => \App\Support\Sponsorship::label($u->sponsor_type, $u->sponsor_tier), 'ssc_access' => (bool) $u->ssc_access,
+                'sponsorship' => \App\Support\Sponsorship::label($u->sponsor_type, $u->sponsor_tier), 'ssc_access' => (bool) $u->ssc_access, 'waitlisted' => $u->waitlisted_at !== null,
                 'docs' => collect(['waiver', 'cor', 'id', 'employee_id', 'sponsorship'])->mapWithKeys(
                     fn (string $k) => [$k => $d($k) + ['applicable' => in_array($k, DocumentSets::keysFor($u->member_type), true)]]
                 )->all(),
@@ -210,7 +211,7 @@ class Stats
             : 'SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id';
         $dir = ($f['sort'] ?? '') === 'newest' ? 'desc' : 'asc';
 
-        $page = $q->select('u.id', 'u.name', 'u.email', 'u.student_no', 'u.college_code', 'u.program', 'u.year_level', 'u.member_type')
+        $page = $q->select('u.id', 'u.name', 'u.email', 'u.student_no', 'u.college_code', 'u.program', 'u.year_level', 'u.member_type', 'u.waitlisted_at')
             ->selectSub($since, 'waiting_since')
             ->orderByRaw('waiting_since IS NULL')   // people who have not submitted anything yet go last
             ->orderBy('waiting_since', $dir)->orderBy('u.id', $dir)

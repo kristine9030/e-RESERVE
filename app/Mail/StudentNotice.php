@@ -89,19 +89,37 @@ class StudentNotice extends Mailable implements ShouldQueue
         );
     }
 
-    public static function waitlisted(string $name): self
+    /** Sent when someone finishes uploading after their group's tickets are already full. It promises nothing. */
+    public static function ticketsFull(string $name): self
     {
         return new self(
-            'Documents approved · no seat available yet',
+            'The tickets for your group are full · ' . config('ereserve.event.name'),
             $name,
-            'Approved, but the tickets for your group are all taken',
+            'The tickets for your group are full',
             [
-                'All three of your documents are approved. Unfortunately all ' . number_format(\App\Services\TicketQuota::capacity()) . ' tickets have already been issued.',
-                'You are in line: if a ticket is released, yours is issued automatically and we will email you.',
+                'We received your files, but all the tickets for your group are already taken.',
+                'We cannot promise you a ticket. Please wait for the SSC’s announcement. If tickets become available, the SSC will announce it.',
+                'Your account and files stay in e-RESERVE, so you do not need to upload again.',
             ],
             'Check my status',
             route('tracking'),
             kind: 'waitlist',
+        );
+    }
+
+    /** Sent when the SSC releases seats for people who were waiting and this person still has files to be approved. */
+    public static function ticketsReleased(string $name): self
+    {
+        return new self(
+            'The SSC opened more tickets for your group',
+            $name,
+            'The SSC opened more tickets for your group',
+            [
+                'You can now get a ticket. Your files go through the normal review, and your ticket is issued once all of them are approved.',
+            ],
+            'Check my status',
+            route('tracking'),
+            kind: 'ticket',
         );
     }
 

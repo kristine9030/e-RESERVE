@@ -127,6 +127,19 @@
 
         <main class="app-content">
             <div class="app-container">
+                @if ($waitState = ticket_waiting_state())
+                    <div class="alert d-flex align-items-start gap-2 mb-3" role="alert"
+                         style="background:rgba(233,169,58,.12);border:1px solid rgba(233,169,58,.42);border-radius:14px;color:#7A5200;font-size:.88rem;">
+                        <i class="fa-solid fa-hourglass-half mt-1"></i>
+                        <span><strong>The tickets for your group are full.</strong>
+                            @if ($waitState === 'waiting')
+                                We received your files, but we cannot promise you a ticket. Please wait for the SSC’s announcement. If tickets become available, the SSC will announce it.
+                            @else
+                                You can still upload your files, but we cannot promise you a ticket. Please wait for the SSC’s announcement.
+                            @endif
+                        </span>
+                    </div>
+                @endif
                 @if (auth()->user()?->email_bounced_at)
                     <div class="alert d-flex align-items-start gap-2 mb-3" role="alert"
                          style="background:rgba(217,72,59,.08);border:1px solid rgba(217,72,59,.22);border-radius:14px;color:#A8352A;font-size:.88rem;">

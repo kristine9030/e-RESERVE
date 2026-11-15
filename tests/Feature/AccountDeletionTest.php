@@ -166,7 +166,7 @@ class AccountDeletionTest extends TestCase
         $this->assertSame(0, DB::table('tickets')->where('ticket_no', $old)->count(), 'the old number no longer admits anyone');
     }
 
-    public function test_the_freed_seat_goes_to_the_next_person_in_line(): void
+    public function test_the_freed_seat_is_not_handed_on_until_the_ssc_releases_it(): void
     {
         Setting::store('quota_student', '1');
         $holder = $this->person('Holder');
@@ -177,6 +177,10 @@ class AccountDeletionTest extends TestCase
 
         $this->remove($holder)->assertSessionHas('flash.type', 'success');
 
+        $this->assertSame(0, DB::table('tickets')->where('user_id', $waiting->id)->count(), 'nothing is handed on by itself');
+        $this->assertSame(1, \App\Services\WaitingList::openSeats('student'), 'but there is one open seat to release');
+
+        app(\App\Services\WaitingList::class)->release('student', 1);
         $this->assertSame(1, DB::table('tickets')->where('user_id', $waiting->id)->where('status', 'valid')->count());
     }
 

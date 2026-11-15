@@ -135,15 +135,35 @@
 
 <div class="card-soft fade-up d3 mt-4">
     <div class="card-head">
+        <div><h5 class="mb-0">Waiting for the SSC (tickets full)</h5>
+            <span class="cell-sub">These people finished uploading after their group's tickets were full. They were told we cannot promise a ticket. Nobody here gets a ticket by itself, not when a seat frees up and not when you raise the allotment. You let them in below, longest-waiting first.</span></div>
+    </div>
+    <div class="card-body-p">
+        @foreach ($groups as $g => $label)
+            <form method="post" action="{{ route('admin.settings.release') }}" class="row g-2 align-items-center py-2" style="border-top:1px solid var(--line);">@csrf
+                <input type="hidden" name="group" value="{{ $g }}">
+                <div class="col-sm-4"><strong>{{ $label }}</strong><div class="cell-sub">{{ $reservedBy[$g] }} of {{ $limits[$g] }} seats spoken for</div></div>
+                <div class="col-6 col-sm-2"><b>{{ $waitingBy[$g] }}</b> <span class="cell-sub">waiting</span></div>
+                <div class="col-6 col-sm-2"><b>{{ $openBy[$g] }}</b> <span class="cell-sub">open seats</span></div>
+                <div class="col-6 col-sm-2"><input type="number" class="form-control" name="count" min="1" max="{{ max(1, min($openBy[$g], $waitingBy[$g])) }}" placeholder="How many" @disabled($openBy[$g] < 1 || $waitingBy[$g] < 1)></div>
+                <div class="col-6 col-sm-2"><button type="submit" class="btn btn-gold btn-sm2 w-100" @disabled($openBy[$g] < 1 || $waitingBy[$g] < 1)><i class="fa-solid fa-door-open"></i> Release</button></div>
+            </form>
+        @endforeach
+        <div class="cell-sub mt-2">Open seats appear when someone with a seat is deleted, or when you raise a group's allotment above.</div>
+    </div>
+</div>
+
+<div class="card-soft fade-up d3 mt-4">
+    <div class="card-head">
         <div><h5 class="mb-0">Give unused seats to another group</h5>
-            <span class="cell-sub">For example, sponsors did not use all 300: move the rest to students. Anyone already waiting gets a ticket right away.</span></div>
+            <span class="cell-sub">For example, sponsors did not use all 300: move the rest to students. Then release them for the waiting list above, if you choose to.</span></div>
     </div>
     <div class="card-body-p">
         <form method="post" action="{{ route('admin.settings.transfer') }}" class="row g-3 align-items-end">@csrf
             <div class="col-sm-4">
                 <label class="form-label-sm d-block" for="mv-from">From</label>
                 <select class="form-select" id="mv-from" name="from">
-                    @foreach ($groups as $g => $label)<option value="{{ $g }}">{{ $label }} ({{ max(0, $limits[$g] - ($taken[$g] ?? 0)) }} unused)</option>@endforeach
+                    @foreach ($groups as $g => $label)<option value="{{ $g }}">{{ $label }} ({{ max(0, $limits[$g] - max($taken[$g] ?? 0, $reservedBy[$g] ?? 0)) }} unused)</option>@endforeach
                 </select>
             </div>
             <div class="col-sm-4">
