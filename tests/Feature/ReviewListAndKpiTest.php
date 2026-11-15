@@ -156,6 +156,37 @@ class ReviewListAndKpiTest extends TestCase
             ->assertSeeInOrder(['Registered Second Submitted First', 'Middle Submitter', 'Registered First Submitted Last'])->assertDontSee('Never Submitted');
     }
 
+    public function test_records_can_be_turned_around_to_latest_submitted_first(): void
+    {
+        $a = $this->person('Submitted Last');   $this->doc($a, 'waiver', 'submitted', '2026-11-15 12:00:00');
+        $b = $this->person('Submitted First');  $this->doc($b, 'waiver', 'submitted', '2026-11-15 09:00:00');
+        $c = $this->person('Submitted Middle'); $this->doc($c, 'waiver', 'submitted', '2026-11-15 10:00:00');
+        $this->person('Never Submitted');
+        $admin = $this->admin();
+
+        // the order choice is on the page, and "first submitted first" is what is picked by default
+        $this->actingAs($admin)->get(route('admin.registrations'))->assertOk()
+            ->assertSee('Latest submitted first')->assertSee('<option value="oldest" selected>', false)
+            ->assertSeeInOrder(['Submitted First', 'Submitted Middle', 'Submitted Last', 'Never Submitted']);
+
+        // turned around: the newest first; people who have not submitted anything are still last
+        $this->actingAs($admin)->get(route('admin.registrations', ['sort' => 'newest']))->assertOk()
+            ->assertSee('<option value="newest" selected>', false)
+            ->assertSeeInOrder(['Submitted Last', 'Submitted Middle', 'Submitted First', 'Never Submitted']);
+
+        // it works together with a filter, and the downloads follow it too
+        $this->actingAs($admin)->get(route('admin.registrations', ['sort' => 'newest', 'docs' => 'pending']))->assertOk()
+            ->assertSeeInOrder(['Submitted Last', 'Submitted Middle', 'Submitted First'])->assertDontSee('Never Submitted');
+        $export = app(\App\Services\RecordsExport::class);
+        $names = fn (array $f) => array_column($export->build($f)['rows'], 0);
+        $this->assertSame(['Submitted First', 'Submitted Middle', 'Submitted Last', 'Never Submitted'], $names(['type' => 'all']));
+        $this->assertSame(['Submitted Last', 'Submitted Middle', 'Submitted First', 'Never Submitted'], $names(['type' => 'all', 'sort' => 'newest']));
+
+        // anything other than "newest" falls back to the normal order instead of breaking
+        $this->actingAs($admin)->get(route('admin.registrations', ['sort' => 'nonsense']))->assertOk()
+            ->assertSeeInOrder(['Submitted First', 'Submitted Middle', 'Submitted Last']);
+    }
+
     public function test_the_dashboard_queue_lists_and_counts_people_not_files(): void
     {
         $late = $this->person('Late Lara');

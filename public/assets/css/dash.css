@@ -414,8 +414,8 @@ button.aud-main { width: 100%; border: 0; background: transparent; text-align: l
 /* ==========================================================================
    Records: one group per tab, original single-row filter
    ========================================================================== */
-.stu-filter { display: grid; grid-template-columns: minmax(200px, 1.6fr) repeat(4, minmax(120px, 1fr)) auto; gap: .65rem; padding: 0 1.5rem 1.15rem; align-items: center; }
-.stu-filter:not(:has(#sfProgram)) { grid-template-columns: minmax(200px, 1.6fr) repeat(2, minmax(120px, 1fr)) auto; }
+.stu-filter { display: grid; grid-template-columns: minmax(200px, 1.6fr) repeat(5, minmax(110px, 1fr)) auto; gap: .65rem; padding: 0 1.5rem 1.15rem; align-items: center; }
+.stu-filter:not(:has(#sfProgram)) { grid-template-columns: minmax(200px, 1.6fr) repeat(3, minmax(120px, 1fr)) auto; }
 .stu-tabs { display: flex; gap: .4rem; padding: 0 1.5rem 1rem; flex-wrap: wrap; }
 .stu-tab { display: inline-flex; align-items: center; gap: .55rem; padding: .55rem 1rem; border-radius: 99px; background: #F1F7FB; border: 1px solid #E3EEF4; color: #3F5A6B; font-weight: 700; font-size: .84rem; text-decoration: none; transition: background .15s ease, border-color .15s ease; }
 .stu-tab i { color: #2A8DB5; font-size: .85rem; }
@@ -460,7 +460,7 @@ button.aud-main { width: 100%; border: 0; background: transparent; text-align: l
 /* Records > Faculty & staff: search, category, documents, ticket and the buttons stay on ONE row
    (the grid only had room for three fields, so the Filter button dropped onto a line of its own).
    It only stacks on phones and small tablets. */
-.stu-filter:not(:has(#sfProgram)):has(select[name="type"]) { grid-template-columns: minmax(170px, 1.6fr) repeat(3, minmax(110px, 1fr)) auto; }
+.stu-filter:not(:has(#sfProgram)):has(select[name="type"]) { grid-template-columns: minmax(160px, 1.6fr) repeat(4, minmax(105px, 1fr)) auto; }
 .stu-filter:not(:has(#sfProgram)):has(select[name="type"]) .stu-search, .stu-filter:not(:has(#sfProgram)):has(select[name="type"]) .stu-filter-actions { grid-column: auto; }
 @media (max-width: 767.98px) {
     .stu-filter:not(:has(#sfProgram)):has(select[name="type"]) { grid-template-columns: 1fr 1fr; }

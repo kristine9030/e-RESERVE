@@ -140,6 +140,10 @@ $viewerData = static function (array $r): string {
                 <option value="{{ $k }}" @selected(($filters['ticket'] ?? '') === $k)>{{ $label }}</option>
             @endforeach
         </select>
+        <select name="sort" class="form-select" aria-label="Order">
+            <option value="oldest" @selected(($filters['sort'] ?? '') !== 'newest')>First submitted first</option>
+            <option value="newest" @selected(($filters['sort'] ?? '') === 'newest')>Latest submitted first</option>
+        </select>
         <div class="stu-filter-actions">
             <button class="btn btn-green btn-sm2" type="submit"><i class="fa-solid fa-filter"></i> Filter</button>
             @if (array_filter(array_diff_key($filters, ['type' => 1])))

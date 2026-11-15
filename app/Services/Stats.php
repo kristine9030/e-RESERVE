@@ -77,7 +77,7 @@ class Stats
      * One page of students for the staff list, filtered in SQL so the page stays
      * fast with thousands of accounts. Same row shape as registrations().
      *
-     * @param array{q?:string,college?:string,docs?:string,ticket?:string,program?:string,type?:string} $f
+     * @param array{q?:string,college?:string,docs?:string,ticket?:string,program?:string,type?:string,sort?:string} $f
      */
     public function registrationsPage(array $f, int $perPage = 25): LengthAwarePaginator
     {
@@ -121,8 +121,10 @@ class Stats
 
         // First submitted first, whatever the filter: the person whose first file came in earliest is at the top.
         // People who have not submitted anything yet follow, in the order they registered.
+        // ?sort=newest turns it around: the person whose first file came in most recently comes first.
+        $dir  = ($f['sort'] ?? '') === 'newest' ? 'desc' : 'asc';
         $page = $q->selectSub('SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id', 'first_submitted')
-            ->orderByRaw('first_submitted IS NULL')->orderBy('first_submitted')->orderBy('u.created_at')->orderBy('u.id')
+            ->orderByRaw('first_submitted IS NULL')->orderBy('first_submitted', $dir)->orderBy('u.created_at', $dir)->orderBy('u.id', $dir)
             ->addSelect('u.id', 'u.name', 'u.email', 'u.student_no', 'u.college_code', 'u.program', 'u.year_level',
                      'u.created_at', 'u.email_verified_at', 'u.email_bounced_at', 'u.email_bounce_type', 'u.sponsor_type', 'u.sponsor_tier', 'u.ssc_access', 'u.status as account_status', 'u.member_type')
             ->paginate($perPage)->withQueryString();

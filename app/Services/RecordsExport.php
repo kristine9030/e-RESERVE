@@ -13,7 +13,7 @@ use ZipArchive;
  */
 class RecordsExport
 {
-    public const FILTERS = ['q', 'college', 'docs', 'ticket', 'program', 'type'];
+    public const FILTERS = ['q', 'college', 'docs', 'ticket', 'program', 'type', 'sort'];
 
     private const DOC_LABEL  = ['waiver' => 'Waiver', 'cor' => 'COR', 'id' => 'School ID', 'employee_id' => 'Employee ID', 'sponsorship' => 'Proof of sponsorship'];
     private const DOC_STATUS = ['approved' => 'Approved', 'submitted' => 'For review', 'rejected' => 'Returned'];

@@ -37,8 +37,11 @@ class AdminController extends Controller
 
     public function registrations(Request $request)
     {
-        $filters = $request->only(['q', 'college', 'docs', 'ticket', 'program', 'type']);
+        $filters = $request->only(['q', 'college', 'docs', 'ticket', 'program', 'type', 'sort']);
         $filters['type'] = (string) ($filters['type'] ?? 'all');   // 'all' = every record; the sidebar opens one group at a time
+        if (($filters['sort'] ?? '') !== 'newest') {
+            unset($filters['sort']);   // "first submitted first" is the normal order, so it is not kept in the URL
+        }
 
         return view('admin.registrations', [
             'rows'    => $this->stats->registrationsPage($filters),
