@@ -31,7 +31,7 @@ class SiteContent
                 'label' => 'Who can join', 'icon' => 'fa-user-graduate',
                 'items' => [
                     ['fa-graduation-cap', 'Currently enrolled students', 'Enrolled at BatStateU The NEU ARASOF-Nasugbu this semester. Sign up with your @' . $domain . ' account; your SR-code is checked against the registrar’s masterlist.'],
-                    ['fa-briefcase', 'Faculty, instructors and staff', 'BatStateU The NEU ARASOF-Nasugbu faculty, instructors and staff. Sign up with your @' . $domain . ' email. No confirmation email is needed.'],
+                    ['fa-briefcase', 'Faculty and staff', 'BatStateU The NEU ARASOF-Nasugbu faculty and staff. Sign up with your @' . $domain . ' email. No confirmation email is needed.'],
                     ['fa-handshake', 'Sponsors', 'Partners and companies supporting SIGLA 2026. Any email works, but you confirm it with the link we send.'],
                     ['fa-envelope', 'Use the right email', 'Students and employees must use their university email. Personal emails are only for sponsors.'],
                     ['fa-user-lock', 'One person, one ticket', 'Each person gets exactly one ticket. A second account or a shared ticket will be voided.'],
@@ -44,7 +44,7 @@ class SiteContent
                     ['fa-file-signature', 'Students: signed waiver', 'Download the waiver from your dashboard, print it, sign it in ink, then scan it. Every page must be included.'],
                     ['fa-file-lines', 'Students: COR', 'Your Certificate of Registration for the current semester. Your name and SR-code must be readable.'],
                     ['fa-id-card', 'Students: school ID', 'The front of your valid BatStateU ID, face visible, no glare, no filters.'],
-                    ['fa-id-badge', 'Faculty, instructors and staff: employee ID', 'One PDF with the front of your BatStateU employee ID. Your name must match your account.'],
+                    ['fa-id-badge', 'Faculty and staff: employee ID', 'One PDF with the front of your BatStateU employee ID. Your name must match your account.'],
                     ['fa-handshake', 'Sponsors: proof of sponsorship', 'One PDF showing your sponsorship, such as the SSC letter, the agreement or a receipt.'],
                     ['fa-circle-check', 'Clear and complete', 'Blurry, cropped, edited or expired documents are returned and your ticket is paused until you replace them.'],
                 ],
@@ -85,7 +85,7 @@ class SiteContent
         $domain  = '@' . config('ereserve.allowed_email_domains')[0];
 
         $faqs = [
-            ['Who can get a ticket?', 'Currently enrolled students of BatStateU The NEU ARASOF-Nasugbu, its faculty, instructors and staff, and sponsors of SIGLA 2026. Students and employees sign up with their ' . $domain . ' GSuite account; sponsors can use any email they check.'],
+            ['Who can get a ticket?', 'Currently enrolled students of BatStateU The NEU ARASOF-Nasugbu, its faculty and staff, and sponsors of SIGLA 2026. Students and employees sign up with their ' . $domain . ' GSuite account; sponsors can use any email they check.'],
         ];
 
         // The soft launch: while the doors are shut, say so.
@@ -95,9 +95,9 @@ class SiteContent
 
         return array_merge($faqs, [
             ['Do I have to pay?', 'No. Your ticket is free. It is issued after SSC approves your documents. There is nothing to send through GCash.'],
-            ['What do I need to upload?', 'Students upload three PDFs: the signed waiver, the Certificate of Registration (COR) for this semester, and the front of the school ID. Faculty, instructors and staff upload one PDF of their employee ID. Sponsors upload one PDF as proof of sponsorship. Each file can be up to 5 MB.'],
+            ['What do I need to upload?', 'Students upload three PDFs: the signed waiver, the Certificate of Registration (COR) for this semester, and the front of the school ID. Faculty and staff upload one PDF of their employee ID. Sponsors upload one file as proof of sponsorship (a PDF, or a photo or screenshot of the receipt). Each file can be up to 5 MB.'],
             ['Can I sign in with Google?', 'Yes. On the sign-in page, press “Continue with Google” and use your ' . $domain . ' account — no password to remember. You can also sign in with your email and password instead.'],
-            ['I am faculty or staff. Do I need to confirm my email?', 'No. Sign up with your ' . $domain . ' GSuite address, pick whether you are faculty, an instructor or staff, and enter your employee ID — then go straight to uploading it. Sponsors do confirm their email by a link, since they may use any address.'],
+            ['I am faculty or staff. Do I need to confirm my email?', 'No. Sign up with your ' . $domain . ' GSuite address, pick whether you are faculty or staff, and enter your employee ID — then go straight to uploading it. Sponsors do confirm their email by a link, since they may use any address.'],
             ['How do sponsors join?', 'Two ways. Not ready yet? Press “Become a sponsor” on this page and send your details — the SSC will reply to the email you give. Ready to register? Choose “I’m a sponsor” when you create your account, confirm your email, then upload one PDF as proof of sponsorship.'],
             ['Where do I get the waiver? (students)', 'Sign in, open My Documents and press “Download waiver form”. Print it, have your parent or guardian and you sign it in ink, scan it and upload the PDF.'],
             ['How do I make a PDF from my phone?', 'Use any “scan to PDF” feature: Google Drive, Adobe Scan, Microsoft Lens, or the Notes app on iPhone. Photos can also be exported as PDF from your gallery’s print option.'],

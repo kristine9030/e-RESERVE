@@ -63,7 +63,7 @@ class TicketService
         return $this->cache['docs'][$userId] = $out;
     }
 
-    /** Faculty, instructor, staff or sponsor (anyone who is not a student). */
+    /** Faculty, staff or sponsor (anyone who is not a student). */
     public function isEmployee(int $userId): bool
     {
         return $this->cache['emp'][$userId] ??= DB::table('users')->where('id', $userId)->where('role', 'student')->where('member_type', '<>', 'student')->exists();
@@ -101,7 +101,7 @@ class TicketService
         }
 
         $row = self::one(
-            'SELECT t.*, u.name, u.email, u.student_no, u.member_type, u.program, u.year_level, c.scanned_at, c.gate
+            'SELECT t.*, u.name, u.email, u.student_no, u.member_type, u.sponsor_type, u.sponsor_tier, u.program, u.year_level, c.scanned_at, c.gate
              FROM tickets t
              JOIN users u ON u.id = t.user_id
              LEFT JOIN checkins c ON c.ticket_id = t.id
@@ -123,6 +123,7 @@ class TicketService
             'student_no'  => $row['student_no'] ?? '',
             'member_type' => $row['member_type'] ?? 'student',
             'program'     => $row['program'] ?? '',
+            'sponsorship' => \App\Support\Sponsorship::label($row['sponsor_type'] ?? null, $row['sponsor_tier'] ?? null),   // sponsors only
             'year'        => $row['year_level'] ?? '',
             'email'       => $row['email'] ?? '',
             'event'       => $ev['name'],

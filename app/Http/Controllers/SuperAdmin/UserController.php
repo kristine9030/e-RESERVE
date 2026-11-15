@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\AccountService;
 use App\Services\Audit;
 use App\Services\TicketService;
+use App\Support\Sponsorship;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -28,7 +29,7 @@ class UserController extends Controller
     public const KINDS = [
         'admin' => ['SSC Admin (full staff access)', 'admin'], 'scanner' => ['Gate Scanner (check-in only)', 'scanner'],
         'superadmin' => ['Super Admin', 'superadmin'],
-        'faculty' => ['Faculty', 'employee'], 'instructor' => ['Instructor', 'employee'], 'staff' => ['Staff', 'employee'],
+        'faculty' => ['Faculty', 'employee'], 'staff' => ['Staff', 'employee'],
         'sponsor' => ['Sponsor', 'sponsor'], 'student' => ['Student', 'student'],
     ];
 
@@ -93,6 +94,7 @@ class UserController extends Controller
             'total'  => User::count(),
             'kinds'  => self::KINDS,
             'types'  => config('ereserve.employee_types'),
+            'sponsorOptions' => config('ereserve.sponsorship'),
         ]);
     }
 
@@ -136,6 +138,15 @@ class UserController extends Controller
             return $bad('That ID number is already registered to someone else.');
         }
 
+        $stype = $stier = null;
+        if ($group === 'sponsor') {
+            $stype = (string) $request->input('sponsor_type');
+            $stier = (string) $request->input('sponsor_tier');
+            if (!Sponsorship::valid($stype, $stier)) {
+                return $bad('Choose what the sponsor availed: the kind of sponsorship, then its tier or package.');
+            }
+        }
+
         $password = trim((string) $request->input('password'));
         $generated = $password === '';
         if ($generated) {
@@ -151,6 +162,7 @@ class UserController extends Controller
             'role' => in_array($group, ['superadmin', 'admin', 'scanner'], true) ? $group : 'student',
             'member_type' => match ($group) { 'student' => 'student', 'sponsor' => 'sponsor', 'employee' => $kind, default => 'student' },
             'student_no' => $no === '' ? null : $no,
+            'sponsor_type' => $stype, 'sponsor_tier' => $stier,
             'program' => $group === 'employee' ? config('ereserve.employee_types')[$kind] : ($group === 'admin' || $group === 'scanner' ? 'Supreme Student Council' : null),
             'status' => 'active', 'must_change_password' => true, 'email_verified_at' => now(),
         ])->save();

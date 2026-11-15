@@ -113,7 +113,7 @@ class SuperAdminTest extends TestCase
 
         $add(['kind' => 'scanner', 'name' => 'Gate One', 'email' => 'gate@g.batstate-u.edu.ph'])->assertSessionHas('flash.type', 'success');
         $add(['kind' => 'superadmin', 'name' => 'Second Owner', 'email' => 'second@example.com', 'password' => 'Strong-pass-1'])->assertSessionHas('flash.type', 'success');
-        $add(['kind' => 'sponsor', 'name' => 'Acme Foods', 'email' => 'acme@example.com'])->assertSessionHas('flash.type', 'success');
+        $add(['kind' => 'sponsor', 'name' => 'Acme Foods', 'email' => 'acme@example.com', 'sponsor_type' => 'event', 'sponsor_tier' => 'puso'])->assertSessionHas('flash.type', 'success');
         $add(['kind' => 'staff', 'name' => 'Maria Staff', 'email' => 'maria@g.batstate-u.edu.ph', 'id_no' => 'EMP-100'])->assertSessionHas('flash.type', 'success');
         $add(['kind' => 'student', 'name' => 'Stu Dent', 'email' => '24-12345@g.batstate-u.edu.ph', 'id_no' => '24-12345'])->assertSessionHas('flash.type', 'success');
 
@@ -131,7 +131,7 @@ class SuperAdminTest extends TestCase
         $add(['kind' => 'bogus', 'name' => 'X Y', 'email' => 'x@example.com']);
         $add(['kind' => 'admin', 'name' => 'Out Sider', 'email' => 'out@gmail.com']);                 // staff need a university address
         $add(['kind' => 'student', 'name' => 'No Code', 'email' => 'n@g.batstate-u.edu.ph']);       // student needs SR-code
-        $add(['kind' => 'sponsor', 'name' => 'Weak', 'email' => 'weak@example.com', 'password' => '123']);
+        $add(['kind' => 'sponsor', 'name' => 'Weak', 'email' => 'weak@example.com', 'password' => '123', 'sponsor_type' => 'event', 'sponsor_tier' => 'puso']);
         $this->make('student', 'dup@g.batstate-u.edu.ph');
         $add(['kind' => 'staff', 'name' => 'Dup Lic', 'email' => 'dup@g.batstate-u.edu.ph']);
 

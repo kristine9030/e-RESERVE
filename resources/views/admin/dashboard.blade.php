@@ -99,14 +99,14 @@
             <div class="card-head">
                 <div>
                     <h5 class="mb-0">Registrations by group</h5>
-                    <span class="cell-sub">Students, instructors &amp; staff, sponsors</span>
+                    <span class="cell-sub">Students, faculty &amp; staff, sponsors</span>
                 </div>
             </div>
             <div class="card-body-p">
                 <div class="aud-grid">
                     @foreach ([
                         ['student',  'fa-user-graduate', 'a-blue',   'Students'],
-                        ['employee', 'fa-briefcase',     'a-orange', 'Instructors & staff'],
+                        ['employee', 'fa-briefcase',     'a-orange', 'Faculty & staff'],
                         ['sponsor',  'fa-handshake',     'a-gold',   'Sponsors'],
                     ] as [$ak, $aIcon, $aTone, $aLabel])
                         <?php $a = $audience[$ak]; ?>
@@ -240,7 +240,7 @@
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content col-modal">
             <div class="modal-header">
-                <div class="min-w-0"><h5 class="modal-title" id="grpTitle-employee">Instructors &amp; staff</h5><div class="cell-sub">Faculty, instructors and staff accounts</div></div>
+                <div class="min-w-0"><h5 class="modal-title" id="grpTitle-employee">Faculty &amp; staff</h5><div class="cell-sub">Faculty and staff accounts</div></div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -258,7 +258,7 @@
                 @endforeach
             </div>
             <div class="modal-footer">
-                <a class="btn btn-gold btn-sm2" href="{{ route('admin.registrations', ['type' => 'employee']) }}">All instructors &amp; staff <i class="fa-solid fa-arrow-right"></i></a>
+                <a class="btn btn-gold btn-sm2" href="{{ route('admin.registrations', ['type' => 'employee']) }}">All faculty &amp; staff <i class="fa-solid fa-arrow-right"></i></a>
             </div>
         </div>
     </div>

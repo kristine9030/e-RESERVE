@@ -27,6 +27,7 @@ class SponsorSignupTest extends TestCase
         return $this->post(route('register.store'), $over + [
             'as' => 'sponsor', 'name' => 'Juan Dela Cruz Trading', 'email' => 'owner@dlcruz-trading.com',
             'mobile' => '', 'password' => 'Test-pass-123', 'password_confirm' => 'Test-pass-123',
+            'sponsor_type' => 'individual', 'sponsor_tier' => 'gold',
         ]);
     }
 

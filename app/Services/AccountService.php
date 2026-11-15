@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Mail\ConfirmEmail;
+use App\Support\Sponsorship;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Auth;
@@ -126,7 +127,7 @@ class AccountService
             return $fail('Choose your college from the list.', 'college');
         }
         if (!$this->registrar->programInCollege($program, $college)) {
-            return $fail('Choose a programme that belongs to your college.', 'program');
+            return $fail('Choose a program that belongs to your college.', 'program');
         }
         if (!in_array($year, config('ereserve.year_levels'), true)) {
             return $fail('Choose your year level.', 'year_level');
@@ -152,7 +153,7 @@ class AccountService
     }
 
     /**
-     * Faculty, instructor, staff or sponsor: name, employee ID, email and a password.
+     * Faculty, staff or sponsor: name, employee ID, email and a password.
      * No documents. The ticket is issued the moment the email is confirmed.
      *
      * @return array{ok:bool,message:string,field:?string,user:?User,mail_ok?:bool}
@@ -170,7 +171,7 @@ class AccountService
         $confirm   = (string) ($in['password_confirm'] ?? '');
 
         if (!isset(config('ereserve.employee_types')[$type])) {
-            return $fail('Choose whether you are faculty, an instructor or staff.', 'member_type');
+            return $fail('Choose whether you are faculty or staff.', 'member_type');
         }
         if (mb_strlen($name) < 3 || mb_strlen($name) > 160) {
             return $fail('Enter your full name.', 'name');
@@ -244,9 +245,14 @@ class AccountService
         $mobile   = trim((string) ($in['mobile'] ?? ''));
         $password = (string) ($in['password'] ?? '');
         $confirm  = (string) ($in['password_confirm'] ?? '');
+        $stype    = (string) ($in['sponsor_type'] ?? '');
+        $stier    = (string) ($in['sponsor_tier'] ?? '');
 
         if (mb_strlen($name) < 3 || mb_strlen($name) > 160) {
             return $fail('Enter your company or your full name.', 'name');
+        }
+        if (!Sponsorship::valid($stype, $stier)) {
+            return $fail('Choose what you availed: the kind of sponsorship, then its tier or package.', 'sponsor_type');
         }
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return $fail('That does not look like a valid email address.', 'email');
@@ -280,6 +286,7 @@ class AccountService
             $user->forceFill([
                 'email' => $email, 'password' => $password, 'role' => 'student', 'member_type' => 'sponsor', 'name' => $name,
                 'initials' => $this->initials($name), 'student_no' => $sponsorNo, 'program' => 'Sponsor',
+                'sponsor_type' => $stype, 'sponsor_tier' => $stier,
                 'year_level' => null, 'college_code' => null,
                 'mobile' => $mobile === '' ? null : preg_replace('/\D/', '', $mobile), 'status' => 'active',
             ])->save();

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', ['student' => 'Students', 'employee' => 'Instructors & staff', 'sponsor' => 'Sponsors', 'all' => 'All records'][request('type', 'all')] ?? (config('ereserve.employee_types')[request('type')] ?? 'All records'))
+@section('title', ['student' => 'Students', 'employee' => 'Faculty & staff', 'sponsor' => 'Sponsors', 'all' => 'All records'][request('type', 'all')] ?? (config('ereserve.employee_types')[request('type')] ?? 'All records'))
 @section('crumb', 'Records')
 @section('nav', 'registrations')
 
@@ -32,7 +32,7 @@ $viewerData = static function (array $r): string {
     <div class="row align-items-center g-3">
         <div class="col-lg-8">
             <span class="eyebrow on-dark"><i class="fa-solid fa-users"></i> Records</span>
-            <h2>{{ ['student' => 'Students', 'employee' => 'Instructors & staff', 'sponsor' => 'Sponsors'][$filters['type'] ?? ''] ?? (config('ereserve.employee_types')[$filters['type'] ?? ''] ?? 'All records') }}</h2>
+            <h2>{{ ['student' => 'Students', 'employee' => 'Faculty & staff', 'sponsor' => 'Sponsors'][$filters['type'] ?? ''] ?? (config('ereserve.employee_types')[$filters['type'] ?? ''] ?? 'All records') }}</h2>
             <p>Every account, with the status of its documents and ticket.</p>
         </div>
         <div class="col-lg-4 text-lg-end">
@@ -43,7 +43,7 @@ $viewerData = static function (array $r): string {
             <div class="dropdown d-inline-block">
                 <button class="btn btn-gold" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-file-export"></i> Export <i class="fa-solid fa-chevron-down ms-1" style="font-size:.65rem;"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end app-drop export-menu shadow border-0 mt-2">
-                    <li class="export-note">Exports what you see now: {{ $filters['type'] === 'all' ? 'all records' : strtolower(['student' => 'Students', 'employee' => 'Instructors & staff', 'sponsor' => 'Sponsors'][$filters['type']] ?? 'this list') }}{{ array_diff_key($exQ, ['type' => 1]) ? ' (filtered)' : '' }}</li>
+                    <li class="export-note">Exports what you see now: {{ $filters['type'] === 'all' ? 'all records' : strtolower(['student' => 'Students', 'employee' => 'Faculty & staff', 'sponsor' => 'Sponsors'][$filters['type']] ?? 'this list') }}{{ array_diff_key($exQ, ['type' => 1]) ? ' (filtered)' : '' }}</li>
                     <li><a class="dropdown-item app-drop-item" href="{{ route('admin.records.export', ['format' => 'xlsx'] + $exQ) }}"><i class="fa-solid fa-file-excel" style="color:#1E9A5A;"></i><span>Excel <small>.xlsx</small></span></a></li>
                     <li><a class="dropdown-item app-drop-item" href="{{ route('admin.records.export', ['format' => 'pdf'] + $exQ) }}"><i class="fa-solid fa-file-pdf" style="color:#D13B3B;"></i><span>PDF <small>A4 landscape</small></span></a></li>
                     <li><a class="dropdown-item app-drop-item" href="{{ route('admin.records.export', ['format' => 'csv'] + $exQ) }}"><i class="fa-solid fa-file-csv" style="color:#2A8DB5;"></i><span>CSV <small>any spreadsheet</small></span></a></li>
@@ -77,7 +77,7 @@ $viewerData = static function (array $r): string {
 <div class="card-soft stu-card fade-up d3">
     <div class="card-head">
         <div>
-            <h5 class="mb-0">{{ ['student' => 'Students', 'employee' => 'Instructors & staff', 'sponsor' => 'Sponsors'][$filters['type'] ?? ''] ?? (config('ereserve.employee_types')[$filters['type'] ?? ''] ?? 'All records') }}{{ !empty($filters['program']) ? ' · ' . $filters['program'] : '' }}</h5>
+            <h5 class="mb-0">{{ ['student' => 'Students', 'employee' => 'Faculty & staff', 'sponsor' => 'Sponsors'][$filters['type'] ?? ''] ?? (config('ereserve.employee_types')[$filters['type'] ?? ''] ?? 'All records') }}{{ !empty($filters['program']) ? ' · ' . $filters['program'] : '' }}</h5>
             <span class="cell-sub">{{ number_format($rows->total()) }} account{{ $rows->total() === 1 ? '' : 's' }}{{ array_filter(array_diff_key($filters, ['type' => 1])) ? ' match your filters' : '' }}</span>
         </div>
         <div class="d-flex gap-2 align-items-center no-print flex-wrap stu-legend">
@@ -167,6 +167,7 @@ $viewerData = static function (array $r): string {
                             <div class="cell-strong">{{ $r['name'] }}@if ($isStudent && $curType === 'all') <span class="badge-soft badge-info ms-1">Student</span>@endif @if (!$isStudent) <span class="badge-soft badge-gold ms-1">{{ $r['member_type'] === 'sponsor' ? 'Sponsor' : (config('ereserve.employee_types')[$r['member_type']] ?? 'Employee') }}</span>@endif @if ($off)<span class="badge-soft badge-muted ms-1">Disabled</span>@endif @if (!empty($r['email_bounced_at']))<span class="badge-soft badge-danger ms-1" title="Email could not be delivered">Email {{ ($r['email_bounce_type'] ?? '') === 'complaint' ? 'spam report' : 'bounced' }}</span>@endif</div>
                             <div class="cell-sub mono">{{ $r['student_no'] }}</div>
                             <div class="cell-sub stu-email" title="{{ $r['email'] }}">{{ $r['email'] }}</div>
+                            @if (!empty($r['sponsorship']))<div class="cell-sub"><i class="fa-solid fa-handshake"></i> {{ $r['sponsorship'] }}</div>@endif
                         </td>
                         @if ($curType !== 'sponsor')
                         <td data-label="{{ $colHead }}" {{ $r['program'] ? '' : 'data-empty' }}>

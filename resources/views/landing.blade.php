@@ -146,7 +146,7 @@
         <div class="row g-3 g-lg-4 justify-content-center">
             @foreach ([
                 ['fa-user-graduate', 'Currently enrolled students', 'Students of BatStateU The NEU ARASOF-Nasugbu who are enrolled this semester, with an active university GSuite account.', 'Upload: waiver, COR and school ID', ['as' => 'student'], 'Register as a student'],
-                ['fa-briefcase', 'Faculty, instructors & staff', 'BatStateU The NEU ARASOF-Nasugbu faculty, instructors and staff, using their university email.', 'Upload: your employee ID (one PDF)', ['as' => 'employee'], 'Register as faculty or staff'],
+                ['fa-briefcase', 'Faculty & staff', 'BatStateU The NEU ARASOF-Nasugbu faculty and staff, using their university email.', 'Upload: your employee ID (one PDF)', ['as' => 'employee'], 'Register as faculty or staff'],
                 ['fa-handshake', 'Sponsors', 'Companies and partners supporting SIGLA 2026. Any email works; you confirm it by link.', 'Upload: proof of sponsorship (one PDF)', ['as' => 'sponsor'], 'Register as a sponsor'],
             ] as $i => [$jIcon, $jTitle, $jDesc, $jUpload, $jQuery, $jCta])
                 <div class="col-md-4 reveal" style="transition-delay:{{ $i * 90 }}ms;">

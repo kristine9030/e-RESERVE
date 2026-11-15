@@ -8,7 +8,7 @@ use Dompdf\Options;
 use ZipArchive;
 
 /**
- * The Records list (students, instructors and staff, sponsors) as Excel (.xlsx), PDF or CSV,
+ * The Records list (students, faculty and staff, sponsors) as Excel (.xlsx), PDF or CSV,
  * for whatever filters the staff member has on screen.
  */
 class RecordsExport
@@ -29,7 +29,7 @@ class RecordsExport
         $filters['type'] = (string) ($filters['type'] ?? 'all');
         $all = $this->stats->registrationsPage($filters, 5000)->items();
 
-        $groups = ['student' => 'Students', 'employee' => 'Instructors & staff', 'sponsor' => 'Sponsors'];
+        $groups = ['student' => 'Students', 'employee' => 'Faculty & staff', 'sponsor' => 'Sponsors'];
         $title  = $groups[$filters['type']] ?? (config('ereserve.employee_types')[$filters['type']] ?? 'All records');
 
         $rows = [];
@@ -48,7 +48,7 @@ class RecordsExport
                 (string) $r['student_no'],
                 (string) $r['email'],
                 $mt === 'student' ? (string) $r['college'] : '',
-                (string) ($r['program'] ?? ''),
+                (string) (($mt === 'sponsor' && !empty($r['sponsorship'])) ? $r['sponsorship'] : ($r['program'] ?? '')),
                 (string) ($r['year'] ?? ''),
                 implode(' · ', $docs),
                 (string) ($r['ticket_no'] ?? ''),
@@ -70,7 +70,7 @@ class RecordsExport
             'title'    => $title,
             'subtitle' => ev('name') . ' · ' . ev('host'),
             'filters'  => $parts ? implode('  ·  ', $parts) : 'No filters',
-            'headers'  => ['Name', 'Group', 'ID', 'Email', 'College', 'Program / category', 'Year', 'Documents', 'Ticket no.', 'Ticket', 'Checked in', 'Account', 'Registered'],
+            'headers'  => ['Name', 'Group', 'ID', 'Email', 'College', 'Program / category / sponsorship', 'Year', 'Documents', 'Ticket no.', 'Ticket', 'Checked in', 'Account', 'Registered'],
             'rows'     => $rows,
             'widths'   => [28, 16, 14, 32, 11, 44, 10, 56, 22, 12, 11, 10, 17],
         ];

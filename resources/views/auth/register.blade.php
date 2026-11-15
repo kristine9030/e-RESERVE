@@ -117,9 +117,9 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label-sm d-block" for="program">Programme</label>
+                    <label class="form-label-sm d-block" for="program">Program</label>
                     <select class="form-select{{ $bad('program') }}" id="program" name="program" required>
-                        <option value="">{{ ($old['college'] ?? '') === '' ? 'Choose your college first…' : 'Choose your programme…' }}</option>
+                        <option value="">{{ ($old['college'] ?? '') === '' ? 'Choose your college first…' : 'Choose your program…' }}</option>
                         @foreach ($programs[$old['college'] ?? ''] ?? [] as $p)
                             <option value="{{ $p }}" {{ ($old['program'] ?? '') === $p ? 'selected' : '' }}>{{ $p }}</option>
                         @endforeach
@@ -214,7 +214,7 @@
                 ? 'Check the spelling — did you mean <strong>' + local + '@' + guess + '</strong>?'
                 : 'e-RESERVE only accepts ' + ALLOWED_DOMAINS.join(' or ') + ' addresses.';
         }
-        /* Programme choices follow the college. The server re-checks them. */
+        /* Program choices follow the college. The server re-checks them. */
         var PROGRAMS = {!! json_encode($programs, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!};
         var collegeSel = document.getElementById('college');
         var programSel = document.getElementById('program');
@@ -223,7 +223,7 @@
             programSel.innerHTML = '';
             var first = document.createElement('option');
             first.value = '';
-            first.textContent = list.length ? 'Choose your programme…' : 'Choose your college first…';
+            first.textContent = list.length ? 'Choose your program…' : 'Choose your college first…';
             programSel.appendChild(first);
             list.forEach(function (p) {
                 var o = document.createElement('option');

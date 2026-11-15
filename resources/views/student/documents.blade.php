@@ -15,7 +15,7 @@
                     One PDF each — your signed waiver, your COR and your school ID.
                     <strong class="text-white">SSC reviews them, and your ticket number is issued once all three are approved.</strong>
                 @else
-                    One PDF — {{ reset($metas)['hint'] }}
+                    {{ in_array(array_key_first($metas), config('ereserve.image_documents'), true) ? 'One file (PDF or picture)' : 'One PDF' }} — {{ reset($metas)['hint'] }}
                     <strong class="text-white">SSC reviews it, and your ticket number is issued once it is approved.</strong>
                 @endif
             </p>
@@ -62,7 +62,7 @@
             $locked  = $status === 'approved' || ($ticket['status'] ?? '') === 'used';
             $tone    = ['missing' => 'muted', 'submitted' => 'info', 'approved' => 'success', 'rejected' => 'danger'][$status]; ?>
             <form method="post" enctype="multipart/form-data" id="doc-{{ $key }}"
-                  class="doc-card state-{{ $status }} fade-up js-doc-form" data-label="{{ $meta['label'] }}">
+                  class="doc-card state-{{ $status }} fade-up js-doc-form" data-label="{{ $meta['label'] }}" data-images="{{ in_array($key, config('ereserve.image_documents'), true) ? 1 : 0 }}">
                 {!! csrf_field() !!}
                 <input type="hidden" name="doc_type" value="{{ $key }}">
                 <input type="hidden" name="MAX_FILE_SIZE" value="{{ config('ereserve.doc_max_bytes') }}">
@@ -110,11 +110,11 @@
                     </div>
                 @else
                     <label class="dropzone" for="file-{{ $key }}">
-                        <input type="file" id="file-{{ $key }}" name="document" accept="application/pdf,.pdf" class="dropzone-input" required>
+                        <input type="file" id="file-{{ $key }}" name="document" accept="{{ in_array($key, config('ereserve.image_documents'), true) ? 'application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp' : 'application/pdf,.pdf' }}" class="dropzone-input" required>
                         <span class="dropzone-art"><i class="fa-solid fa-cloud-arrow-up"></i></span>
                         <span class="dropzone-text">
-                            <strong class="dz-title">{{ $doc ? 'Choose a replacement PDF' : 'Choose your PDF' }}</strong>
-                            <span class="dz-sub">or drag and drop it here · PDF only · up to {{ (int) (config('ereserve.doc_max_bytes') / 1024 / 1024) }} MB</span>
+                            <strong class="dz-title">{{ in_array($key, config('ereserve.image_documents'), true) ? ($doc ? 'Choose a replacement file' : 'Choose your file') : ($doc ? 'Choose a replacement PDF' : 'Choose your PDF') }}</strong>
+                            <span class="dz-sub">or drag and drop it here · {{ in_array($key, config('ereserve.image_documents'), true) ? 'PDF, JPG, PNG or WEBP' : 'PDF only' }} · up to {{ (int) (config('ereserve.doc_max_bytes') / 1024 / 1024) }} MB</span>
                         </span>
                     </label>
 
@@ -241,7 +241,11 @@ document.addEventListener('DOMContentLoaded', function () {
             var f = input.files && input.files[0];
             if (!f) { return reset(); }
 
-            if (!/\.pdf$/i.test(f.name) || (f.type && f.type !== 'application/pdf')) {
+            if (form.dataset.images === '1') {
+                if (!/\.(pdf|jpe?g|png|webp)$/i.test(f.name) || (f.type && !/^(application\/pdf|image\/(jpeg|png|webp))$/.test(f.type))) {
+                    return reset('Your ' + label + ' must be a PDF, or a JPG, PNG or WEBP picture.');
+                }
+            } else if (!/\.pdf$/i.test(f.name) || (f.type && f.type !== 'application/pdf')) {
                 return reset('Your ' + label + ' must be a PDF. Photos and Word files need to be saved as PDF first.');
             }
             if (f.size > MAX) {

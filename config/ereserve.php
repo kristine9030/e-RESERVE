@@ -107,7 +107,7 @@ return [
             'label' => 'Proof of Sponsorship',
             'short' => 'Proof of sponsorship',
             'icon'  => 'fa-handshake',
-            'hint'  => 'The SSC letter, agreement or receipt that shows your sponsorship, saved as one PDF.',
+            'hint'  => 'The SSC letter, agreement or receipt that shows your sponsorship: one PDF, or a photo or screenshot of the receipt (a GCash or bank receipt is fine).',
             'rules' => ['Shows the company or your name', 'Shows the SSC or the event', 'Readable, not cropped'],
         ],
     ],
@@ -115,11 +115,31 @@ return [
     /** Which of the documents above each kind of holder uploads. The ticket comes once all of them are approved. */
     'document_sets' => [
         'student'  => ['waiver', 'cor', 'id'],
-        'employee' => ['employee_id'],          // faculty, instructor, staff
+        'employee' => ['employee_id'],          // faculty, staff
         'sponsor'  => ['sponsorship'],
     ],
 
     'doc_max_bytes' => 5 * 1024 * 1024,
+
+    /**
+     * What a sponsor availed: the kind of sponsorship, and the tier or package inside it.
+     * Shown on the sponsor's ticket and in the SSC Records.
+     */
+    'sponsorship' => [
+        'individual' => [
+            'label' => 'Individual Sponsors', 'short' => 'Individual Sponsor',
+            'tier_label' => 'Tier',
+            'tiers' => ['gold' => 'Gold', 'silver' => 'Silver', 'bronze' => 'Bronze'],
+        ],
+        'event' => [
+            'label' => 'Event Sponsors', 'short' => 'Event Sponsor',
+            'tier_label' => 'Package',
+            'tiers' => ['puso' => 'Puso', 'dedikasyon' => 'Dedikasyon', 'talino' => 'Talino'],
+        ],
+    ],
+
+    /** Photos (a GCash or bank receipt) are accepted next to PDFs for these documents. */
+    'image_documents' => ['sponsorship'],
 
     /** Who may hold an account. */
     'allowed_email_domains' => [
@@ -144,14 +164,13 @@ return [
     /** Employees who may register without documents: a confirmed email is enough for a ticket. */
     'employee_types' => [
         'faculty'        => 'Faculty',
-        'instructor'     => 'Instructor',
         'staff'          => 'Staff',
     ],
 
     /** Employee ID shape: letters, digits, dash or slash; 3 to 20 characters. */
     'employee_id_pattern' => '/^[A-Z0-9][A-Z0-9\-\/]{2,19}$/',
 
-    'year_levels' => ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'],
+    'year_levels' => ['1st Year', '2nd Year', '3rd Year', '4th Year'],
 
     /** Colleges whose students may attend. The Laboratory School is not eligible. */
     'colleges' => [

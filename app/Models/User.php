@@ -89,7 +89,7 @@ class User extends Authenticatable
         return $this->role === 'scanner';
     }
 
-    /** Faculty, instructor, staff or sponsor: no documents, a confirmed email is enough. */
+    /** Faculty, staff or sponsor: no documents, a confirmed email is enough. */
     public function isEmployee(): bool
     {
         return $this->role === 'student' && ($this->member_type ?? 'student') !== 'student';

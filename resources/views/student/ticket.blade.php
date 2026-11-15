@@ -111,10 +111,17 @@
                         <span>{{ ($ticket['member_type'] ?? 'student') === 'student' ? 'SR-Code' : (($ticket['member_type'] ?? '') === 'sponsor' ? 'Sponsor ID' : 'Employee ID') }}</span>
                         <strong class="mono">{{ $ticket['student_no'] }}</strong>
                     </div>
-                    <div>
-                        <span>{{ ($ticket['member_type'] ?? 'student') === 'student' ? 'Program' : 'Category' }}</span>
-                        <strong>{{ trim($ticket['program'] . ' · ' . $ticket['year'], ' ·') }}</strong>
-                    </div>
+                    @if (($ticket['member_type'] ?? '') === 'sponsor' && !empty($ticket['sponsorship']))
+                        <div>
+                            <span>Sponsorship</span>
+                            <strong>{{ $ticket['sponsorship'] }}</strong>
+                        </div>
+                    @else
+                        <div>
+                            <span>{{ ($ticket['member_type'] ?? 'student') === 'student' ? 'Program' : 'Category' }}</span>
+                            <strong>{{ trim($ticket['program'] . ' · ' . $ticket['year'], ' ·') }}</strong>
+                        </div>
+                    @endif
                 </div>
 
                 <footer class="tix-foot">

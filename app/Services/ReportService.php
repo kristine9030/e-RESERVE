@@ -125,7 +125,7 @@ class ReportService
     {
         $regs = $this->narrow($this->stats->registrations(), $f);
 
-        $order = array_flip(['student', 'faculty', 'instructor', 'staff', 'sponsor']);
+        $order = array_flip(['student', 'faculty', 'staff', 'sponsor']);
         $years = array_flip(config('ereserve.year_levels'));
         usort($regs, static fn(array $a, array $b) => [$order[$a['member_type']] ?? 9, (string) $a['college'], (string) $a['program'], $years[$a['year']] ?? 9, $a['name']]
             <=> [$order[$b['member_type']] ?? 9, (string) $b['college'], (string) $b['program'], $years[$b['year']] ?? 9, $b['name']]);
@@ -141,7 +141,7 @@ class ReportService
         $parts = [match (true) {
             $t === ''         => 'All registrants',
             $t === 'student'  => 'Students',
-            $t === 'employee' => 'All faculty, instructors & staff',
+            $t === 'employee' => 'All faculty & staff',
             $t === 'sponsor'  => 'Sponsors',
             default           => config('ereserve.employee_types')[$t] ?? ucfirst($t),
         }];

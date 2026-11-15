@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * Draws the student's ticket as a JPG picture: the same landscape ticket they see on the site
- * (blue header, ticket holder details, scan stub with the QR). Pure GD plus the bundled Plus
+ * (pink, yellow or blue header by holder type, ticket holder details, scan stub with the QR). Pure GD plus the bundled Plus
  * Jakarta Sans, so it looks the same everywhere and needs nothing installed on the server.
  * The QR is the one the gate scanner reads.
  *
@@ -23,7 +23,7 @@ class TicketImage
     private const OUT = 1.5;          // output pixels per design unit (final 1710 x 870)
 
     /** Bump when the design changes so old saved pictures are redrawn. */
-    private const DESIGN = 4;
+    private const DESIGN = 5;
 
     /** @var array<string,mixed> colours for the ticket being drawn */
     private array $theme = [];
@@ -42,7 +42,7 @@ class TicketImage
     {
         $key = sha1(json_encode([
             self::DESIGN, $ticket['ticket_no'] ?? '', $ticket['name'] ?? '', $ticket['student_no'] ?? '', $ticket['program'] ?? '',
-            $ticket['year'] ?? '', $ticket['member_type'] ?? 'student', $ticket['event'] ?? '', $ticket['venue'] ?? '', $ticket['date_text'] ?? '', $ticket['time_text'] ?? '',
+            $ticket['year'] ?? '', $ticket['member_type'] ?? 'student', $ticket['sponsorship'] ?? '', $ticket['event'] ?? '', $ticket['venue'] ?? '', $ticket['date_text'] ?? '', $ticket['time_text'] ?? '',
             $ticket['status'] ?? '', !empty($ticket['checked_in']), $ticket['verify_hash'] ?? '',
         ]));
         $disk = Storage::disk('local');
@@ -141,8 +141,10 @@ class TicketImage
         $this->text(348, 394, $emp ? (($t['member_type'] ?? '') === 'sponsor' ? 'SPONSOR ID' : 'EMPLOYEE ID') : 'SR-CODE', 11, 'bold', $this->c['label'], 1.4);
         $this->text(348, 417, (string) ($t['student_no'] ?? ''), 16, 'bold', $this->c['ink'], 1.0);
 
-        $this->text(513, 394, $emp ? 'CATEGORY' : 'PROGRAM', 11, 'bold', $this->c['label'], 1.4);
-        $program = trim(($t['program'] ?? '') . ' · ' . ($t['year'] ?? ''), ' ·');
+        // A sponsor's ticket says what they availed (e.g. "Individual Sponsor · Gold") instead of just "Sponsor".
+        $sponsorship = ($t['member_type'] ?? '') === 'sponsor' ? (string) ($t['sponsorship'] ?? '') : '';
+        $this->text(513, 394, $sponsorship !== '' ? 'SPONSORSHIP' : ($emp ? 'CATEGORY' : 'PROGRAM'), 11, 'bold', $this->c['label'], 1.4);
+        $program = $sponsorship !== '' ? $sponsorship : trim(($t['program'] ?? '') . ' · ' . ($t['year'] ?? ''), ' ·');
         $y = 418;
         foreach (array_slice($this->wrap($program, 18, 'bold', 246), 0, 4) as $line) {
             $this->text(513, $y, $line, 18, 'bold', $this->c['deep']);
@@ -466,6 +468,14 @@ class TicketImage
             'orange_dk'  => $rgb(0xB8, 0x47, 0x0A),
             'orange_adm' => $rgb(0xC2, 0x50, 0x0C),
             'orange_soft' => $rgb(0xFF, 0xE9, 0xD6),
+            // student pink, sponsor yellow (dark olive text), faculty and staff blue
+            'pink_dk'    => $rgb(0xB0, 0x12, 0x8F),
+            'pink_soft'  => $rgb(0xFF, 0xE3, 0xF8),
+            'olive'      => $rgb(0x3A, 0x3A, 0x00),
+            'olive_soft' => $rgb(0x5C, 0x5C, 0x00),
+            'olive_dk'   => $rgb(0x6B, 0x6B, 0x00),
+            'blue_dk'    => $rgb(0x00, 0x10, 0xC4),
+            'blue_soft'  => $rgb(0xDD, 0xE2, 0xFF),
         ];
     }
 
@@ -473,20 +483,23 @@ class TicketImage
     private function themeFor(string $tier): array
     {
         return match ($tier) {
+            // Students: pink #FA3ED8
             'student' => [
-                'head' => [[0xE3, 0xA0, 0x12], [0xFF, 0xD9, 0x78]], 'stub' => [[0xFF, 0xFB, 0xEF], [0xFF, 0xF1, 0xCC]],
-                'title' => [[0xD9, 0x96, 0x0B], [0xF5, 0x86, 0x34]],
-                'ink' => 'brown', 'ink_soft' => 'brown_soft', 'admit' => 'amber', 'label' => 'amber',
+                'head' => [[0xFA, 0x3E, 0xD8], [0xFF, 0x9C, 0xEC]], 'stub' => [[0xFF, 0xF6, 0xFD], [0xFF, 0xE1, 0xF7]],
+                'title' => [[0xC4, 0x1F, 0xA6], [0xFF, 0x7D, 0xE9]],
+                'ink' => 'white', 'ink_soft' => 'pink_soft', 'admit' => 'pink_dk', 'label' => 'pink_dk',
             ],
+            // Sponsors: yellow #EFEF14 (dark text, white would not read on it)
             'sponsor' => [
-                'head' => [[0xD4, 0x56, 0x0F], [0xFF, 0xA5, 0x5C]], 'stub' => [[0xFF, 0xF8, 0xF1], [0xFF, 0xE6, 0xD0]],
-                'title' => [[0xE8, 0x64, 0x1B], [0xF4, 0xBC, 0x3A]],
-                'ink' => 'white', 'ink_soft' => 'orange_soft', 'admit' => 'orange_adm', 'label' => 'orange_dk',
+                'head' => [[0xEF, 0xEF, 0x14], [0xFA, 0xFA, 0x8F]], 'stub' => [[0xFF, 0xFF, 0xEE], [0xFB, 0xFB, 0xC4]],
+                'title' => [[0x8A, 0x8A, 0x00], [0xD6, 0xD6, 0x0C]],
+                'ink' => 'olive', 'ink_soft' => 'olive_soft', 'admit' => 'olive_dk', 'label' => 'olive_dk',
             ],
+            // Faculty and staff: blue #0015FF
             default => [
-                'head' => [[0x22, 0x79, 0xA3], [0x6C, 0xC6, 0xEA]], 'stub' => [[0xF7, 0xFB, 0xFD], [0xE2, 0xEF, 0xF8]],
-                'title' => [[0x4F, 0xB0, 0xD8], [0xC9, 0xBA, 0x7E]],
-                'ink' => 'white', 'ink_soft' => 'white_soft', 'admit' => 'orange', 'label' => 'blue',
+                'head' => [[0x00, 0x15, 0xFF], [0x6B, 0x78, 0xFF]], 'stub' => [[0xF3, 0xF4, 0xFF], [0xDD, 0xE1, 0xFF]],
+                'title' => [[0x00, 0x10, 0xC4], [0x54, 0x63, 0xFF]],
+                'ink' => 'white', 'ink_soft' => 'blue_soft', 'admit' => 'blue_dk', 'label' => 'blue_dk',
             ],
         };
     }

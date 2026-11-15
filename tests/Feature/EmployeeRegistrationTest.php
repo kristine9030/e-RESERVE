@@ -73,7 +73,7 @@ class EmployeeRegistrationTest extends TestCase
 
     public function test_the_first_step_asks_who_you_are_and_each_choice_has_its_own_form(): void
     {
-        $this->get(route('register'))->assertOk()->assertSee('I’m a student')->assertSee('faculty, an instructor or staff')->assertSee('I’m a sponsor')->assertDontSee('administration')
+        $this->get(route('register'))->assertOk()->assertSee('I’m a student')->assertSee('faculty or staff')->assertSee('I’m a sponsor')->assertDontSee('administration')
             ->assertDontSee('Employee ID', false);
         $this->get(route('register', ['as' => 'student']))->assertOk()->assertSee('SR-Code')->assertSee('College');
         $this->get(route('register', ['as' => 'employee']))->assertOk()->assertSee('Employee ID')->assertDontSee('Administration')->assertDontSee('SR-Code');
@@ -240,12 +240,12 @@ class EmployeeRegistrationTest extends TestCase
 
         $this->actingAs($u)->get(route('profile'))->assertOk()->assertSee('Employee Information')->assertSee('Employee ID');
 
-        $this->post(route('profile.update'), ['name' => 'Ana B. Employee', 'member_type' => 'instructor', 'mobile' => '09171234567'])
+        $this->post(route('profile.update'), ['name' => 'Ana B. Employee', 'member_type' => 'staff', 'mobile' => '09171234567'])
             ->assertRedirect(route('profile'));
         $u->refresh();
         $this->assertSame('Ana B. Employee', $u->name);
-        $this->assertSame('instructor', $u->member_type);
-        $this->assertSame('Instructor', $u->program);
+        $this->assertSame('staff', $u->member_type);
+        $this->assertSame('Staff', $u->program);
         $this->assertSame('EMP-001', $u->student_no, 'ID untouched');
 
         $this->post(route('profile.update'), ['name' => 'Ana', 'member_type' => 'nonsense'])->assertSessionHas('flash.title', 'Check your details');

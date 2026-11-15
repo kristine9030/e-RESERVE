@@ -14,7 +14,7 @@ class RegisterController extends Controller
     }
 
     /**
-     * Step 1 is "who are you": a student, or faculty / instructor / staff, or a sponsor.
+     * Step 1 is "who are you": a student, or faculty / staff, or a sponsor.
      * Each goes to its own form. A Google sign-up in progress is always a student.
      */
     public function show(Request $request)

@@ -16,7 +16,7 @@
     $ssRecords   = [
         ['all',      'All records',         'fa-layer-group',   array_sum($ssCounts)],
         ['student',  'Students',            'fa-user-graduate', $ssCounts['student'] ?? 0],
-        ['employee', 'Instructors & staff', 'fa-briefcase',     $ssCounts['employee'] ?? 0],
+        ['employee', 'Faculty & staff', 'fa-briefcase',     $ssCounts['employee'] ?? 0],
         ['sponsor',  'Sponsors',            'fa-handshake',     $ssCounts['sponsor'] ?? 0],
     ];
 

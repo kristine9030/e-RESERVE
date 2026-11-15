@@ -16,7 +16,7 @@ class TicketQuota
 {
     public const GROUPS = [
         'student'  => 'Students',
-        'employee' => 'Faculty, instructors & staff',
+        'employee' => 'Faculty & staff',
         'sponsor'  => 'Sponsors',
     ];
 

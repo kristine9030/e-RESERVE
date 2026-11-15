@@ -50,9 +50,12 @@ class DocumentChecker
         $hash   = hash_file('sha256', $absolutePath) ?: '';
         $checks = [];
 
-        // 1. Readable PDF, sensible length
-        $pages = $this->inspect($absolutePath, 'file')['pages'];
-        if ($pages === null) {
+        // 1. Readable PDF, sensible length (a picture of a receipt has no pages to count)
+        $isPicture = strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION)) !== 'pdf';
+        $pages = $isPicture ? null : $this->inspect($absolutePath, 'file')['pages'];
+        if ($isPicture) {
+            $checks[] = ['k' => 'pdf', 's' => 'info', 't' => 'Picture (photo or screenshot). Check the amount, the date and the name by eye.'];
+        } elseif ($pages === null) {
             $checks[] = ['k' => 'pdf', 's' => 'info', 't' => 'Valid PDF (page count could not be read)'];
         } elseif ($pages > self::MAX_PAGES_NORMAL) {
             $checks[] = ['k' => 'pdf', 's' => 'warn', 't' => "Unusually long: $pages pages. Check it is the right file."];

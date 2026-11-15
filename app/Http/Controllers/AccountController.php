@@ -16,7 +16,7 @@ class AccountController extends Controller
     }
 
     /**
-     * A student edits their own details: name, college, programme, year level, contact.
+     * A student edits their own details: name, college, program, year level, contact.
      * SR-code and GSuite email stay fixed (they are the sign-in and the ticket identity).
      * The name is locked once SSC has approved a document, so the files and the ticket keep matching.
      */
@@ -49,7 +49,7 @@ class AccountController extends Controller
             return $err('Choose your college from the list.');
         }
         if (!$registrar->programInCollege($program, $college)) {
-            return $err('Choose a programme that belongs to your college.');
+            return $err('Choose a program that belongs to your college.');
         }
         if (!in_array($year, config('ereserve.year_levels'), true)) {
             return $err('Choose your year level.');
@@ -69,7 +69,7 @@ class AccountController extends Controller
             'mobile' => $mobile === '' ? null : $digits,
             'initials' => strtoupper(mb_substr($parts[0], 0, 1) . mb_substr((string) end($parts), 0, 1)),
         ])->save();
-        $tickets->forget();   // the ticket shows name, programme and year
+        $tickets->forget();   // the ticket shows name, program and year
 
         $after = $user->only(['name', 'college_code', 'program', 'year_level', 'mobile']);
         Audit::log('profile.update', 'user', (string) $user->id, ['changed' => array_keys(array_diff_assoc($after, $before))]);
@@ -90,6 +90,9 @@ class AccountController extends Controller
             return $err('Enter your full name.');
         }
         $labels = $user->member_type === 'sponsor' ? ['sponsor' => 'Sponsor'] : config('ereserve.employee_types');
+        if ($user->member_type === 'instructor') {
+            $labels['instructor'] = 'Instructor';   // an older account may keep it; nobody can newly choose it
+        }
         if ($user->member_type === 'sponsor') {
             $type = 'sponsor';
         }

@@ -16,6 +16,13 @@ use Illuminate\Support\Facades\Storage;
  */
 class DocumentService
 {
+    /** Picture types accepted where a photo is allowed: mime => [extension, IMAGETYPE_* constant]. */
+    private const IMAGES = [
+        'image/jpeg' => ['jpg', IMAGETYPE_JPEG],
+        'image/png'  => ['png', IMAGETYPE_PNG],
+        'image/webp' => ['webp', IMAGETYPE_WEBP],
+    ];
+
     public function __construct(private TicketService $tickets, private DocumentChecker $checker)
     {
     }
@@ -26,11 +33,11 @@ class DocumentService
     }
 
     /**
-     * Validate and store an uploaded PDF.
+     * Validate and store an uploaded PDF (or, where $allowImages is set, a JPG, PNG or WEBP picture such as a receipt).
      *
      * @return array{ok:bool,message:string,stored:?string,original:?string,size:int}
      */
-    public function store(?UploadedFile $file, string $label): array
+    public function store(?UploadedFile $file, string $label, bool $allowImages = false): array
     {
         $fail = static fn(string $m) => ['ok' => false, 'message' => $m, 'stored' => null, 'original' => null, 'size' => 0];
         $max  = (int) config('ereserve.doc_max_bytes');
@@ -56,20 +63,35 @@ class DocumentService
         $mime = (string) (new \finfo(FILEINFO_MIME_TYPE))->file($path);
         $head = (string) file_get_contents($path, false, null, 0, 1024);
 
-        if ($mime !== 'application/pdf' || !str_contains($head, '%PDF-')) {
-            return $fail('Only PDF files are accepted. Photos and Word files must be saved as PDF first.');
+        // The stored extension comes from what the file really is, never from the name it arrived with.
+        $ext = null;
+        if ($mime === 'application/pdf' && str_contains($head, '%PDF-')) {
+            $ext = 'pdf';
+        } elseif ($allowImages && isset(self::IMAGES[$mime])) {
+            [$ext, $type] = self::IMAGES[$mime];
+            $info = @getimagesize($path);
+            if ($info === false || ($info[2] ?? 0) !== $type || $info[0] < 100 || $info[1] < 100 || $info[0] > 12000 || $info[1] > 12000) {
+                return $fail('That picture could not be read. Take or save it again as a JPG or PNG and upload the new one.');
+            }
+        }
+        if ($ext === null) {
+            return $fail($allowImages
+                ? 'Only a PDF or a JPG, PNG or WEBP picture is accepted for your ' . $label . '.'
+                : 'Only PDF files are accepted. Photos and Word files must be saved as PDF first.');
         }
 
         // Password-protected or cut-off PDFs cannot be reviewed: say so now, not after SSC finds out.
-        $look = $this->checker->inspect($path, $label);
-        if (!$look['ok']) {
-            return $fail($look['message']);
+        if ($ext === 'pdf') {
+            $look = $this->checker->inspect($path, $label);
+            if (!$look['ok']) {
+                return $fail($look['message']);
+            }
         }
 
-        $name = date('Ymd') . '-' . bin2hex(random_bytes(16)) . '.pdf';
+        $name = date('Ymd') . '-' . bin2hex(random_bytes(16)) . '.' . $ext;
         Storage::disk('local')->putFileAs('documents', $file, $name);
 
-        $original = preg_replace('/[^\w\s.\-()]+/u', '', basename((string) $file->getClientOriginalName())) ?: 'document.pdf';
+        $original = preg_replace('/[^\w\s.\-()]+/u', '', basename((string) $file->getClientOriginalName())) ?: 'document.' . $ext;
 
         return [
             'ok'       => true,
@@ -83,7 +105,7 @@ class DocumentService
     /** Absolute path of a stored document, or null (rejects path trickery). */
     public function path(string $storedName): ?string
     {
-        if (!preg_match('/^\d{8}-[0-9a-f]{32}\.pdf$/', $storedName)) {
+        if (!preg_match('/^\d{8}-[0-9a-f]{32}\.(pdf|jpg|png|webp)$/', $storedName)) {
             return null;
         }
 
@@ -125,7 +147,7 @@ class DocumentService
             return $fail('Your ticket has already been used at the gate.');
         }
 
-        $stored = $this->store($file, $label);
+        $stored = $this->store($file, $label, in_array($type, (array) config('ereserve.image_documents'), true));
         if (!$stored['ok']) {
             return $fail($stored['message']);
         }

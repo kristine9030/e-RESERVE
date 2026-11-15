@@ -36,7 +36,7 @@
             <a href="{{ route('register', ['as' => 'employee']) . $q }}" class="who-card">
                 <span class="who-ico who-ico-gold"><i class="fa-solid fa-briefcase"></i></span>
                 <span class="who-txt">
-                    <strong>I’m faculty, an instructor or staff</strong>
+                    <strong>I’m faculty or staff</strong>
                     <span>Your name and employee ID, plus one PDF of your employee ID. Your ticket is issued once SSC approves it.</span>
                 </span>
                 <i class="fa-solid fa-chevron-right who-go"></i>

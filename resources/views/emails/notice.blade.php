@@ -26,12 +26,19 @@
     {{-- The pass: sky header, gold ticket number, details grid. The QR code is deliberately NOT in the email. --}}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
            style="margin:12px 0 26px;border-radius:20px;overflow:hidden;border:1.5px solid #9AD6EE;background:#ffffff;">
-      <tr><td bgcolor="#2A7FA6" style="padding:16px 22px;background-color:#2A7FA6;background-image:radial-gradient(circle at 95% 15%,rgba(255,255,255,.25) 0,rgba(255,255,255,.25) 38px,rgba(255,255,255,0) 39px),linear-gradient(135deg,#2279A3 0%,#3A9ACB 60%,#6CC6EA 100%);">
+      @php
+          // Pass colours: students pink, sponsors yellow, faculty and staff blue (same as on the site).
+          $tier  = ticket_tier($ticket['member_type'] ?? null);
+          $pass  = ['student' => ['#FA3ED8', '#FB66E1', '#FF9CEC', '#ffffff', '#FFE3F8'], 'sponsor' => ['#EFEF14', '#F5F550', '#FAFA8F', '#3A3A00', '#5C5C00'],
+                    'faculty' => ['#0015FF', '#2E40FF', '#6B78FF', '#ffffff', '#DDE2FF']][$tier];
+          [$pA, $pB, $pC, $pInk, $pSoft] = $pass;
+      @endphp
+      <tr><td bgcolor="{{ $pA }}" style="padding:16px 22px;background-color:{{ $pA }};background-image:radial-gradient(circle at 95% 15%,rgba(255,255,255,.25) 0,rgba(255,255,255,.25) 38px,rgba(255,255,255,0) 39px),linear-gradient(135deg,{{ $pA }} 0%,{{ $pB }} 60%,{{ $pC }} 100%);">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#F4D08A;">Admit one</td>
-          <td align="right" style="font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,.85);">{{ $ticket['date_text'] }}</td>
+          <td style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:{{ $pInk }};opacity:.85;">Admit one</td>
+          <td align="right" style="font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:{{ $pSoft }};">{{ $ticket['date_text'] }}</td>
         </tr></table>
-        <div style="font-size:19px;font-weight:800;color:#ffffff;line-height:1.3;margin-top:8px;">{{ $ticket['event'] }}</div>
+        <div style="font-size:19px;font-weight:800;color:{{ $pInk }};line-height:1.3;margin-top:8px;">{{ $ticket['event'] }}</div>
       </td></tr>
 
       <tr><td align="center" style="padding:22px 20px 18px;background:#F4FAFD;">
@@ -55,7 +62,9 @@
               $rows = [
                   ['Name', $ticket['name']],
                   [$isStudent ? 'SR-code' : 'Employee ID', $ticket['student_no']],
-                  [$isStudent ? 'Program' : 'Category', trim(($ticket['program'] ?? '') . ' ' . ($ticket['year'] ?? ''))],
+                  (($ticket['member_type'] ?? '') === 'sponsor' && !empty($ticket['sponsorship']))
+                      ? ['Sponsorship', $ticket['sponsorship']]
+                      : [$isStudent ? 'Program' : 'Category', trim(($ticket['program'] ?? '') . ' ' . ($ticket['year'] ?? ''))],
                   ['Time', $ticket['time_text']],
                   ['Venue', $ticket['venue']],
               ];

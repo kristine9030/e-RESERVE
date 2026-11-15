@@ -24,7 +24,7 @@
 
             @include('partials.auth_switch', ['active' => 'register'])
 
-            <span class="badge-soft badge-gold mb-2"><i class="fa-solid fa-briefcase"></i> Faculty · Instructor · Staff</span>
+            <span class="badge-soft badge-gold mb-2"><i class="fa-solid fa-briefcase"></i> Faculty · Staff</span>
             <h3 style="font-size:1.55rem;">Create your account</h3>
             <p class="text-soft mb-4" style="font-size:.87rem;">
                 You will upload one PDF of your employee ID next. Your ticket is issued once SSC approves it.

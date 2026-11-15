@@ -94,6 +94,18 @@
                     <input type="text" class="form-control" id="ad-id" name="id_no" value="{{ old('id_no') }}" maxlength="32">
                 </div>
 
+                <div id="ad-sponsorbox" class="d-none">
+                    <label class="form-label small fw-bold mt-3" for="ad-stype">Availed Sponsorship</label>
+                    <select class="form-select" id="ad-stype" name="sponsor_type">
+                        <option value="">Choose…</option>
+                        @foreach ($sponsorOptions as $sk => $so)<option value="{{ $sk }}" @selected(old('sponsor_type') === $sk)>{{ $so['label'] }}</option>@endforeach
+                    </select>
+                    <label class="form-label small fw-bold mt-3" for="ad-stier" id="ad-stierlabel">Tier</label>
+                    <select class="form-select" id="ad-stier" name="sponsor_tier" disabled>
+                        <option value="">Choose the sponsorship first…</option>
+                    </select>
+                </div>
+
                 <label class="form-label small fw-bold mt-3" for="ad-pass">Temporary password <span class="text-muted fw-normal">(optional)</span></label>
                 <input type="text" class="form-control" id="ad-pass" name="password" value="" maxlength="200" autocomplete="off">
                 <div class="form-text">Leave empty to generate one. It is shown once, and the person must choose their own at first sign-in.</div>
@@ -109,11 +121,30 @@
     document.addEventListener('DOMContentLoaded', function () {
         var kind = document.getElementById('ad-kind'), box = document.getElementById('ad-idbox'), lab = document.getElementById('ad-idlabel'), inp = document.getElementById('ad-id');
         function sync() {
-            var k = kind.value, student = k === 'student', emp = ['faculty', 'instructor', 'staff'].indexOf(k) > -1;
+            var k = kind.value, student = k === 'student', emp = ['faculty', 'staff'].indexOf(k) > -1, sponsor = k === 'sponsor';
             box.classList.toggle('d-none', !(student || emp));
             inp.required = student;
             lab.textContent = student ? 'SR-code (e.g. 24-12345)' : 'Employee ID (optional)';
+            document.getElementById('ad-sponsorbox').classList.toggle('d-none', !sponsor);
+            stype.required = sponsor; stier.required = sponsor;
         }
+        /* The tier (or package) choices follow the kind of sponsorship; the server re-checks them. */
+        var OPTIONS = @json($sponsorOptions), stype = document.getElementById('ad-stype'), stier = document.getElementById('ad-stier');
+        var stierLabel = document.getElementById('ad-stierlabel'), chosenTier = @json(old('sponsor_tier', ''));
+        function fillTiers() {
+            var o = OPTIONS[stype.value];
+            stier.innerHTML = '';
+            if (!o) { stier.disabled = true; stier.add(new Option('Choose the sponsorship first…', '')); stierLabel.textContent = 'Tier'; return; }
+            stierLabel.textContent = o.tier_label; stier.disabled = false;
+            stier.add(new Option('Choose the ' + o.tier_label.toLowerCase() + '…', ''));
+            Object.keys(o.tiers).forEach(function (k) {
+                var opt = new Option(o.tiers[k] + (stype.value === 'event' ? ' Package' : ''), k);
+                if (k === chosenTier) { opt.selected = true; }
+                stier.add(opt);
+            });
+        }
+        stype.addEventListener('change', function () { chosenTier = ''; fillTiers(); });
+        fillTiers();
         kind.addEventListener('change', sync); sync();
         @if (session('open_add') || old('kind'))
             bootstrap.Modal.getOrCreateInstance(document.getElementById('addModal')).show();

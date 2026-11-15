@@ -10,7 +10,7 @@
         <select name="type" class="form-select" id="rfType" aria-label="Group">
             <option value="">All registrants</option>
             <option value="student" @selected($curType === 'student')>Students</option>
-            <option value="employee" @selected($curType === 'employee')>All faculty, instructors &amp; staff</option>
+            <option value="employee" @selected($curType === 'employee')>All faculty &amp; staff</option>
             @foreach (config('ereserve.employee_types') as $k => $label)
                 <option value="{{ $k }}" @selected($curType === $k)>{{ $label }} only</option>
             @endforeach

@@ -166,7 +166,7 @@
                         @endforeach
                     </select>
 
-                    <label class="form-label-sm d-block mt-3" for="pf-program">Programme</label>
+                    <label class="form-label-sm d-block mt-3" for="pf-program">Program</label>
                     <select class="form-select" id="pf-program" name="program" required></select>
 
                     <label class="form-label-sm d-block mt-3" for="pf-year">Year level</label>

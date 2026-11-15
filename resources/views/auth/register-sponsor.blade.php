@@ -27,7 +27,7 @@
             <span class="badge-soft badge-gold mb-2"><i class="fa-solid fa-handshake"></i> Sponsor · Partner</span>
             <h3 style="font-size:1.55rem;">Create your account</h3>
             <p class="text-soft mb-4" style="font-size:.87rem;">
-                Use any email you check and confirm it with the link we send. Then upload one PDF as proof of sponsorship; your ticket is issued once SSC approves it.
+                Use any email you check and confirm it with the link we send. Then upload your proof of sponsorship (a PDF, or a photo or screenshot of your receipt, such as GCash); your ticket is issued once SSC approves it.
             </p>
 
             @if ($error !== '')
@@ -47,6 +47,25 @@
                     <label class="form-label-sm d-block" for="name">Company or Full Name</label>
                     <input type="text" class="form-control{{ $bad('name') }}" id="name" name="name" value="{{ old('name') }}"
                            placeholder="e.g. Juan Dela Cruz Trading" autocomplete="name" maxlength="160" required>
+                </div>
+
+                @php $sponsorOptions = config('ereserve.sponsorship'); @endphp
+                <div class="row g-3 mb-1">
+                    <div class="col-sm-6">
+                        <label class="form-label-sm d-block" for="sponsor_type">Availed Sponsorship</label>
+                        <select class="form-select{{ $bad('sponsor_type') }}" id="sponsor_type" name="sponsor_type" required>
+                            <option value="">Choose…</option>
+                            @foreach ($sponsorOptions as $key => $o)
+                                <option value="{{ $key }}" @selected(old('sponsor_type') === $key)>{{ $o['label'] }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label-sm d-block" for="sponsor_tier" id="sponsorTierLabel">Tier</label>
+                        <select class="form-select{{ $bad('sponsor_type') }}" id="sponsor_tier" name="sponsor_tier" required disabled>
+                            <option value="">Choose the sponsorship first…</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="row g-3">
@@ -107,6 +126,32 @@
 
 @push('scripts')
 <script>
+    (function () {
+        /* The tier (or package) choices follow the kind of sponsorship. The server re-checks them. */
+        var OPTIONS = @json($sponsorOptions);
+        var type = document.getElementById('sponsor_type'), tier = document.getElementById('sponsor_tier');
+        var tierLabel = document.getElementById('sponsorTierLabel'), chosen = @json(old('sponsor_tier', ''));
+        function fillTiers() {
+            var o = OPTIONS[type.value];
+            tier.innerHTML = '';
+            if (!o) {
+                tier.disabled = true;
+                tier.add(new Option('Choose the sponsorship first…', ''));
+                tierLabel.textContent = 'Tier';
+                return;
+            }
+            tierLabel.textContent = o.tier_label;
+            tier.disabled = false;
+            tier.add(new Option('Choose the ' + o.tier_label.toLowerCase() + '…', ''));
+            Object.keys(o.tiers).forEach(function (k) {
+                var opt = new Option(o.tiers[k] + (type.value === 'event' ? ' Package' : ''), k);
+                if (k === chosen) { opt.selected = true; }
+                tier.add(opt);
+            });
+        }
+        type.addEventListener('change', function () { chosen = ''; fillTiers(); });
+        fillTiers();
+    })();
     (function () {
         var pass = document.getElementById('password'), again = document.getElementById('password_confirm');
         var hint = document.querySelector('[data-match-hint]');

@@ -22,7 +22,7 @@
         <div class="col-lg-8">
             <span class="eyebrow on-dark"><i class="fa-solid {{ $kindIco }}"></i> {{ $kindLbl }} review</span>
             <h2>{{ $user['name'] }}</h2>
-            <p>{{ $user['student_no'] }} · {{ $user['program'] }}@if ($user['year_level']) · {{ $user['year_level'] }}@endif @if ($user['college_code']) · {{ $user['college_code'] }}@endif · {{ $user['email'] }}</p>
+            <p>{{ $user['student_no'] }} · {{ \App\Support\Sponsorship::label($user['sponsor_type'] ?? null, $user['sponsor_tier'] ?? null) ?: $user['program'] }}@if ($user['year_level']) · {{ $user['year_level'] }}@endif @if ($user['college_code']) · {{ $user['college_code'] }}@endif · {{ $user['email'] }}</p>
         </div>
         <div class="col-lg-4 text-lg-end">
             <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
