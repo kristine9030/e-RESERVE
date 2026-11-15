@@ -187,6 +187,31 @@ class ReviewListAndKpiTest extends TestCase
             ->assertSeeInOrder(['Submitted First', 'Submitted Middle', 'Submitted Last']);
     }
 
+    public function test_records_show_the_upload_time_that_the_order_is_based_on(): void
+    {
+        // registered in this order (oldest first): Ana, Ben, Carl. But Carl uploaded first, Ana last.
+        $ana  = $this->person('Ana Registered First');   $this->doc($ana, 'waiver', 'submitted', '2026-11-15 12:00:00');
+        $ben  = $this->person('Ben Registered Second');  $this->doc($ben, 'waiver', 'submitted', '2026-11-15 11:00:00');
+        $carl = $this->person('Carl Registered Third');  $this->doc($carl, 'waiver', 'submitted', '2026-11-15 09:30:00');
+        foreach ([[$ana, '2026-11-14 08:00:00'], [$ben, '2026-11-14 09:00:00'], [$carl, '2026-11-14 10:00:00']] as [$u, $at]) {
+            DB::table('users')->where('id', $u->id)->update(['created_at' => $at]);
+        }
+        $admin = $this->admin();
+        $get = fn (array $q = []) => $this->actingAs($admin)->get(route('admin.registrations', $q + ['type' => 'student']))->assertOk();
+
+        // the time that decides the order is the one in the list, with its own column
+        $html = $get()->assertSee('<th>Submitted</th>', false)->assertDontSee('<th>Registered</th>', false)
+            ->assertSeeInOrder(['Carl Registered Third', 'Ben Registered Second', 'Ana Registered First'])
+            ->assertSee('Nov 15, 2026 · 9:30 AM')->assertSee('Nov 15, 2026 · 12:00 PM')->getContent();
+        $this->assertStringContainsString('Registered Nov 14', $html, 'the day they registered is kept as a small note');
+
+        $get(['sort' => 'newest'])->assertSeeInOrder(['Ana Registered First', 'Ben Registered Second', 'Carl Registered Third']);
+        $get()->assertDontSee('Latest registered')->assertDontSee('First registered');
+
+        $this->person('No File Yet');
+        $get()->assertSee('No file yet');
+    }
+
     public function test_the_dashboard_queue_lists_and_counts_people_not_files(): void
     {
         $late = $this->person('Late Lara');

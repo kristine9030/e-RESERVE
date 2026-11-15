@@ -121,7 +121,8 @@ class Stats
 
         // First submitted first, whatever the filter: the person whose first file came in earliest is at the top.
         // People who have not submitted anything yet follow, in the order they registered.
-        // ?sort=newest turns it around: the person whose first file came in most recently comes first.
+        // By when the person uploaded their first file (the time shown in the list): oldest first, or newest
+        // first with ?sort=newest. People who have not uploaded anything yet come last.
         $dir  = ($f['sort'] ?? '') === 'newest' ? 'desc' : 'asc';
         $page = $q->selectSub('SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id', 'first_submitted')
             ->orderByRaw('first_submitted IS NULL')->orderBy('first_submitted', $dir)->orderBy('u.created_at', $dir)->orderBy('u.id', $dir)
@@ -146,7 +147,7 @@ class Stats
                 'id' => (int) $u->id, 'name' => $u->name, 'email' => $u->email, 'student_no' => $u->student_no,
                 'college' => $u->college_code, 'program' => $u->program, 'year' => $u->year_level,
                 'member_type' => $u->member_type ?? 'student',
-                'registered_at' => $u->created_at, 'verified' => $u->email_verified_at !== null,
+                'registered_at' => $u->created_at, 'first_submitted' => $u->first_submitted, 'verified' => $u->email_verified_at !== null,
                 'account_status' => $u->account_status,
                 'email_bounced_at' => $u->email_bounced_at, 'email_bounce_type' => $u->email_bounce_type,
                 'sponsorship' => \App\Support\Sponsorship::label($u->sponsor_type, $u->sponsor_tier), 'ssc_access' => (bool) $u->ssc_access,

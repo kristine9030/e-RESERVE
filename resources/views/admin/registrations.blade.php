@@ -141,8 +141,9 @@ $viewerData = static function (array $r): string {
             @endforeach
         </select>
         <select name="sort" class="form-select" aria-label="Order">
-            <option value="oldest" @selected(($filters['sort'] ?? '') !== 'newest')>First submitted first</option>
-            <option value="newest" @selected(($filters['sort'] ?? '') === 'newest')>Latest submitted first</option>
+            @foreach (['oldest' => 'First submitted first', 'newest' => 'Latest submitted first'] as $sk => $sl)
+                <option value="{{ $sk }}" @selected(($filters['sort'] ?? 'oldest') === $sk)>{{ $sl }}</option>
+            @endforeach
         </select>
         <div class="stu-filter-actions">
             <button class="btn btn-green btn-sm2" type="submit"><i class="fa-solid fa-filter"></i> Filter</button>
@@ -160,7 +161,7 @@ $viewerData = static function (array $r): string {
                     @if ($curType !== 'sponsor')<th>{{ $colHead }}</th>@endif
                     <th>Documents</th>
                     <th>Ticket</th>
-                    <th>Registered</th>
+                    <th>Submitted</th>
                     <th class="no-sort no-print text-end">Actions</th>
                 </tr>
             </thead>
@@ -202,7 +203,14 @@ $viewerData = static function (array $r): string {
                                 <span class="cell-sub">No ticket</span>
                             @endif
                         </td>
-                        <td class="cell-sub" data-label="Registered" data-order="{{ $r['registered_at'] }}">{{ pretty_date($r['registered_at']) }}</td>
+                        <td data-label="Submitted" data-order="{{ $r['first_submitted'] }}">
+                            @if (!empty($r['first_submitted']))
+                                <div class="cell-strong" style="font-size:.84rem;">{{ pretty_date($r['first_submitted']) }}</div>
+                            @else
+                                <div class="cell-sub">No file yet</div>
+                            @endif
+                            <div class="cell-sub" style="font-size:.72rem;">Registered {{ pretty_date($r['registered_at'], 'M d · g:i A') }}</div>
+                        </td>
                         <td class="no-print text-end" data-label="Actions">
                             <div class="stu-actions">
                                 @if (true)
