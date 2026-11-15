@@ -62,9 +62,9 @@ class AdminPagesTest extends TestCase
         $this->students(30);    // 30 students, 90 pending documents
         $this->actingAs($this->admin());
 
-        $this->get(route('admin.documents'))->assertOk()->assertSee('30 students waiting')->assertSee('Showing 1–20 of 30');
-        $this->get(route('admin.documents', ['college' => 'CAS']))->assertOk()->assertSee('15 students waiting');
-        $this->get(route('admin.documents', ['q' => '26-00007']))->assertOk()->assertSee('1 student waiting')->assertSee('Student 7');
+        $this->get(route('admin.documents'))->assertOk()->assertSee('30 waiting')->assertSee('Showing 1–20 of 30');
+        $this->get(route('admin.documents', ['college' => 'CAS']))->assertOk()->assertSee('15 waiting');
+        $this->get(route('admin.documents', ['q' => '26-00007']))->assertOk()->assertSee('1 person waiting')->assertSee('Student 7');
     }
 
     public function test_college_numbers_are_correct_and_review_page_is_one_table(): void

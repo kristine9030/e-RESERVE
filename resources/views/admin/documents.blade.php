@@ -9,11 +9,11 @@
         <div class="col-lg-8">
             <span class="eyebrow on-dark"><i class="fa-solid fa-user-shield"></i> Document Control</span>
             <h2>Review Documents</h2>
-            <p>Open a student to approve or return their documents.</p>
+            <p>Open a person to approve or return their documents. The one who submitted first is at the top.</p>
         </div>
         <div class="col-lg-4 text-lg-end">
             <span class="badge-soft badge-gold" style="font-size:.82rem;">
-                <i class="fa-solid fa-inbox"></i> {{ number_format($queue->total()) }} students waiting
+                <i class="fa-solid fa-inbox"></i> {{ number_format($queue->total()) }} {{ ($filters['status'] ?? 'pending') === 'pending' ? 'waiting' : 'shown' }}
             </span>
         </div>
     </div>
@@ -23,8 +23,9 @@
 <div class="card-soft stu-card rq-card fade-up d2 mb-4">
     <div class="card-head">
         <div>
-            <h5 class="mb-0">Needs review</h5>
-            <span class="cell-sub">Longest wait first · {{ number_format($queue->total()) }} student{{ $queue->total() === 1 ? '' : 's' }} waiting</span>
+            <?php $stat = $filters['status'] ?? 'pending'; $newest = ($filters['sort'] ?? '') === 'newest'; ?>
+            <h5 class="mb-0">{{ $stat === 'pending' ? 'Needs review' : \App\Services\Stats::REVIEW_STATUSES[$stat] }}</h5>
+            <span class="cell-sub">{{ $newest ? 'Latest submitted first' : 'First submitted first' }} · {{ number_format($queue->total()) }} {{ $queue->total() === 1 ? 'person' : 'people' }}{{ $stat === 'pending' ? ' waiting' : '' }}</span>
         </div>
     </div>
 
@@ -34,7 +35,7 @@
     ?>
     <nav class="stu-tabs no-print" aria-label="Filter by group">
         @foreach ($tabs as $key => [$label, $icon])
-            <a class="stu-tab {{ $tab === $key ? 'is-active' : '' }}" href="{{ route('admin.documents', array_filter(['q' => $filters['q'] ?? null, 'college' => $filters['college'] ?? null, 'type' => $key === 'all' ? null : $key])) }}">
+            <a class="stu-tab {{ $tab === $key ? 'is-active' : '' }}" href="{{ route('admin.documents', array_filter(['q' => $filters['q'] ?? null, 'college' => $filters['college'] ?? null, 'status' => $filters['status'] ?? null, 'sort' => $filters['sort'] ?? null, 'type' => $key === 'all' ? null : $key])) }}">
                 <i class="fa-solid {{ $icon }}"></i>{{ $label }} <b>{{ number_format($counts[$key] ?? 0) }}</b>
             </a>
         @endforeach
@@ -52,6 +53,15 @@
                 <option value="{{ $code }}" @selected(($filters['college'] ?? '') === $code)>{{ $code }}</option>
             @endforeach
         </select>
+        <select name="status" class="form-select" aria-label="Status">
+            @foreach (\App\Services\Stats::REVIEW_STATUSES as $sk => $sl)
+                <option value="{{ $sk }}" @selected(($filters['status'] ?? 'pending') === $sk)>{{ $sl }}</option>
+            @endforeach
+        </select>
+        <select name="sort" class="form-select" aria-label="Order">
+            <option value="oldest" @selected(!$newest)>First submitted first</option>
+            <option value="newest" @selected($newest)>Latest submitted first</option>
+        </select>
         <div class="stu-filter-actions">
             <button class="btn btn-green btn-sm2" type="submit"><i class="fa-solid fa-filter"></i> Filter</button>
             @if (array_filter(\Illuminate\Support\Arr::except($filters, 'type')))<a class="btn btn-ghost btn-sm2" href="{{ route('admin.documents', array_filter(['type' => $filters['type'] ?? null])) }}">Clear</a>@endif
@@ -61,18 +71,18 @@
     @if ($queue->isEmpty())
         <div class="text-center py-5">
             <span class="stat-icon green d-inline-grid mb-3" style="width:56px;height:56px;font-size:1.3rem;"><i class="fa-solid fa-check"></i></span>
-            <h5 class="mb-1">Nothing to review</h5>
-            <p class="text-soft mb-0" style="font-size:.88rem;">No one is waiting for a review{{ array_filter($filters) ? ' with these filters' : '' }}.</p>
+            <h5 class="mb-1">{{ $stat === 'pending' ? 'Nothing to review' : 'No one here' }}</h5>
+            <p class="text-soft mb-0" style="font-size:.88rem;">{{ $stat === 'pending' ? 'No one is waiting for a review' : 'No one is ' . strtolower(\App\Services\Stats::REVIEW_STATUSES[$stat]) }}{{ array_filter(\Illuminate\Support\Arr::except($filters, ['status', 'sort'])) ? ' with these filters' : '' }}.</p>
         </div>
     @else
         <div class="table-responsive">
             <table class="table table-stack stu-table rq-table" style="width:100%;">
                 <thead>
                     <tr>
-                        <th>User</th>
+                        <th>Name</th>
                         <th>College / group</th>
                         <th>Documents</th>
-                        <th>Waiting</th>
+                        <th>{{ $stat === 'pending' ? 'Waiting' : 'Submitted' }}</th>
                         <th class="no-print text-end">Action</th>
                     </tr>
                 </thead>
@@ -112,9 +122,14 @@
                                 </div>
                                 @if ($look)<div class="mt-1"><span class="chk chk-warn"><i class="fa-solid fa-triangle-exclamation"></i>Needs a closer look</span></div>@endif
                             </td>
-                            <td data-label="Waiting" data-order="{{ $s['waiting_since'] }}">
-                                <div class="cell-strong rq-n">{{ $s['waiting'] }} <small>of {{ count($s['docs']) }}</small></div>
-                                <div class="cell-sub">since {{ pretty_date($s['waiting_since']) }}</div>
+                            <td data-label="{{ $stat === 'pending' ? 'Waiting' : 'Submitted' }}" data-order="{{ $s['waiting_since'] }}">
+                                @if ($stat === 'pending')
+                                    <div class="cell-strong rq-n">{{ $s['waiting'] }} <small>of {{ count($s['docs']) }}</small></div>
+                                    <div class="cell-sub">since {{ pretty_date($s['waiting_since']) }}</div>
+                                @else
+                                    <div class="cell-strong">{{ $s['waiting_since'] ? pretty_date($s['waiting_since']) : 'Nothing yet' }}</div>
+                                    <div class="cell-sub">{{ $s['waiting'] ? $s['waiting'] . ' waiting' : 'none waiting' }}</div>
+                                @endif
                             </td>
                             <td class="no-print text-end" data-label="Action">
                                 <a href="{{ route('admin.documents.student', array_filter(['user' => $s['id'], 'college' => $filters['college'] ?? null])) }}" class="btn btn-green btn-sm2">

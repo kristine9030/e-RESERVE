@@ -80,14 +80,13 @@ class ReportService
     private function narrow(array $rows, array $f): array
     {
         $f   = $this->cleanFilters($f);
-        $emp = array_keys(config('ereserve.employee_types'));
 
-        return array_values(array_filter($rows, static function (array $r) use ($f, $emp): bool {
+        return array_values(array_filter($rows, static function (array $r) use ($f): bool {
             $mt = $r['member_type'];
             $okType = match ($f['type'] ?? '') {
                 'student'  => $mt === 'student',
                 'sponsor'  => $mt === 'sponsor',
-                'employee' => in_array($mt, $emp, true),
+                'employee' => !in_array($mt, ['student', 'sponsor'], true),
                 ''         => true,
                 default    => $mt === $f['type'],
             };

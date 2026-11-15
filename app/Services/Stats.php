@@ -183,8 +183,9 @@ class Stats
      */
     public function pendingStudentsPage(array $f, int $perPage = 20): LengthAwarePaginator
     {
-        $q = DB::table('users as u')->where('u.role', 'student')
-            ->whereRaw('EXISTS (SELECT 1 FROM documents d WHERE d.user_id = u.id AND d.status = "submitted")');
+        $status = (string) ($f['status'] ?? 'pending');
+        $q = DB::table('users as u')->where('u.role', 'student');
+        $this->applyReviewStatus($q, $status);
 
         if (($term = trim((string) ($f['q'] ?? ''))) !== '') {
             $like = '%' . addcslashes($term, '%_\\') . '%';
@@ -195,9 +196,18 @@ class Stats
         }
         $this->applyMemberGroup($q, (string) ($f['type'] ?? ''));
 
+        // "Since": when the oldest file still waiting was submitted. For the other statuses (nothing is
+        // waiting) it is when the person first submitted anything. First submitted comes first, so the
+        // person who has waited longest is always at the top; ?sort=newest turns it around.
+        $since = $status === 'pending'
+            ? 'SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id AND d.status = "submitted"'
+            : 'SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id';
+        $dir = ($f['sort'] ?? '') === 'newest' ? 'desc' : 'asc';
+
         $page = $q->select('u.id', 'u.name', 'u.email', 'u.student_no', 'u.college_code', 'u.program', 'u.year_level', 'u.member_type')
-            ->selectSub('SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id AND d.status = "submitted"', 'waiting_since')
-            ->orderBy('waiting_since')->orderBy('u.id')
+            ->selectSub($since, 'waiting_since')
+            ->orderByRaw('waiting_since IS NULL')   // people who have not submitted anything yet go last
+            ->orderBy('waiting_since', $dir)->orderBy('u.id', $dir)
             ->paginate($perPage)->withQueryString();
 
         $docs = DB::table('documents')->whereIn('user_id', $page->pluck('id')->all())->get()->groupBy('user_id');
@@ -218,22 +228,43 @@ class Stats
     /** Limit a query on users (alias u) to one tab: student, employee (faculty/staff) or sponsor. */
     private function applyMemberGroup($q, string $group): void
     {
-        $employee = array_keys(config('ereserve.employee_types'));
         match ($group) {
             'student'  => $q->where(fn ($w) => $w->whereNull('u.member_type')->orWhere('u.member_type', 'student')),
-            'employee' => $q->whereIn('u.member_type', $employee),
+            'employee' => $q->whereNotNull('u.member_type')->whereNotIn('u.member_type', ['student', 'sponsor']),   // includes older accounts (e.g. instructor)
             'sponsor'  => $q->where('u.member_type', 'sponsor'),
             default    => null,
         };
     }
 
-    /** How many people are waiting in each review tab (ignores the tab itself, respects search and college). */
+    /** The review list's status filter: what state a person's documents are in. */
+    public const REVIEW_STATUSES = [
+        'pending'    => 'Waiting for review',
+        'approved'   => 'Approved',
+        'returned'   => 'Returned to fix',
+        'incomplete' => 'Still uploading',
+        'all'        => 'All',
+    ];
+
+    /** Limit users (alias u) to one review status. Same meaning as the filters on the Records page. */
+    private function applyReviewStatus($q, string $status): void
+    {
+        $need = DocumentSets::sqlRequired('u.member_type');
+        match ($status) {
+            'approved'   => $q->whereRaw('(SELECT COUNT(*) FROM documents d WHERE d.user_id = u.id AND d.status = "approved") = ' . $need),
+            'returned'   => $q->whereRaw('EXISTS (SELECT 1 FROM documents d WHERE d.user_id = u.id AND d.status = "rejected")'),
+            'incomplete' => $q->whereRaw('(SELECT COUNT(*) FROM documents d WHERE d.user_id = u.id) < ' . $need),
+            'all'        => null,
+            default      => $q->whereRaw('EXISTS (SELECT 1 FROM documents d WHERE d.user_id = u.id AND d.status = "submitted")'),   // pending
+        };
+    }
+
+    /** How many people are waiting in each review tab (ignores the tab itself, respects search, college and status). */
     public function pendingGroupCounts(array $f): array
     {
         $out = [];
         foreach (['all', 'student', 'employee', 'sponsor'] as $g) {
-            $q = DB::table('users as u')->where('u.role', 'student')
-                ->whereRaw('EXISTS (SELECT 1 FROM documents d WHERE d.user_id = u.id AND d.status = "submitted")');
+            $q = DB::table('users as u')->where('u.role', 'student');
+            $this->applyReviewStatus($q, (string) ($f['status'] ?? 'pending'));
             if (($term = trim((string) ($f['q'] ?? ''))) !== '') {
                 $like = '%' . addcslashes($term, '%_\\') . '%';
                 $q->where(fn ($w) => $w->where('u.name', 'like', $like)->orWhere('u.student_no', 'like', $like)->orWhere('u.email', 'like', $like));
@@ -387,6 +418,44 @@ class Stats
             'incomplete'    => (int) ($row['incomplete'] ?? 0),
             'capacity'      => $cap,
             'fill_rate'     => round($tickets / max(1, $cap) * 100, 2),
+        ];
+    }
+
+    /**
+     * The four numbers at the top of the Records page, for the group being looked at only
+     * (students, faculty & staff, sponsors, one category, or everyone).
+     *
+     * @return array{label:string,accounts:int,tickets:int,incomplete:int,docs_rejected:int}
+     */
+    public function recordsKpis(string $type): array
+    {
+        $scope = function ($q) use ($type): void {
+            match (true) {
+                in_array($type, ['student', 'employee', 'sponsor'], true)  => $this->applyMemberGroup($q, $type),
+                array_key_exists($type, config('ereserve.employee_types')) => $q->where('u.member_type', $type),
+                default                                                    => null,
+            };
+        };
+        $need = DocumentSets::sqlRequired('u.member_type');
+
+        $accounts = DB::table('users as u')->where('u.role', 'student');
+        $scope($accounts);
+
+        $tickets = DB::table('tickets as t')->join('users as u', 'u.id', '=', 't.user_id')->where('u.role', 'student')->where('t.status', '<>', 'void');
+        $scope($tickets);
+
+        $incomplete = DB::table('users as u')->where('u.role', 'student')
+            ->whereRaw('(SELECT COUNT(*) FROM documents d WHERE d.user_id = u.id) < ' . $need);
+        $scope($incomplete);
+
+        $returned = DB::table('documents as d')->join('users as u', 'u.id', '=', 'd.user_id')->where('u.role', 'student')->where('d.status', 'rejected');
+        $scope($returned);
+
+        return [
+            'label' => ['student' => 'Students', 'employee' => 'Faculty & staff', 'sponsor' => 'Sponsors'][$type]
+                ?? (config('ereserve.employee_types')[$type] ?? 'All accounts'),
+            'accounts' => $accounts->count(), 'tickets' => $tickets->count(),
+            'incomplete' => $incomplete->count(), 'docs_rejected' => $returned->count(),
         ];
     }
 

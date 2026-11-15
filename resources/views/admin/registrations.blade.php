@@ -58,10 +58,11 @@ $viewerData = static function (array $r): string {
 
 <div class="row g-3 mb-4">
     <?php $mini = [
-        ['fa-users',          'deep',   'Students',          $stats['students']],
-        ['fa-ticket',         'green',  'Tickets Issued',    $stats['tickets']],
-        ['fa-hourglass-half', 'orange', 'Still Uploading',   $stats['incomplete']],
-        ['fa-rotate-left',    'danger', 'Docs Returned',     $stats['docs_rejected']],
+        // Only the group being looked at: open Faculty & staff and these are faculty & staff numbers.
+        ['fa-users',          'deep',   $kpi['label'],       $kpi['accounts']],
+        ['fa-ticket',         'green',  'Tickets Issued',    $kpi['tickets']],
+        ['fa-hourglass-half', 'orange', 'Still Uploading',   $kpi['incomplete']],
+        ['fa-rotate-left',    'danger', 'Docs Returned',     $kpi['docs_rejected']],
     ];
     foreach ($mini as $i => [$icon, $tone, $label, $val]): ?>
         <div class="col-6 col-lg-3">
@@ -151,7 +152,7 @@ $viewerData = static function (array $r): string {
         <table class="table table-stack stu-table" style="width:100%;">
             <thead>
                 <tr>
-                    <th>Student</th>
+                    <th>Name</th>
                     @if ($curType !== 'sponsor')<th>{{ $colHead }}</th>@endif
                     <th>Documents</th>
                     <th>Ticket</th>

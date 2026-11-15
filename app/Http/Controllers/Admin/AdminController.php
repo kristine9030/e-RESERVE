@@ -43,7 +43,7 @@ class AdminController extends Controller
         return view('admin.registrations', [
             'rows'    => $this->stats->registrationsPage($filters),
             'filters' => $filters,
-            'stats' => $this->stats->dashboard(),
+            'kpi'     => $this->stats->recordsKpis((string) $filters['type']),
         ]);
     }
 
@@ -129,9 +129,16 @@ class AdminController extends Controller
 
     public function documents(Request $request)
     {
-        $filters = $request->only(['q', 'college', 'type']);
+        $filters = $request->only(['q', 'college', 'type', 'status', 'sort']);
         if (!in_array($filters['type'] ?? '', ['student', 'employee', 'sponsor'], true)) {
             unset($filters['type']);
+        }
+        // "Waiting for review" and "first submitted first" are the defaults, so they are not kept in the URL.
+        if (!array_key_exists($filters['status'] ?? '', \App\Services\Stats::REVIEW_STATUSES) || $filters['status'] === 'pending') {
+            unset($filters['status']);
+        }
+        if (($filters['sort'] ?? '') !== 'newest') {
+            unset($filters['sort']);
         }
 
         return view('admin.documents', [
