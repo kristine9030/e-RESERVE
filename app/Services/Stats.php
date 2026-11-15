@@ -124,7 +124,7 @@ class Stats
         $page = $q->selectSub('SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id', 'first_submitted')
             ->orderByRaw('first_submitted IS NULL')->orderBy('first_submitted')->orderBy('u.created_at')->orderBy('u.id')
             ->addSelect('u.id', 'u.name', 'u.email', 'u.student_no', 'u.college_code', 'u.program', 'u.year_level',
-                     'u.created_at', 'u.email_verified_at', 'u.email_bounced_at', 'u.email_bounce_type', 'u.sponsor_type', 'u.sponsor_tier', 'u.status as account_status', 'u.member_type')
+                     'u.created_at', 'u.email_verified_at', 'u.email_bounced_at', 'u.email_bounce_type', 'u.sponsor_type', 'u.sponsor_tier', 'u.ssc_access', 'u.status as account_status', 'u.member_type')
             ->paginate($perPage)->withQueryString();
 
         $ids  = $page->pluck('id')->all();
@@ -147,7 +147,7 @@ class Stats
                 'registered_at' => $u->created_at, 'verified' => $u->email_verified_at !== null,
                 'account_status' => $u->account_status,
                 'email_bounced_at' => $u->email_bounced_at, 'email_bounce_type' => $u->email_bounce_type,
-                'sponsorship' => \App\Support\Sponsorship::label($u->sponsor_type, $u->sponsor_tier),
+                'sponsorship' => \App\Support\Sponsorship::label($u->sponsor_type, $u->sponsor_tier), 'ssc_access' => (bool) $u->ssc_access,
                 'docs' => collect(['waiver', 'cor', 'id', 'employee_id', 'sponsorship'])->mapWithKeys(
                     fn (string $k) => [$k => $d($k) + ['applicable' => in_array($k, DocumentSets::keysFor($u->member_type), true)]]
                 )->all(),

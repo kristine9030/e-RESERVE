@@ -88,6 +88,16 @@ class AdminController extends Controller
      * Disable or re-enable a student account. Disabling signs them out on their
      * next request and puts a valid ticket on hold; enabling restores it.
      */
+    /** Delete an account for good (and, if asked, tell the person by email). */
+    public function deleteAccount(Request $request, User $user, \App\Services\AccountDeleter $deleter)
+    {
+        $request->validate(['note' => ['nullable', 'string', 'max:500']]);
+
+        $result = $deleter->delete($user, (string) $request->input('note'), $request->boolean('notify'), $request->user());
+
+        return back()->with('flash', flash($result['ok'] ? 'success' : 'error', $result['ok'] ? 'Account deleted' : 'Not deleted', e($result['message'])));
+    }
+
     /** The SSC says this address is fine after all: let e-RESERVE email it again. */
     public function clearEmailFlag(User $user)
     {

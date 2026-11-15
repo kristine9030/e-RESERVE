@@ -122,6 +122,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/students', [AdminController::class, 'registrations'])->name('admin.registrations');
     Route::get('/students/export/{format}', [AdminController::class, 'recordsExport'])->whereIn('format', ['xlsx', 'csv', 'pdf'])->name('admin.records.export');
     Route::post('/students/{user}/status', [AdminController::class, 'setStatus'])->whereNumber('user')->name('admin.students.status');
+    Route::post('/students/{user}/delete', [AdminController::class, 'deleteAccount'])->whereNumber('user')->name('admin.students.delete');
     Route::post('/students/{user}/email-ok', [AdminController::class, 'clearEmailFlag'])->whereNumber('user')->name('admin.students.email-ok');
     Route::get('/documents', [AdminController::class, 'documents'])->name('admin.documents');
     Route::get('/documents/student/{user}', [AdminController::class, 'student'])->whereNumber('user')->name('admin.documents.student');

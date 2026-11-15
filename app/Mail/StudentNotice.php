@@ -105,6 +105,24 @@ class StudentNotice extends Mailable implements ShouldQueue
         );
     }
 
+    /** Sent when the SSC deletes an account. $note is the SSC's own message (e.g. when to sign up again). */
+    public static function accountDeleted(string $name, string $note = ''): self
+    {
+        return new self(
+            'Your e-RESERVE account was deleted',
+            $name,
+            'Your account was deleted',
+            array_values(array_filter([
+                'The SSC deleted your e-RESERVE account for ' . config('ereserve.event.name') . ', together with the files you uploaded.',
+                $note !== '' ? $note : null,
+                'If you think this is a mistake, please message the SSC at ' . config('ereserve.ssc.email') . '.',
+            ])),
+            'Open e-RESERVE',
+            route('home'),
+            kind: 'deleted',
+        );
+    }
+
     public function envelope(): Envelope
     {
         return new Envelope(subject: $this->subjectLine);

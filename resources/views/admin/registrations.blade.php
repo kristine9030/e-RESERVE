@@ -217,6 +217,13 @@ $viewerData = static function (array $r): string {
                                         <i class="fa-solid {{ $off ? 'fa-user-check' : 'fa-user-slash' }}"></i> {{ $off ? 'Enable' : 'Disable' }}
                                     </button>
                                 </form>
+                                @if (empty($r['ssc_access']) && empty($r['checked_in']))
+                                    <button type="button" class="btn btn-sm2 btn-ghost js-delete" style="color:#B3261E;"
+                                            data-action="{{ route('admin.students.delete', $r['id']) }}" data-name="{{ $r['name'] }}" data-email="{{ $r['email'] }}"
+                                            data-files="{{ (int) $r['doc_count'] }}" data-ticket="{{ $r['ticket_no'] ?? '' }}" data-bounced="{{ empty($r['email_bounced_at']) ? 0 : 1 }}">
+                                        <i class="fa-solid fa-trash"></i> Delete
+                                    </button>
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -287,6 +294,67 @@ $viewerData = static function (array $r): string {
     </div>
 </div>
 @endsection
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="post" id="deleteForm" class="modal-content" style="border:0;border-radius:20px;">
+            @csrf
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="deleteTitle">Delete this account for good?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-0">
+                <p class="mb-2" style="font-size:.9rem;"><strong id="delName"></strong> <span class="text-muted2" id="delEmail"></span></p>
+                <div class="callout callout-warning mb-3" style="font-size:.84rem;">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    <span>This removes the account<span id="delWhat"></span>. <strong>It cannot be undone.</strong> To pause someone instead, use Disable.</span>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="notify" value="1" id="delNotify" checked>
+                    <label class="form-check-label" for="delNotify" style="font-size:.88rem;">Tell them by email that the account was deleted</label>
+                </div>
+                <div id="delBounced" class="cell-sub mb-2 d-none"><i class="fa-solid fa-envelope-circle-check me-1"></i>Their email bounced, so no email can be sent.</div>
+                <label class="form-label-sm" for="delNote">Message in the email</label>
+                <textarea class="form-control" name="note" id="delNote" rows="3" maxlength="500">{{ config('ereserve.account_deleted_note') }}</textarea>
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="delSure">
+                    <label class="form-check-label" for="delSure" style="font-size:.88rem;">I understand this cannot be undone.</label>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-ghost btn-sm2" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-sm2" id="delGo" style="background:#B3261E;color:#fff;" disabled><i class="fa-solid fa-trash"></i> Delete permanently</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    (function () {
+        var modalEl = document.getElementById('deleteModal'), form = document.getElementById('deleteForm');
+        var sure = document.getElementById('delSure'), go = document.getElementById('delGo'), notify = document.getElementById('delNotify'), note = document.getElementById('delNote');
+        sure.addEventListener('change', function () { go.disabled = !sure.checked; });
+        notify.addEventListener('change', function () { note.disabled = !notify.checked; });
+        document.querySelectorAll('.js-delete').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var files = parseInt(btn.dataset.files, 10) || 0, bits = [];
+                if (files) { bits.push(files + ' uploaded file' + (files === 1 ? '' : 's')); }
+                if (btn.dataset.ticket) { bits.push('the ticket ' + btn.dataset.ticket); }
+                form.action = btn.dataset.action;
+                document.getElementById('delName').textContent = btn.dataset.name;
+                document.getElementById('delEmail').textContent = btn.dataset.email;
+                document.getElementById('delWhat').textContent = bits.length ? ', ' + bits.join(' and ') : '';
+                var bounced = btn.dataset.bounced === '1';
+                notify.checked = !bounced; notify.disabled = bounced; note.disabled = bounced;
+                document.getElementById('delBounced').classList.toggle('d-none', !bounced);
+                sure.checked = false; go.disabled = true;
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            });
+        });
+    })();
+</script>
+@endpush
 
 @push('scripts')
 <script>

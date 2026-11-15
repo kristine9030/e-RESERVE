@@ -38,15 +38,28 @@ class TicketImage
      * ticket only changes now and then. The key covers everything printed on it, so a changed
      * status or name is redrawn and a stale picture is never served.
      */
-    public function jpg(array $ticket): string
+    /** Everything printed on the ticket decides which saved picture it is. */
+    private function cacheFile(array $ticket): string
     {
         $key = sha1(json_encode([
             self::DESIGN, $ticket['ticket_no'] ?? '', $ticket['name'] ?? '', $ticket['student_no'] ?? '', $ticket['program'] ?? '',
             $ticket['year'] ?? '', $ticket['member_type'] ?? 'student', $ticket['sponsorship'] ?? '', $ticket['event'] ?? '', $ticket['venue'] ?? '', $ticket['date_text'] ?? '', $ticket['time_text'] ?? '',
             $ticket['status'] ?? '', !empty($ticket['checked_in']), $ticket['verify_hash'] ?? '',
         ]));
+
+        return "ticket-images/$key.jpg";
+    }
+
+    /** Remove the saved picture of this ticket (when its owner's account is deleted). */
+    public function forget(array $ticket): void
+    {
+        Storage::disk('local')->delete($this->cacheFile($ticket));
+    }
+
+    public function jpg(array $ticket): string
+    {
         $disk = Storage::disk('local');
-        $file = "ticket-images/$key.jpg";
+        $file = $this->cacheFile($ticket);
 
         if ($disk->exists($file)) {
             return (string) $disk->get($file);

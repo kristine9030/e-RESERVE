@@ -152,6 +152,9 @@ return [
      */
     'staff_extra_emails' => array_values(array_filter(array_map('trim', explode(',', strtolower((string) env('STAFF_EXTRA_EMAILS', '')))))),
 
+    /** Suggested message in the "your account was deleted" email (the SSC can edit it each time). ACCOUNT_DELETED_NOTE overrides. */
+    'account_deleted_note' => (string) env('ACCOUNT_DELETED_NOTE', 'This was part of clearing the test accounts before the launch. Please create a new account once e-RESERVE officially opens.'),
+
     /** Hours a confirmation link stays usable. */
     'verify_token_hours' => 24,
 
