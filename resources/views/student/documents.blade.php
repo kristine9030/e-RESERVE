@@ -59,7 +59,8 @@
         <?php foreach ($metas as $key => $meta):
             $doc     = $docs[$key] ?? null;
             $status  = $doc['status'] ?? 'missing';
-            $locked  = $status === 'approved' || ($ticket['status'] ?? '') === 'used';
+            $closed  = \App\Services\WaitingList::uploadsClosedFor((int) auth()->id(), auth()->user()->member_type);   // group is full and they hold no seat
+            $locked  = $status === 'approved' || ($ticket['status'] ?? '') === 'used' || $closed;
             $tone    = ['missing' => 'muted', 'submitted' => 'info', 'approved' => 'success', 'rejected' => 'danger'][$status]; ?>
             <form method="post" enctype="multipart/form-data" id="doc-{{ $key }}"
                   class="doc-card state-{{ $status }} fade-up js-doc-form" data-label="{{ $meta['label'] }}" data-images="{{ in_array($key, config('ereserve.image_documents'), true) ? 1 : 0 }}">
@@ -106,7 +107,7 @@
 
                 @if ($locked)
                     <div class="doc-locked"><i class="fa-solid fa-lock"></i>
-                        {{ $status === 'approved' ? 'Approved by SSC staff — this file is locked.' : 'Your ticket has been used — files are locked.' }}
+                        {{ $status === 'approved' ? 'Approved by SSC staff — this file is locked.' : (($ticket['status'] ?? '') === 'used' ? 'Your ticket has been used — files are locked.' : 'Uploads are closed — all the tickets for your group are taken.') }}
                     </div>
                 @else
                     <label class="dropzone" for="file-{{ $key }}">

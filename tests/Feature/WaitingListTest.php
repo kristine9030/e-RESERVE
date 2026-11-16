@@ -17,8 +17,8 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * When a group's tickets are spoken for, the next person to finish uploading is told "full", promised
- * nothing, and gets a ticket only when the SSC releases seats.
+ * When a group's seats are all spoken for, uploads CLOSE for everyone without a seat: no waiting list, no false hope.
+ * (People waitlisted before this rule can still be released by the SSC.)
  */
 class WaitingListTest extends TestCase
 {
@@ -90,53 +90,85 @@ class WaitingListTest extends TestCase
         return DB::table('tickets')->where('user_id', $u->id)->where('status', '<>', 'void')->count();
     }
 
-    /* ------------------------------------------------------------- being told "full" */
+    /** A person from the old waiting list: finished uploading while full, then was put on it. */
+    private function waitlisted(string $name, string $type = 'student'): User
+    {
+        $u = $this->person($name, $type);
+        $old = Setting::read('quota_student');
+        Setting::store('quota_student', '999');
+        $this->upload($u);
+        Setting::store('quota_student', $old);
+        $u->forceFill(['waitlisted_at' => now()])->save();
 
-    public function test_the_first_people_keep_their_seat_and_the_next_is_told_full_without_any_promise(): void
+        return $u->fresh();
+    }
+
+
+    /* ------------------------------------------------------------- uploads close when full */
+
+    private function tryUpload(User $u, string $type): array
+    {
+        return app(DocumentService::class)->submit($u, $type, $this->pdf());
+    }
+
+    public function test_once_the_seats_are_spoken_for_the_next_person_cannot_upload_at_all(): void
     {
         [$a, $b, $c] = [$this->person('Ana'), $this->person('Ben'), $this->person('Cora')];
 
-        $this->assertFalse($this->upload($a)['waiting']);
-        $this->assertFalse($this->upload($b)['waiting']);
-        $r = $this->upload($c);
+        $this->upload($a);
+        $this->upload($b);
+        $r = $this->tryUpload($c, 'waiver');
 
-        $this->assertTrue($r['waiting']);
-        $this->assertNull($a->fresh()->waitlisted_at);
-        $this->assertNotNull($c->fresh()->waitlisted_at);
+        $this->assertFalse($r['ok']);
+        $this->assertStringContainsString('Uploads are closed', $r['message']);
+        $this->assertSame(0, Document::where('user_id', $c->id)->count());
+        $this->assertCount(6, Storage::disk('local')->allFiles('documents'), 'only Ana and Ben (3 files each); the refused file is not kept');
+        $this->assertNull($c->fresh()->waitlisted_at, 'nobody is put on a waiting list');
+        $this->assertSame(0, WaitingList::waitingFor('student'));
         $this->assertSame(2, WaitingList::reservedFor('student'));
-        $this->assertSame(1, WaitingList::waitingFor('student'));
-
-        // Cora is told the tickets are full, in words that promise nothing
-        $this->assertSame(1, $this->mailsTo($c, 'The tickets for your group are full'));
-        Mail::assertQueued(StudentNotice::class, function ($m) use ($c) {
-            if (!$m->hasTo($c->email)) {
-                return false;
-            }
-            $text = strtolower(implode(' ', $m->paragraphs) . ' ' . $m->heading);
-            return str_contains($text, 'cannot promise you a ticket') && str_contains($text, 'wait for the ssc')
-                && !str_contains($text, 'in line') && !str_contains($text, 'automatically') && !str_contains($text, 'next');
-        });
-        $this->assertSame(0, $this->mailsTo($c, 'We received your documents'), 'the "your ticket comes once approved" email is not sent to her');
-        $this->assertSame(1, $this->mailsTo($a, 'We received your documents'), 'people with a seat still get it');
-        $this->assertDatabaseHas('notices', ['user_id' => $c->id, 'type' => 'waitlist', 'title' => 'The tickets for your group are full']);
-        $this->assertDatabaseHas('audit_log', ['action' => 'waiting.add', 'entity_id' => (string) $c->id]);
+        Mail::assertNotQueued(StudentNotice::class, fn ($m) => $m->hasTo($c->email));
     }
 
-    public function test_a_half_finished_upload_does_not_use_a_seat_and_replacing_a_file_never_loses_one(): void
+    public function test_anyone_who_already_started_can_finish_even_when_the_seats_run_out(): void
+    {
+        Setting::store('quota_student', '2');
+        [$a, $b, $c] = [$this->person('Ana'), $this->person('Ben'), $this->person('Cora')];
+
+        $this->upload($a, ['waiver']);                       // one file is enough to hold a seat
+        $this->upload($b, ['waiver', 'cor']);                // seat 2
+        $this->assertSame(2, WaitingList::reservedFor('student'));
+
+        $r = $this->tryUpload($c, 'waiver');                 // full: Cora never started
+        $this->assertFalse($r['ok']);
+
+        $this->assertTrue($this->tryUpload($b, 'id')['ok'], 'Ben started, so he can finish');
+        $this->assertTrue($this->tryUpload($a, 'cor')['ok'], 'so can Ana');
+        $this->assertTrue($this->tryUpload($a, 'id')['ok']);
+        $this->assertSame(2, WaitingList::reservedFor('student'), 'finishing never takes a second seat');
+        $this->assertSame(0, Document::where('user_id', $c->id)->count());
+    }
+
+    public function test_a_freed_seat_reopens_uploads(): void
     {
         Setting::store('quota_student', '1');
         [$a, $b] = [$this->person('Ana'), $this->person('Ben')];
+        $this->upload($a);
+        $this->assertFalse($this->tryUpload($b, 'waiver')['ok']);
 
-        $this->upload($a);                                   // Ana's seat is spoken for
-        $this->upload($b, ['waiver', 'cor']);                // two of three: not finished yet
-        $this->assertNull($b->fresh()->waitlisted_at);
-        $this->assertNull($b->fresh()->upload_completed_at);
+        $a->forceFill(['status' => 'disabled'])->save();
 
-        $this->assertTrue($this->upload($b, ['id'])['waiting']);   // finishing is what counts
+        $this->assertTrue($this->tryUpload($b, 'waiver')['ok']);
+    }
 
-        // Ana swaps one of her files later: she keeps her seat
-        $this->upload($a, ['waiver']);
-        $this->assertNull($a->fresh()->waitlisted_at);
+    public function test_the_upload_page_and_post_are_closed_for_people_without_a_seat(): void
+    {
+        Setting::store('quota_student', '1');
+        [$a, $b] = [$this->person('Ana'), $this->person('Ben')];
+        $this->upload($a);
+
+        $this->actingAs($b)->get(route('documents.index'))->assertOk()->assertSee('Uploads are closed')->assertDontSee('name="document"', false);
+        $this->actingAs($b)->post(route('documents.store'), ['doc_type' => 'waiver', 'document' => $this->pdf()])->assertSessionHas('flash.type', 'error');
+        $this->assertSame(0, Document::where('user_id', $b->id)->count());
     }
 
     public function test_groups_are_counted_separately(): void
@@ -145,100 +177,9 @@ class WaitingListTest extends TestCase
         $this->upload($this->person('Ana'));
         $faculty = $this->person('Prof', 'faculty');
 
-        $this->assertFalse($this->upload($faculty)['waiting'], 'students being full does not affect faculty and staff');
+        $this->assertTrue($this->upload($faculty)['ok'], 'students being full does not affect faculty and staff');
         $this->assertTrue(WaitingList::isFull('student'));
         $this->assertFalse(WaitingList::isFull('employee'));
-    }
-
-    /* ------------------------------------------------------------- no ticket by itself */
-
-    public function test_approving_a_waiting_person_issues_no_ticket_and_no_ticket_email(): void
-    {
-        [$a, $b, $c] = [$this->person('Ana'), $this->person('Ben'), $this->person('Cora')];
-        $this->upload($a); $this->upload($b); $this->upload($c);
-
-        $this->approveAll($c);
-
-        $this->assertSame(0, $this->tickets($c));
-        $this->assertSame(0, $this->mailsTo($c, 'Your ticket is ready'));
-        $this->assertSame('waiting', app(\App\Services\TicketService::class)->sync($c->id)['state']);
-    }
-
-    public function test_a_freed_seat_or_a_bigger_allotment_never_gives_a_waiting_person_a_ticket(): void
-    {
-        [$a, $b, $c] = [$this->person('Ana'), $this->person('Ben'), $this->person('Cora')];
-        $this->upload($a); $this->upload($b); $this->upload($c);
-        $this->approveAll($a); $this->approveAll($c);
-        $this->assertSame(1, $this->tickets($a));
-
-        $this->actingAs($this->admin())->post(route('admin.settings.quotas'), ['quota' => ['student' => 3, 'employee' => 200, 'sponsor' => 300]]);
-        $this->assertSame(0, $this->tickets($c), 'a bigger allotment does not issue it');
-
-        app(AccountDeleter::class)->delete($b, null, false);
-        $this->assertSame(0, $this->tickets($c), 'neither does a seat that was freed');
-        $this->assertSame(2, WaitingList::openSeats('student'), 'but the seats are open for the SSC to release');
-    }
-
-    /* ------------------------------------------------------------- the SSC releases */
-
-    public function test_the_ssc_releases_the_longest_waiting_first_and_only_up_to_the_open_seats(): void
-    {
-        Setting::store('quota_student', '1');
-        [$a, $c, $d] = [$this->person('Ana'), $this->person('Cora'), $this->person('Dina')];
-        $this->upload($a);
-        $this->upload($c);
-        $this->travel(5)->minutes();
-        $this->upload($d);
-        $this->approveAll($c);                                  // Cora is already approved, Dina is not
-        $admin = $this->actingAs($this->admin());
-
-        // no open seat yet: nothing happens
-        $admin->post(route('admin.settings.release'), ['group' => 'student', 'count' => 3])->assertSessionHas('flash.type', 'error');
-        $this->assertSame(2, WaitingList::waitingFor('student'));
-
-        // raise the allotment to 2 (one open seat) and ask for 5: only one goes, and it is Cora
-        $admin->post(route('admin.settings.quotas'), ['quota' => ['student' => 2, 'employee' => 200, 'sponsor' => 300]]);
-        $admin->post(route('admin.settings.release'), ['group' => 'student', 'count' => 5])->assertSessionHas('flash.type', 'success');
-
-        $this->assertNull($c->fresh()->waitlisted_at);
-        $this->assertNotNull($d->fresh()->waitlisted_at);
-        $this->assertSame(1, $this->tickets($c), 'already approved, so the ticket comes at once');
-        $this->assertSame(1, $this->mailsTo($c, 'Your ticket is ready'));
-
-        // Dina is released later; her files are not approved yet, so she is told so and has no ticket yet
-        $admin->post(route('admin.settings.quotas'), ['quota' => ['student' => 3, 'employee' => 200, 'sponsor' => 300]]);
-        $admin->post(route('admin.settings.release'), ['group' => 'student', 'count' => 1]);
-        $this->assertNull($d->fresh()->waitlisted_at);
-        $this->assertSame(0, $this->tickets($d));
-        $this->assertSame(1, $this->mailsTo($d, 'The SSC opened more tickets for your group'));
-
-        $this->approveAll($d);
-        $this->assertSame(1, $this->tickets($d), 'her ticket comes with her last approval, as for everyone');
-    }
-
-    public function test_disabling_an_account_gives_its_seat_back_to_be_released(): void
-    {
-        [$a, $b, $c] = [$this->person('Ana'), $this->person('Ben'), $this->person('Cora')];
-        $this->upload($a); $this->upload($b); $this->upload($c);
-        $this->assertSame(0, WaitingList::openSeats('student'));
-
-        $b->forceFill(['status' => 'disabled'])->save();
-
-        $this->assertSame(1, WaitingList::openSeats('student'), 'the disabled account no longer holds a seat');
-        $this->assertSame(1, WaitingList::waitingFor('student'));
-        $this->assertSame(1, app(WaitingList::class)->release('student', 5)['released']);
-    }
-
-    public function test_only_ssc_admins_can_release_seats(): void
-    {
-        Setting::store('quota_student', '1');
-        [$a, $c] = [$this->person('Ana'), $this->person('Cora')];
-        $this->upload($a); $this->upload($c);
-        Setting::store('quota_student', '2');
-
-        $this->actingAs($a)->post(route('admin.settings.release'), ['group' => 'student', 'count' => 1]);
-
-        $this->assertNotNull($c->fresh()->waitlisted_at);
     }
 
     public function test_the_allotment_cannot_be_cut_below_the_people_who_finished_uploading(): void
@@ -252,36 +193,61 @@ class WaitingListTest extends TestCase
         $this->assertSame(2, \App\Services\TicketQuota::limit('student'));
     }
 
-    /* ------------------------------------------------------------- what people and the SSC see */
+    /* ------------------------------------------------------------- people waitlisted before, released by the SSC */
 
-    public function test_people_see_an_honest_notice_and_no_false_hope(): void
+    public function test_the_ssc_releases_the_longest_waiting_first_and_only_up_to_the_open_seats(): void
     {
-        [$a, $b, $c, $d] = [$this->person('Ana'), $this->person('Ben'), $this->person('Cora'), $this->person('Dina')];
-        $this->upload($a); $this->upload($b); $this->upload($c);
-        $this->approveAll($a);
-
-        // finished after it filled up
-        $html = $this->actingAs($c)->get(route('dashboard'))->assertOk()->assertSee('The tickets for your group are full')->assertSee('cannot promise you a ticket')->getContent();
-        $this->assertStringNotContainsString('next in line', $html);
-        $this->actingAs($c)->get(route('ticket'))->assertOk()->assertSee('cannot promise you a ticket')->assertDontSee('next in line');
-
-        // has not uploaded yet, group already full: told before they start
-        $this->actingAs($d)->get(route('dashboard'))->assertOk()->assertSee('The tickets for your group are full')->assertSee('You can still upload your files');
-
-        // someone with a seat sees nothing of this
-        $this->actingAs($a)->get(route('dashboard'))->assertOk()->assertDontSee('The tickets for your group are full');
-    }
-
-    public function test_the_ssc_sees_who_is_waiting_and_can_filter_for_them(): void
-    {
-        [$a, $b, $c] = [$this->person('Ana Seated'), $this->person('Ben Seated'), $this->person('Cora Waiting')];
-        $this->upload($a); $this->upload($b); $this->upload($c);
+        Setting::store('quota_student', '1');
+        $a = $this->person('Ana');
+        $this->upload($a);
+        $c = $this->waitlisted('Cora');
+        $this->travel(5)->minutes();
+        $d = $this->waitlisted('Dina');
+        $d->forceFill(['waitlisted_at' => now()])->save();
+        $this->approveAll($c);
         $admin = $this->actingAs($this->admin());
 
-        $admin->get(route('admin.registrations', ['type' => 'student']))->assertOk()->assertSee('Waiting for SSC')->assertSee('Waiting for SSC (tickets full)');
-        $admin->get(route('admin.registrations', ['type' => 'student', 'ticket' => 'waiting']))->assertOk()
-            ->assertSee('Cora Waiting')->assertDontSee('Ana Seated')->assertDontSee('Ben Seated');
-        $admin->get(route('admin.documents.student', $c->id))->assertOk()->assertSee('Waiting for SSC');
-        $admin->get(route('admin.settings'))->assertOk()->assertSee('Waiting for the SSC (tickets full)')->assertSee('2 of 2 seats spoken for')->assertSee('Students (0 unused)');
+        $admin->post(route('admin.settings.release'), ['group' => 'student', 'count' => 3])->assertSessionHas('flash.type', 'error');
+        $this->assertSame(2, WaitingList::waitingFor('student'));
+
+        $admin->post(route('admin.settings.quotas'), ['quota' => ['student' => 2, 'employee' => 200, 'sponsor' => 300]]);
+        $admin->post(route('admin.settings.release'), ['group' => 'student', 'count' => 5])->assertSessionHas('flash.type', 'success');
+
+        $this->assertNull($c->fresh()->waitlisted_at);
+        $this->assertNotNull($d->fresh()->waitlisted_at);
+        $this->assertSame(1, $this->tickets($c), 'already approved, so the ticket comes at once');
+        $this->assertSame(1, $this->mailsTo($c, 'Your ticket is ready'));
+    }
+
+    public function test_approving_a_waitlisted_person_issues_no_ticket(): void
+    {
+        $c = $this->waitlisted('Cora');
+        $this->approveAll($c);
+
+        $this->assertSame(0, $this->tickets($c));
+        $this->assertSame('waiting', app(\App\Services\TicketService::class)->sync($c->id)['state']);
+    }
+
+    public function test_only_ssc_admins_can_release_seats(): void
+    {
+        $a = $this->person('Ana');
+        $c = $this->waitlisted('Cora');
+
+        $this->actingAs($a)->post(route('admin.settings.release'), ['group' => 'student', 'count' => 1]);
+
+        $this->assertNotNull($c->fresh()->waitlisted_at);
+    }
+
+    /* ------------------------------------------------------------- what people see */
+
+    public function test_a_person_without_a_seat_sees_that_uploads_are_closed_and_a_seated_person_sees_nothing(): void
+    {
+        [$a, $b, $d] = [$this->person('Ana'), $this->person('Ben'), $this->person('Dina')];
+        $this->upload($a); $this->upload($b);
+
+        $html = $this->actingAs($d)->get(route('dashboard'))->assertOk()->assertSee('The tickets for your group are full')->assertSee('Uploads are now closed')->getContent();
+        $this->assertStringNotContainsString('You can still upload', $html);
+
+        $this->actingAs($a->fresh())->get(route("dashboard"))->assertOk()->assertDontSee("The tickets for your group are full");
     }
 }

@@ -45,10 +45,6 @@ class DocumentController extends Controller
         }
 
         // All three are in: show the "now wait for SSC" pop-up instead of the plain toast.
-        if (!empty($result['waiting'])) {
-            return redirect()->route('documents.index')->with('flash', flash('warning', 'Your files are in, but the tickets are full', e($result['message'])));
-        }
-
         if (!empty($result['all_in'])) {
             return redirect()->route('documents.index')->with('submitted_popup', true)->with('doc_warnings', $result['warnings'] ?? []);
         }

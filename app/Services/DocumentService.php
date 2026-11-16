@@ -146,6 +146,10 @@ class DocumentService
         if (($this->tickets->ticketFor($user->id)['status'] ?? '') === 'used') {
             return $fail('Your ticket has already been used at the gate.');
         }
+        $closed = 'Uploads are closed: all the tickets for your group are already taken. You cannot upload files anymore, and no ticket can be promised.';
+        if (WaitingList::uploadsClosedFor((int) $user->id, $user->member_type)) {   // quick check; the exact one is under the lock below
+            return $fail($closed);
+        }
 
         $stored = $this->store($file, $label, in_array($type, (array) config('ereserve.image_documents'), true));
         if (!$stored['ok']) {
@@ -163,8 +167,16 @@ class DocumentService
         // The row is locked while we decide, so an approval that lands at the
         // same moment cannot be overwritten by this upload.
         $previous = null;
+        DB::table('sequences')->insertOrIgnore(['seq_key' => 'ticket', 'current_value' => 0]);   // outside the transaction, like tickets do
         try {
             $saved = DB::transaction(function () use ($user, $type, $stored, $verdict, &$previous) {
+                // The same lock tickets use: two people finishing at once cannot both take the last seat.
+                DB::table('sequences')->where('seq_key', 'ticket')->lockForUpdate()->first();
+
+                if (WaitingList::uploadsClosedFor((int) $user->id, $user->member_type)) {
+                    return 'closed';
+                }
+
                 $row = Document::where('user_id', $user->id)->where('doc_type', $type)->lockForUpdate()->first();
 
                 if ($row && $row->status === 'approved') {
@@ -190,6 +202,11 @@ class DocumentService
                     ]
                 );
 
+                // The first time everything is in, their seat is spoken for (still under the lock).
+                if (app(WaitingList::class)->hasUploadedAll((int) $user->id, $user->member_type)) {
+                    DB::table('users')->where('id', $user->id)->whereNull('upload_completed_at')->update(['upload_completed_at' => now()]);
+                }
+
                 return true;
             });
         } catch (\Throwable $e) {
@@ -197,6 +214,11 @@ class DocumentService
             throw $e;
         }
 
+        if ($saved === 'closed') {
+            Storage::disk('local')->delete('documents/' . $stored['stored']);
+
+            return $fail($closed);
+        }
         if (!$saved) {
             Storage::disk('local')->delete('documents/' . $stored['stored']);
 
@@ -211,15 +233,10 @@ class DocumentService
         $this->tickets->forget();
         Audit::log('document.upload', 'document', $type, ['user_id' => $user->id, 'file' => $stored['original']]);
 
-        // The first time everything is in: their seat is spoken for, or the group is already full and they
-        // are told so (and promised nothing).
-        $waiting = app(WaitingList::class)->afterUpload($user);
-
         $sync = $this->tickets->sync($user->id);
 
         $progress = $this->tickets->progress($user->id);
         $message  = match (true) {
-            $waiting                      => 'Your files are in, but the tickets for your group are already full. We cannot promise you a ticket. Please wait for the SSC’s announcement.',
             $sync['state'] === 'issued'   => 'Your ticket number is ' . $sync['ticket_no'] . '.',
             $sync['state'] === 'restored' => 'Thanks — your ticket ' . $sync['ticket_no'] . ' is valid again.',
             $progress['missing'] === []   => $label . ' uploaded.' . ($progress['total'] > 1 ? ' All ' . $progress['total'] . ' are in.' : '') . ' SSC will review ' . ($progress['total'] > 1 ? 'them' : 'it') . ', and your ticket is issued once approved.',
@@ -227,7 +244,7 @@ class DocumentService
         };
 
         // Everything is in and nothing is waiting on the student: tell them to sit tight.
-        $allIn = $progress['missing'] === [] && !$progress['blocked'] && !$progress['all_approved'] && !$waiting;
+        $allIn = $progress['missing'] === [] && !$progress['blocked'] && !$progress['all_approved'];
         if ($allIn) {
             Notifier::submitted((int) $user->id);
         }
@@ -238,7 +255,7 @@ class DocumentService
             array_filter($verdict['checks'], fn ($c) => ($c['s'] ?? '') === 'warn' && !empty($c['student']))
         ));
 
-        return ['ok' => true, 'message' => $message, 'ticket' => $sync['state'], 'all_in' => $allIn, 'waiting' => $waiting, 'warnings' => $warnings];
+        return ['ok' => true, 'message' => $message, 'ticket' => $sync['state'], 'all_in' => $allIn, 'warnings' => $warnings];
     }
 
     /**

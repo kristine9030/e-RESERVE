@@ -227,7 +227,7 @@ function ticket_waiting_state(): ?string
         if ($u->waitlisted_at !== null) {
             return 'waiting';
         }
-        if ($u->upload_completed_at === null && \App\Services\WaitingList::isFull(\App\Services\WaitingList::groupOf($u->member_type)) && !tickets()->ticketFor((int) $u->id)) {
+        if (\App\Services\WaitingList::uploadsClosedFor((int) $u->id, $u->member_type)) {
             return 'full';
         }
 

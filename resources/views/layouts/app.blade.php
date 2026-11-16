@@ -135,7 +135,7 @@
                             @if ($waitState === 'waiting')
                                 We received your files, but we cannot promise you a ticket. Please wait for the SSC’s announcement. If tickets become available, the SSC will announce it.
                             @else
-                                You can still upload your files, but we cannot promise you a ticket. Please wait for the SSC’s announcement.
+                                Uploads are now closed, so you can no longer upload your files. Please wait for the SSC’s announcement.
                             @endif
                         </span>
                     </div>

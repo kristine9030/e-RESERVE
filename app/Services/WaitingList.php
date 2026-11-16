@@ -7,13 +7,15 @@ use App\Support\DocumentSets;
 use Illuminate\Support\Facades\DB;
 
 /**
- * "The tickets are full" without false hope.
+ * Seat counting, and closing uploads when a group is full.
  *
- * A seat in a group is spoken for as soon as a person has uploaded EVERY file they need (even before the
- * SSC approves them). When a group's allotment is already spoken for, the next person to finish uploading
- * is told the tickets are full, is promised nothing, and waits for the SSC's announcement. They are put
- * on the waiting list and are never given a ticket automatically: not when a seat frees up, not when
- * the allotment is raised. Only the SSC releases seats, in Site Settings.
+ * A seat in a group is spoken for as soon as a person uploads their FIRST file (even before the SSC approves
+ * them), so they can always finish what they started. Once a group's allotment is all spoken for, uploads close for everyone who does not
+ * already hold a seat: there is no waiting list, so nobody is left hoping. (A seat freed by a disabled or
+ * deleted account simply reopens uploads.)
+ *
+ * The waiting-list pieces below (waitingFor, release) remain only for people who were waitlisted before
+ * uploads were closed; nobody new is added to it.
  */
 class WaitingList
 {
@@ -35,11 +37,12 @@ class WaitingList
         return array_diff(DocumentSets::keysFor($memberType), $have) === [];
     }
 
-    /** People in a group who finished uploading and are NOT on the waiting list (their seat is spoken for). */
+    /** People in a group who have started uploading (at least one file) and are NOT on the waiting list: their seat is spoken for. */
     public static function reservedFor(string $group): int
     {
         return (int) DB::table('users as u')->where('u.role', 'student')->where('u.status', 'active')   // a disabled account gives its seat back
-            ->whereNotNull('u.upload_completed_at')->whereNull('u.waitlisted_at')
+            ->where(fn ($w) => $w->whereNotNull('u.upload_completed_at')->orWhereExists(fn ($d) => $d->from('documents as d')->whereColumn('d.user_id', 'u.id')->select(DB::raw(1))))
+            ->whereNull('u.waitlisted_at')
             ->whereRaw(TicketQuota::GROUP_SQL . ' = ?', [$group])->count();
     }
 
@@ -63,42 +66,24 @@ class WaitingList
     }
 
     /**
-     * Called when someone saves a file. The first time they have uploaded everything, either their seat is
-     * spoken for or, if the group is already full, they go on the waiting list and are told so.
-     *
-     * @return bool true when they were put on the waiting list
+     * Are uploads closed for this person? Yes once their group's seats (or the venue) are all spoken for and
+     * they do not already hold one. Nobody is put on a waiting list any more: they simply cannot upload.
+     * Someone who already started uploading, has a ticket, or was waitlisted earlier can still upload and replace files.
+     * Call it while holding the `sequences.ticket` lock when the answer must be exact.
      */
-    public function afterUpload(User $user): bool
+    public static function uploadsClosedFor(int $userId, ?string $memberType): bool
     {
-        $row = DB::table('users')->where('id', $user->id)->first(['upload_completed_at', 'waitlisted_at', 'member_type']);
-        if (!$row || $row->upload_completed_at !== null || $row->waitlisted_at !== null || !$this->hasUploadedAll((int) $user->id, $row->member_type)) {
+        $row = DB::table('users')->where('id', $userId)->first(['upload_completed_at', 'waitlisted_at']);
+        if (($row->upload_completed_at ?? null) !== null || ($row->waitlisted_at ?? null) !== null
+            || DB::table('documents')->where('user_id', $userId)->exists()   // started already: their seat is held, let them finish
+            || DB::table('tickets')->where('user_id', $userId)->exists()) {
             return false;
         }
 
-        $group = self::groupOf($row->member_type);
-        DB::table('sequences')->insertOrIgnore(['seq_key' => 'ticket', 'current_value' => 0]);
+        $group = self::groupOf($memberType);
 
-        $waiting = DB::transaction(function () use ($user, $group) {
-            // the same lock tickets use: two people finishing at once cannot both take the last seat
-            DB::table('sequences')->where('seq_key', 'ticket')->lockForUpdate()->first();
-
-            $now = DB::table('users')->where('id', $user->id)->first(['upload_completed_at', 'waitlisted_at']);
-            if ($now->upload_completed_at !== null || $now->waitlisted_at !== null) {
-                return false;
-            }
-
-            $full = self::reservedFor($group) >= TicketQuota::limit($group) || self::totalReserved() >= TicketQuota::capacity();
-            DB::table('users')->where('id', $user->id)->update(['upload_completed_at' => now(), 'waitlisted_at' => $full ? now() : null]);
-
-            return $full;
-        }, 5);
-
-        if ($waiting) {
-            Audit::log('waiting.add', 'user', (string) $user->id, ['group' => $group, 'student' => $user->name]);
-            Notifier::ticketsFull((int) $user->id);
-        }
-
-        return $waiting;
+        return max(self::reservedFor($group), TicketQuota::takenFor($group)) >= TicketQuota::limit($group)
+            || self::totalReserved() >= TicketQuota::capacity();
     }
 
     private static function totalReserved(): int
