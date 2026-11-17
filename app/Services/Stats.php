@@ -312,16 +312,20 @@ class Stats
      */
     public function nextWaitingStudent(int $currentId, ?string $college = null): ?int
     {
-        $since = 'SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id AND d.status = "submitted"';
+        // A missing upload time counts as the very oldest, so such students still have a fixed place
+        // in the queue (NULL cannot be compared with > and would make "Next" fall back to the top).
+        $epoch = '1970-01-01 00:00:00';
+        $since = 'SELECT COALESCE(MIN(d.uploaded_at), "' . $epoch . '") FROM documents d WHERE d.user_id = u.id AND d.status = "submitted"';
         $base = fn () => DB::table('users as u')->where('u.role', 'student')
             ->whereRaw('EXISTS (SELECT 1 FROM documents d WHERE d.user_id = u.id AND d.status = "submitted")')
             ->when($college && array_key_exists($college, config('ereserve.colleges')), fn ($q) => $q->where('u.college_code', $college))
             ->select('u.id')->selectSub($since, 'ws')->orderBy('ws')->orderBy('u.id');
 
         // Where the current student sits in the queue (null when they have nothing waiting any more).
-        $curWs = DB::table('documents')->where('user_id', $currentId)->where('status', 'submitted')->min('uploaded_at');
+        $waiting = DB::table('documents')->where('user_id', $currentId)->where('status', 'submitted');
+        $curWs   = (clone $waiting)->min('uploaded_at') ?? $epoch;
 
-        if ($curWs !== null) {
+        if ($waiting->exists()) {
             $after = $base()->whereRaw("(($since) > ? OR (($since) = ? AND u.id > ?))", [$curWs, $curWs, $currentId])->first();
             if ($after) {
                 return (int) $after->id;
