@@ -323,16 +323,21 @@ class Stats
 
         // Where the current student sits in the queue (null when they have nothing waiting any more).
         $waiting = DB::table('documents')->where('user_id', $currentId)->where('status', 'submitted');
-        $curWs   = (clone $waiting)->min('uploaded_at') ?? $epoch;
-
         if ($waiting->exists()) {
-            $after = $base()->whereRaw("(($since) > ? OR (($since) = ? AND u.id > ?))", [$curWs, $curWs, $currentId])->first();
-            if ($after) {
-                return (int) $after->id;
-            }
+            $curWs = (clone $waiting)->min('uploaded_at') ?? $epoch;
+        } else {
+            // Just approved/returned everything: they have left the queue, but "Next" must still go to
+            // whoever was behind them, so keep their old place (their latest upload) as the marker.
+            $curWs = DB::table('documents')->where('user_id', $currentId)->max('uploaded_at') ?? $epoch;
         }
 
-        // End of the queue, or the current student is already done: start again from the top.
+        $after = $base()->where('u.id', '<>', $currentId)
+            ->whereRaw("(($since) > ? OR (($since) = ? AND u.id > ?))", [$curWs, $curWs, $currentId])->first();
+        if ($after) {
+            return (int) $after->id;
+        }
+
+        // End of the queue: start again from the top.
         $first = $base()->where('u.id', '<>', $currentId)->first();
 
         return $first ? (int) $first->id : null;
