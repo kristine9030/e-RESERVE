@@ -167,8 +167,20 @@ class AdminController extends Controller
         $data = $this->stats->studentForReview((int) $user->id);
         abort_if($data === null, 404);
 
+        // Remember the students opened in this review session so "Previous" can step back to
+        // them, even after they were approved and left the waiting queue.
+        $trail = array_values(array_map('intval', (array) session('review_trail', [])));
+        $pos   = array_search((int) $user->id, $trail, true);
+        if ($pos === false) {
+            $trail[] = (int) $user->id;
+            $pos     = count($trail) - 1;
+        }
+        $previous = $pos > 0 ? (int) $trail[$pos - 1] : null;
+        session(['review_trail' => array_slice($trail, -100)]);
+
         return view('admin.student-review', $data + [
-            'next'    => $this->stats->nextWaitingStudent((int) $user->id, $request->query('college')),
+            'previous' => $previous,
+            'next'    =>$this->stats->nextWaitingStudent((int) $user->id, $request->query('college')),
             'college' => (string) $request->query('college', ''),
         ]);
     }

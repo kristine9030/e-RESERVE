@@ -63,6 +63,11 @@
                 </button>
             </form>
         @endif
+        @if ($previous)
+            <a href="{{ route('admin.documents.student', array_filter(['user' => $previous, 'college' => $college])) }}" class="btn btn-ghost btn-sm2">
+                <i class="fa-solid fa-arrow-left"></i> Previous student
+            </a>
+        @endif
         @if ($next)
             <a href="{{ route('admin.documents.student', array_filter(['user' => $next, 'college' => $college])) }}" class="btn btn-gold btn-sm2">
                 Next student <i class="fa-solid fa-arrow-right"></i>
@@ -190,6 +195,7 @@
         <h5 class="mb-1">Nothing left to review for {{ $user['name'] }}</h5>
         <p class="text-soft mb-3" style="font-size:.88rem;">Every uploaded document has a decision.</p>
         <div class="d-flex gap-2 justify-content-center flex-wrap">
+            @if ($previous)<a href="{{ route('admin.documents.student', array_filter(['user' => $previous, 'college' => $college])) }}" class="btn btn-ghost btn-sm2"><i class="fa-solid fa-arrow-left"></i> Previous student</a>@endif
             <a href="{{ $back }}" class="btn btn-ghost btn-sm2">Back to the queue</a>
             @if ($next)<a href="{{ route('admin.documents.student', array_filter(['user' => $next, 'college' => $college])) }}" class="btn btn-gold btn-sm2">Next student <i class="fa-solid fa-arrow-right"></i></a>@endif
         </div>
