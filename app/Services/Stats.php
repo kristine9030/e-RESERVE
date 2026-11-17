@@ -314,10 +314,12 @@ class Stats
             $q->where('u.college_code', $college);
         }
 
-        $id = $q->selectSub('SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id AND d.status = "submitted"', 'ws')
-            ->orderBy('ws')->orderBy('u.id')->value('u.id');
+        // Select the id explicitly: value() would return the first selected column (the date), not the id.
+        $row = $q->select('u.id')
+            ->selectSub('SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id AND d.status = "submitted"', 'ws')
+            ->orderBy('ws')->orderBy('u.id')->first();
 
-        return $id ? (int) $id : null;
+        return $row ? (int) $row->id : null;
     }
 
     /**
