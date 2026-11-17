@@ -305,21 +305,33 @@ class Stats
         return ['user' => (array) $u, 'docs' => $docs, 'ticket' => $ticket ? (array) $ticket : null];
     }
 
-    /** The student who has waited longest, other than $exceptId (for "next student"). */
-    public function nextWaitingStudent(int $exceptId, ?string $college = null): ?int
+    /**
+     * The next student in the review queue after $currentId (same order as the list: waiting
+     * longest first), so repeated "Next" walks the whole queue instead of bouncing between two.
+     * At the end of the queue it wraps to the first one; null only when nobody else is waiting.
+     */
+    public function nextWaitingStudent(int $currentId, ?string $college = null): ?int
     {
-        $q = DB::table('users as u')->where('u.role', 'student')->where('u.id', '<>', $exceptId)
-            ->whereRaw('EXISTS (SELECT 1 FROM documents d WHERE d.user_id = u.id AND d.status = "submitted")');
-        if ($college && array_key_exists($college, config('ereserve.colleges'))) {
-            $q->where('u.college_code', $college);
+        $since = 'SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id AND d.status = "submitted"';
+        $base = fn () => DB::table('users as u')->where('u.role', 'student')
+            ->whereRaw('EXISTS (SELECT 1 FROM documents d WHERE d.user_id = u.id AND d.status = "submitted")')
+            ->when($college && array_key_exists($college, config('ereserve.colleges')), fn ($q) => $q->where('u.college_code', $college))
+            ->select('u.id')->selectSub($since, 'ws')->orderBy('ws')->orderBy('u.id');
+
+        // Where the current student sits in the queue (null when they have nothing waiting any more).
+        $curWs = DB::table('documents')->where('user_id', $currentId)->where('status', 'submitted')->min('uploaded_at');
+
+        if ($curWs !== null) {
+            $after = $base()->whereRaw("(($since) > ? OR (($since) = ? AND u.id > ?))", [$curWs, $curWs, $currentId])->first();
+            if ($after) {
+                return (int) $after->id;
+            }
         }
 
-        // Select the id explicitly: value() would return the first selected column (the date), not the id.
-        $row = $q->select('u.id')
-            ->selectSub('SELECT MIN(d.uploaded_at) FROM documents d WHERE d.user_id = u.id AND d.status = "submitted"', 'ws')
-            ->orderBy('ws')->orderBy('u.id')->first();
+        // End of the queue, or the current student is already done: start again from the top.
+        $first = $base()->where('u.id', '<>', $currentId)->first();
 
-        return $row ? (int) $row->id : null;
+        return $first ? (int) $first->id : null;
     }
 
     /**
