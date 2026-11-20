@@ -46,6 +46,20 @@
                     <td>{{ $u->last_login_at ? $u->last_login_at->diffForHumans() : 'Never' }}</td>
                     <td>{{ $u->created_at?->format('M j, Y') }}</td>
                     <td class="text-end text-nowrap">
+                        @if ($u->role === 'student')
+                            @php
+                                $mine  = $have[$u->id] ?? [];
+                                $open  = collect(\App\Support\DocumentSets::metaFor($u->member_type))->filter(fn ($m, $k) => ($mine[$k] ?? '') !== 'approved')->map(fn ($m, $k) => $m['label'] ?? $k);
+                                $total = count(\App\Support\DocumentSets::keysFor($u->member_type));
+                            @endphp
+                            @if ($open->isNotEmpty())
+                                <button type="button" class="sa-btn sm js-upload" title="Upload files for this person" aria-label="Upload files for {{ $u->name }}"
+                                        data-name="{{ $u->name }}" data-action="{{ route('superadmin.users.documents', $u->id) }}"
+                                        data-info="{{ count($mine) }} of {{ $total }} uploaded" data-types="{{ $open->toJson() }}">
+                                    <i class="fa-solid fa-upload"></i> Files <small>{{ count($mine) }}/{{ $total }}</small>
+                                </button>
+                            @endif
+                        @endif
                         @if ($u->id !== auth()->id())
                             <form method="post" action="{{ route('superadmin.users.reset', $u->id) }}" class="d-inline">@csrf
                                 <button class="sa-btn sm" type="submit" title="Reset password" aria-label="Reset password for {{ $u->name }}"
@@ -117,8 +131,43 @@
         </form>
     </div>
 </div>
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <form method="post" id="uploadForm" enctype="multipart/form-data" class="modal-content" style="border:0;border-radius:20px;">
+            @csrf
+            <div class="modal-header border-0"><h5 class="modal-title">Upload files</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            <div class="modal-body pt-0">
+                <p class="mb-1"><b id="up-name"></b> <span class="text-muted small" id="up-info"></span></p>
+                <p class="text-muted small">The files are checked like any other upload and the time saved is right now. The activity log records you and the reason.</p>
+                <div id="up-fields"></div>
+                <label class="form-label small fw-bold mt-3" for="up-reason">Reason</label>
+                <input type="text" class="form-control" id="up-reason" name="reason" maxlength="250" minlength="5" required placeholder="e.g. SSC head approved this exception">
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="sa-btn" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="sa-btn primary"><i class="fa-solid fa-upload"></i> Save files</button>
+            </div>
+        </form>
+    </div>
+</div>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.js-upload').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var types = JSON.parse(btn.dataset.types), box = document.getElementById('up-fields');
+                document.getElementById('uploadForm').action = btn.dataset.action;
+                document.getElementById('up-name').textContent = btn.dataset.name;
+                document.getElementById('up-info').textContent = '· ' + btn.dataset.info;
+                box.innerHTML = '';
+                Object.keys(types).forEach(function (k) {
+                    var label = document.createElement('label'), input = document.createElement('input');
+                    label.className = 'form-label small fw-bold mt-2'; label.textContent = types[k];
+                    input.type = 'file'; input.name = 'files[' + k + ']'; input.accept = 'application/pdf,image/*'; input.className = 'form-control form-control-sm';
+                    box.appendChild(label); box.appendChild(input);
+                });
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('uploadModal')).show();
+            });
+        });
         var kind = document.getElementById('ad-kind'), box = document.getElementById('ad-idbox'), lab = document.getElementById('ad-idlabel'), inp = document.getElementById('ad-id');
         function sync() {
             var k = kind.value, student = k === 'student', emp = ['faculty', 'staff'].indexOf(k) > -1, sponsor = k === 'sponsor';

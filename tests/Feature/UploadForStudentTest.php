@@ -25,7 +25,7 @@ class UploadForStudentTest extends TestCase
     private function admin(): User
     {
         $a = User::create(['email' => 'admin@g.batstate-u.edu.ph', 'name' => 'SSC Admin', 'password' => 'Test-pass-123']);
-        $a->forceFill(['role' => 'admin', 'status' => 'active', 'email_verified_at' => now()])->save();
+        $a->forceFill(['role' => 'superadmin', 'status' => 'active', 'email_verified_at' => now()])->save();
 
         return $a;
     }
@@ -62,13 +62,13 @@ class UploadForStudentTest extends TestCase
         return ['waiver' => UploadedFile::fake()->createWithContent('w.pdf', $this->pdf(str_repeat('Waiver sample ', 20)))];
     }
 
-    public function test_the_button_saves_files_with_the_real_time_and_logs_who_did_it(): void
+    public function test_the_super_admin_saves_files_with_the_real_time_and_logs_who_did_it(): void
     {
         Mail::fake();
         Storage::fake('local');
         $s = $this->student(2);
 
-        $this->actingAs($this->admin())->post(route('admin.documents.upload-for', $s->id), [
+        $this->actingAs($this->admin())->post(route('superadmin.users.documents', $s->id), [
             'files' => $this->files(), 'reason' => 'SSC head approved this exception',
         ])->assertSessionHas('flash');
 
@@ -78,15 +78,27 @@ class UploadForStudentTest extends TestCase
         $this->assertDatabaseHas('audit_log', ['action' => 'document.upload_for_student', 'entity_id' => (string) $s->id]);
     }
 
-    public function test_it_needs_a_reason_and_only_staff_can_do_it(): void
+    public function test_the_users_page_shows_the_upload_button_for_a_student_with_no_files(): void
+    {
+        $s = $this->student(4);
+        $this->actingAs($this->admin())->get(route('superadmin.users', ['q' => $s->email]))
+            ->assertOk()->assertSee('js-upload', false)->assertSee('0/3', false);
+    }
+
+    public function test_it_needs_a_reason_and_only_a_super_admin_can_do_it(): void
     {
         Storage::fake('local');
         $s = $this->student(3);
 
-        $this->actingAs($this->admin())->post(route('admin.documents.upload-for', $s->id), ['files' => $this->files(), 'reason' => ''])->assertSessionHas('flash');
+        $this->actingAs($this->admin())->post(route('superadmin.users.documents', $s->id), ['files' => $this->files(), 'reason' => ''])->assertSessionHas('flash');
         $this->assertSame(0, DB::table('documents')->where('user_id', $s->id)->count());
 
-        $this->actingAs($s)->post(route('admin.documents.upload-for', $s->id), ['files' => $this->files(), 'reason' => 'let me in please'])->assertRedirect();
+        $ssc = User::create(['email' => 'ssc@g.batstate-u.edu.ph', 'name' => 'SSC Admin', 'password' => 'Test-pass-123']);
+        $ssc->forceFill(['role' => 'admin', 'status' => 'active', 'email_verified_at' => now()])->save();
+        $this->actingAs($ssc)->post(route('superadmin.users.documents', $s->id), ['files' => $this->files(), 'reason' => 'ssc should not'])->assertNotFound();
+        $this->assertSame(0, DB::table('documents')->where('user_id', $s->id)->count());
+
+        $this->actingAs($s)->post(route('superadmin.users.documents', $s->id), ['files' => $this->files(), 'reason' => 'let me in please'])->assertNotFound();
         $this->assertSame(0, DB::table('documents')->where('user_id', $s->id)->count());
     }
 }

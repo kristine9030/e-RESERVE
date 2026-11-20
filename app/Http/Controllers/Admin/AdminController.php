@@ -185,24 +185,6 @@ class AdminController extends Controller
         ]);
     }
 
-    /** Staff exception: put a student's files in for them. Recorded in the audit log. */
-    public function uploadForStudent(Request $request, User $user, \App\Services\DocumentService $documents)
-    {
-        abort_if($user->isStaff(), 403);
-        abort_unless($request->user()->isAdmin(), 403);
-
-        $files = [];
-        foreach (\App\Support\DocumentSets::keysFor($user->member_type) as $type) {
-            if ($f = $request->file('files.' . $type)) {
-                $files[$type] = $f;
-            }
-        }
-
-        $r = $documents->submitForStudent((string) $request->user()->name, $user, $files, (string) $request->input('reason', ''));
-
-        return back()->with('flash', flash($r['ok'] ? 'success' : 'error', $r['ok'] ? 'Files saved' : 'Not saved', e($r['message'])));
-    }
-
     /**
      * Approve several documents in one go. Each one still goes through the same
      * locked review, so a file replaced since the page loaded is skipped, not approved.

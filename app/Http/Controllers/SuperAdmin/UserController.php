@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AccountService;
 use App\Services\Audit;
+use App\Services\DocumentService;
 use App\Services\TicketService;
+use App\Support\DocumentSets;
 use App\Support\Sponsorship;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -88,7 +90,12 @@ class UserController extends Controller
     {
         $users = $this->scope($request)->orderByDesc('created_at')->orderByDesc('id')->paginate(25)->withQueryString();
 
+        // Which documents each person on this page has, so the upload form can offer only what is still open.
+        $have = DB::table('documents')->whereIn('user_id', $users->pluck('id'))->get(['user_id', 'doc_type', 'status'])
+            ->groupBy('user_id')->map(fn ($rows) => $rows->pluck('status', 'doc_type')->all());
+
         return view('superadmin.users', [
+            'have'   => $have,
             'users'  => $users,
             'roles'  => self::roleCounts(),
             'total'  => User::count(),
@@ -173,6 +180,23 @@ class UserController extends Controller
             '<strong>' . e($name) . '</strong> · ' . e(self::KINDS[$kind][0]) . '<br>'
             . 'Temporary password' . ($generated ? ' (shown once)' : '') . ': <code>' . e($password) . '</code><br>'
             . 'They must choose their own password the first time they sign in.'));
+    }
+
+    /** Put a student's files in for them (super admin only). Recorded in the activity log. */
+    public function uploadDocuments(Request $request, User $user, DocumentService $documents)
+    {
+        abort_if($user->isStaff(), 403);
+
+        $files = [];
+        foreach (DocumentSets::keysFor($user->member_type) as $type) {
+            if ($f = $request->file('files.' . $type)) {
+                $files[$type] = $f;
+            }
+        }
+
+        $r = $documents->submitForStudent((string) $request->user()->name, $user, $files, (string) $request->input('reason', ''));
+
+        return back()->with('flash', flash($r['ok'] ? 'success' : 'error', $r['ok'] ? 'Files saved' : 'Not saved', e($r['message'])));
     }
 
     public function reset(User $user)

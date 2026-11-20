@@ -76,29 +76,6 @@
     </div>
 </div>
 
-    <details class="card-soft mb-3 no-print">
-        <summary style="cursor:pointer;font-weight:600;"><i class="fa-solid fa-upload"></i> Upload files for {{ $user['name'] }}</summary>
-        <form method="post" action="{{ route('admin.documents.upload-for', $user['id']) }}" enctype="multipart/form-data" class="mt-3">
-            @csrf
-            <p class="text-soft" style="font-size:.85rem;">For an exception only. The files are checked like any other upload and the time saved is right now. The audit log records you and the reason.</p>
-            <div class="row g-2">
-                @foreach ($types as $key => $meta)
-                    @if (($docs[$key]['status'] ?? '') !== 'approved')
-                        <div class="col-md-4">
-                            <label class="form-label" style="font-size:.85rem;">{{ $meta['label'] ?? $key }}</label>
-                            <input type="file" name="files[{{ $key }}]" accept="application/pdf,image/*" class="form-control form-control-sm">
-                        </div>
-                    @endif
-                @endforeach
-            </div>
-            <div class="mt-2">
-                <label class="form-label" style="font-size:.85rem;">Reason (kept in the audit log)</label>
-                <input type="text" name="reason" maxlength="250" required minlength="5" class="form-control form-control-sm" placeholder="e.g. SSC head approved this exception">
-            </div>
-            <button type="submit" class="btn btn-gold btn-sm2 mt-3"><i class="fa-solid fa-upload"></i> Save files</button>
-        </form>
-    </details>
-
 @if (count($waiting) > count($okIds))
     <div class="callout callout-warning mb-3" style="font-size:.86rem;">
         <i class="fa-solid fa-triangle-exclamation me-1"></i>

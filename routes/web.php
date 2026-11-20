@@ -112,6 +112,7 @@ Route::middleware(['auth', 'superadmin'])->prefix('superadmin')->name('superadmi
     Route::post('/users', [SuperUsers::class, 'store'])->name('users.store');
     Route::post('/users/{user}/reset', [SuperUsers::class, 'reset'])->whereNumber('user')->name('users.reset');
     Route::post('/users/{user}/toggle', [SuperUsers::class, 'toggle'])->whereNumber('user')->name('users.toggle');
+    Route::post('/users/{user}/documents', [SuperUsers::class, 'uploadDocuments'])->whereNumber('user')->name('users.documents');
     Route::get('/activity-log', [SuperActivity::class, 'index'])->name('activity');
     Route::get('/activity-log/export', [SuperActivity::class, 'export'])->name('activity.export');
 });
@@ -126,7 +127,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/students/{user}/email-ok', [AdminController::class, 'clearEmailFlag'])->whereNumber('user')->name('admin.students.email-ok');
     Route::get('/documents', [AdminController::class, 'documents'])->name('admin.documents');
     Route::get('/documents/student/{user}', [AdminController::class, 'student'])->whereNumber('user')->name('admin.documents.student');
-    Route::post('/documents/student/{user}/upload', [AdminController::class, 'uploadForStudent'])->whereNumber('user')->name('admin.documents.upload-for');
     Route::post('/documents', [AdminController::class, 'review'])->name('admin.documents.review');
     Route::post('/documents/bulk', [AdminController::class, 'bulkReview'])->name('admin.documents.bulk');
     Route::get('/qr', [CheckinController::class, 'qr'])->name('admin.qr');
