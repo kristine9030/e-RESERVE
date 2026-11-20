@@ -259,6 +259,39 @@ class DocumentService
     }
 
     /**
+     * Staff puts files in for a student (an exception). The files go through the same checks and the
+     * real upload time is kept; the audit log records who did it and why.
+     *
+     * @param array<string,UploadedFile> $files doc type => file
+     * @return array{ok:bool,message:string}
+     */
+    public function submitForStudent(string $by, User $student, array $files, string $reason): array
+    {
+        $reason = trim($reason);
+        if (mb_strlen($reason) < 5) {
+            return ['ok' => false, 'message' => 'Write a few words on why this exception is made. It goes in the audit log.'];
+        }
+        if ($files === []) {
+            return ['ok' => false, 'message' => 'Choose at least one file.'];
+        }
+
+        $done = [];
+        foreach ($files as $type => $file) {
+            $r = $this->submit($student, (string) $type, $file);
+            if (!$r['ok']) {
+                return ['ok' => false, 'message' => $r['message'] . ($done ? ' (Already saved: ' . implode(', ', $done) . '.)' : '')];
+            }
+            $done[] = (string) $type;
+        }
+
+        Audit::log('document.upload_for_student', 'user', (string) $student->id, [
+            'student' => $student->name, 'types' => $done, 'reason' => mb_substr($reason, 0, 250), 'by' => $by,
+        ]);
+
+        return ['ok' => true, 'message' => 'Saved ' . count($done) . ' file' . (count($done) === 1 ? '' : 's') . ' for ' . $student->name . '.'];
+    }
+
+    /**
      * Staff decision on one document.
      *
      * @return array{ok:bool,message:string}

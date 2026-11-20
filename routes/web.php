@@ -126,6 +126,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/students/{user}/email-ok', [AdminController::class, 'clearEmailFlag'])->whereNumber('user')->name('admin.students.email-ok');
     Route::get('/documents', [AdminController::class, 'documents'])->name('admin.documents');
     Route::get('/documents/student/{user}', [AdminController::class, 'student'])->whereNumber('user')->name('admin.documents.student');
+    Route::post('/documents/student/{user}/upload', [AdminController::class, 'uploadForStudent'])->whereNumber('user')->name('admin.documents.upload-for');
     Route::post('/documents', [AdminController::class, 'review'])->name('admin.documents.review');
     Route::post('/documents/bulk', [AdminController::class, 'bulkReview'])->name('admin.documents.bulk');
     Route::get('/qr', [CheckinController::class, 'qr'])->name('admin.qr');
