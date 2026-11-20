@@ -119,7 +119,7 @@ class DocumentService
      *
      * @return array{ok:bool,message:string,ticket:string}
      */
-    public function submit(User $user, string $type, ?UploadedFile $file): array
+    public function submit(User $user, string $type, ?UploadedFile $file, bool $byStaff = false): array
     {
         $fail = static fn(string $m) => ['ok' => false, 'message' => $m, 'ticket' => 'unchanged'];
 
@@ -147,7 +147,7 @@ class DocumentService
             return $fail('Your ticket has already been used at the gate.');
         }
         $closed = 'Uploads are closed: all the tickets for your group are already taken. You cannot upload files anymore, and no ticket can be promised.';
-        if (WaitingList::uploadsClosedFor((int) $user->id, $user->member_type)) {   // quick check; the exact one is under the lock below
+        if (!$byStaff && WaitingList::uploadsClosedFor((int) $user->id, $user->member_type)) {   // quick check; the exact one is under the lock below
             return $fail($closed);
         }
 
@@ -169,11 +169,11 @@ class DocumentService
         $previous = null;
         DB::table('sequences')->insertOrIgnore(['seq_key' => 'ticket', 'current_value' => 0]);   // outside the transaction, like tickets do
         try {
-            $saved = DB::transaction(function () use ($user, $type, $stored, $verdict, &$previous) {
+            $saved = DB::transaction(function () use ($user, $type, $stored, $verdict, &$previous, $byStaff) {
                 // The same lock tickets use: two people finishing at once cannot both take the last seat.
                 DB::table('sequences')->where('seq_key', 'ticket')->lockForUpdate()->first();
 
-                if (WaitingList::uploadsClosedFor((int) $user->id, $user->member_type)) {
+                if (!$byStaff && WaitingList::uploadsClosedFor((int) $user->id, $user->member_type)) {
                     return 'closed';
                 }
 
@@ -277,7 +277,7 @@ class DocumentService
 
         $done = [];
         foreach ($files as $type => $file) {
-            $r = $this->submit($student, (string) $type, $file);
+            $r = $this->submit($student, (string) $type, $file, byStaff: true);   // staff may upload even when the group is closed
             if (!$r['ok']) {
                 return ['ok' => false, 'message' => $r['message'] . ($done ? ' (Already saved: ' . implode(', ', $done) . '.)' : '')];
             }

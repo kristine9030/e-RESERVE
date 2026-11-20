@@ -85,6 +85,23 @@ class UploadForStudentTest extends TestCase
             ->assertOk()->assertSee('js-upload', false)->assertSee('0/3', false);
     }
 
+    public function test_it_works_when_the_group_is_closed_but_the_student_still_cannot(): void
+    {
+        Mail::fake();
+        Storage::fake('local');
+        \App\Services\TicketQuota::save(['student' => 1, 'employee' => 200, 'sponsor' => 300]);
+        $first = $this->student(1);
+        DB::table('documents')->insert(['user_id' => $first->id, 'doc_type' => 'waiver', 'original_name' => 'a.pdf', 'stored_name' => 'a', 'size_bytes' => 1, 'status' => 'submitted', 'uploaded_at' => now()]);
+        $late = $this->student(5);
+        $this->assertTrue(\App\Services\WaitingList::uploadsClosedFor($late->id, $late->member_type));
+
+        $this->actingAs($late)->post(route('documents.store'), ['doc_type' => 'waiver', 'document' => $this->files()['waiver']]);
+        $this->assertSame(0, DB::table('documents')->where('user_id', $late->id)->count(), 'a student is still turned away');
+
+        $this->actingAs($this->admin())->post(route('superadmin.users.documents', $late->id), ['files' => $this->files(), 'reason' => 'SSC head approved this exception']);
+        $this->assertSame(1, DB::table('documents')->where('user_id', $late->id)->count(), 'the super admin can still put the file in');
+    }
+
     public function test_it_needs_a_reason_and_only_a_super_admin_can_do_it(): void
     {
         Storage::fake('local');
