@@ -310,7 +310,22 @@ class Stats
      * longest first), so repeated "Next" walks the whole queue instead of bouncing between two.
      * At the end of the queue it wraps to the first one; null only when nobody else is waiting.
      */
-    public function nextWaitingStudent(int $currentId, ?string $college = null): ?int
+    /**
+     * Where a student sits in the review queue right now: when their oldest waiting file was uploaded.
+     * Null when nothing of theirs is waiting. The review page remembers this while the student is still
+     * open, so "Next" keeps working after their files are approved or returned.
+     */
+    public function queuePosition(int $userId): ?string
+    {
+        $waiting = DB::table('documents')->where('user_id', $userId)->where('status', 'submitted');
+        if (!$waiting->exists()) {
+            return null;
+        }
+
+        return (string) ((clone $waiting)->min('uploaded_at') ?? '1970-01-01 00:00:00');
+    }
+
+    public function nextWaitingStudent(int $currentId, ?string $college = null, ?string $mark = null): ?int
     {
         // A missing upload time counts as the very oldest, so such students still have a fixed place
         // in the queue (NULL cannot be compared with > and would make "Next" fall back to the top).
@@ -326,9 +341,10 @@ class Stats
         if ($waiting->exists()) {
             $curWs = (clone $waiting)->min('uploaded_at') ?? $epoch;
         } else {
-            // Just approved/returned everything: they have left the queue, but "Next" must still go to
-            // whoever was behind them, so keep their old place (their latest upload) as the marker.
-            $curWs = DB::table('documents')->where('user_id', $currentId)->max('uploaded_at') ?? $epoch;
+            // Everything of theirs was just decided, so they have left the queue. Use the place the review page
+            // remembered; failing that, their first upload (never their latest: a re-upload would make "Next"
+            // jump far ahead, or past the end and back to the top).
+            $curWs = $mark ?? DB::table('documents')->where('user_id', $currentId)->min('uploaded_at') ?? $epoch;
         }
 
         $after = $base()->where('u.id', '<>', $currentId)

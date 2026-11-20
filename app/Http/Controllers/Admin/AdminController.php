@@ -178,9 +178,20 @@ class AdminController extends Controller
         $previous = $pos > 0 ? (int) $trail[$pos - 1] : null;
         session(['review_trail' => array_slice($trail, -100)]);
 
+        // Remember this student's place in the queue while their files are still waiting, so that after
+        // you approve or return them "Next" carries on from the same spot (their files no longer count as waiting).
+        $marks = (array) session('review_marks', []);
+        $mark  = $this->stats->queuePosition((int) $user->id);
+        if ($mark !== null) {
+            $marks[(int) $user->id] = $mark;
+            session(['review_marks' => array_slice($marks, -200, null, true)]);
+        } else {
+            $mark = $marks[(int) $user->id] ?? null;
+        }
+
         return view('admin.student-review', $data + [
             'previous' => $previous,
-            'next'    =>$this->stats->nextWaitingStudent((int) $user->id, $request->query('college')),
+            'next'    => $this->stats->nextWaitingStudent((int) $user->id, $request->query('college'), $mark),
             'college' => (string) $request->query('college', ''),
         ]);
     }
