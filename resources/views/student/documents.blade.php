@@ -107,7 +107,7 @@
 
                 @if ($locked)
                     <div class="doc-locked"><i class="fa-solid fa-lock"></i>
-                        {{ $status === 'approved' ? 'Approved by SSC staff — this file is locked.' : (($ticket['status'] ?? '') === 'used' ? 'Your ticket has been used — files are locked.' : 'Uploads are closed — all the tickets for your group are taken.') }}
+                        {{ $status === 'approved' ? 'Approved by SSC staff — this file is locked.' : (($ticket['status'] ?? '') === 'used' ? 'Your ticket has been used — files are locked.' : 'Uploads are closed — the target number of tickets has been reached.') }}
                     </div>
                 @else
                     <label class="dropzone" for="file-{{ $key }}">

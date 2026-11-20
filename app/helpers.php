@@ -395,7 +395,7 @@ function tracking_timeline(): array
         ['key' => 'ticket', 'label' => 'Ticket Number Issued', 'icon' => 'fa-ticket',
          'desc' => $ticket ? 'Your ticket number is ' . $ticket['ticket_no'] . '.'
              : ($progress['all_approved']
-                 ? 'All the tickets for your group have been claimed. You will get one if a seat is released or SSC opens more.'
+                 ? 'The target number of tickets has been reached. You will get one if a seat is released or SSC opens more.'
                  : (count($docCfg) > 1 ? 'Issued once SSC approves all three documents.' : 'Issued once SSC approves your document.')),
          'stamp' => $ticket['issued_at'] ?? null, 'done' => $live],
         ['key' => 'gate', 'label' => 'Scanned at the Gate', 'icon' => 'fa-qrcode',

@@ -245,9 +245,9 @@ class WaitingListTest extends TestCase
         [$a, $b, $d] = [$this->person('Ana'), $this->person('Ben'), $this->person('Dina')];
         $this->upload($a); $this->upload($b);
 
-        $html = $this->actingAs($d)->get(route('dashboard'))->assertOk()->assertSee('The tickets for your group are full')->assertSee('Uploads are now closed')->getContent();
+        $html = $this->actingAs($d)->get(route('dashboard'))->assertOk()->assertSee('The target number of tickets has been reached')->assertSee('Uploads are now closed')->getContent();
         $this->assertStringNotContainsString('You can still upload', $html);
 
-        $this->actingAs($a->fresh())->get(route("dashboard"))->assertOk()->assertDontSee("The tickets for your group are full");
+        $this->actingAs($a->fresh())->get(route("dashboard"))->assertOk()->assertDontSee("The target number of tickets has been reached");
     }
 }

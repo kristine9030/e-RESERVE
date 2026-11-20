@@ -89,15 +89,15 @@ class StudentNotice extends Mailable implements ShouldQueue
         );
     }
 
-    /** Sent when someone finishes uploading after their group's tickets are already full. It promises nothing. */
+    /** Sent when someone finishes uploading after the target number of tickets has already been reached. It promises nothing. */
     public static function ticketsFull(string $name): self
     {
         return new self(
-            'The tickets for your group are full · ' . config('ereserve.event.name'),
+            'The target number of tickets has been reached · ' . config('ereserve.event.name'),
             $name,
-            'The tickets for your group are full',
+            'The target number of tickets has been reached',
             [
-                'We received your files, but all the tickets for your group are already taken.',
+                'We received your files, but the target number of tickets has already been reached.',
                 'We cannot promise you a ticket. Please wait for the SSC’s announcement. If tickets become available, the SSC will announce it.',
                 'Your account and files stay in e-RESERVE, so you do not need to upload again.',
             ],
@@ -111,9 +111,9 @@ class StudentNotice extends Mailable implements ShouldQueue
     public static function ticketsReleased(string $name): self
     {
         return new self(
-            'The SSC opened more tickets for your group',
+            'The SSC opened more tickets',
             $name,
-            'The SSC opened more tickets for your group',
+            'The SSC opened more tickets',
             [
                 'You can now get a ticket. Your files go through the normal review, and your ticket is issued once all of them are approved.',
             ],

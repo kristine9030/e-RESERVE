@@ -146,7 +146,7 @@ class DocumentService
         if (($this->tickets->ticketFor($user->id)['status'] ?? '') === 'used') {
             return $fail('Your ticket has already been used at the gate.');
         }
-        $closed = 'Uploads are closed: all the tickets for your group are already taken. You cannot upload files anymore, and no ticket can be promised.';
+        $closed = 'Uploads are closed: the target number of tickets has been reached. You can no longer upload files, and no ticket can be promised.';
         if (!$byStaff && WaitingList::uploadsClosedFor((int) $user->id, $user->member_type)) {   // quick check; the exact one is under the lock below
             return $fail($closed);
         }

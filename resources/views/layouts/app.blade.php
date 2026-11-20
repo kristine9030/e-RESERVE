@@ -131,7 +131,7 @@
                     <div class="alert d-flex align-items-start gap-2 mb-3" role="alert"
                          style="background:rgba(233,169,58,.12);border:1px solid rgba(233,169,58,.42);border-radius:14px;color:#7A5200;font-size:.88rem;">
                         <i class="fa-solid fa-hourglass-half mt-1"></i>
-                        <span><strong>The tickets for your group are full.</strong>
+                        <span><strong>The target number of tickets has been reached.</strong>
                             @if ($waitState === 'waiting')
                                 We received your files, but we cannot promise you a ticket. Please wait for the SSC’s announcement. If tickets become available, the SSC will announce it.
                             @else

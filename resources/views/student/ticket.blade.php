@@ -15,7 +15,7 @@
                 You have uploaded <strong>{{ $progress['uploaded'] }} of {{ $progress['total'] }}</strong>
                 and <strong>{{ $progress['approved'] }}</strong> {{ $progress['approved'] === 1 ? 'is' : 'are' }} approved so far.
                 @if (ticket_waiting_state() === 'waiting' || $progress['all_approved'])
-                    The tickets for your group are full. We cannot promise you a ticket. Please wait for the SSC’s announcement.
+                    The target number of tickets has been reached. We cannot promise you a ticket. Please wait for the SSC’s announcement.
                 @endif
             </p>
             <a href="{{ route('documents.index') }}" class="btn btn-gold"><i class="fa-solid fa-file-arrow-up"></i> Upload documents</a>

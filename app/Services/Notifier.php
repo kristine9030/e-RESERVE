@@ -59,7 +59,7 @@ class Notifier
     /** The tickets for their group are full. Nothing is promised: the SSC will announce if more become available. */
     public static function ticketsFull(int $userId): void
     {
-        self::notice($userId, 'waitlist', 'The tickets for your group are full',
+        self::notice($userId, 'waitlist', 'The target number of tickets has been reached',
             'We received your files but cannot promise you a ticket. Please wait for the SSC’s announcement.', route('tracking'));
         self::mail($userId, fn (User $u) => StudentNotice::ticketsFull($u->name));
     }
@@ -67,7 +67,7 @@ class Notifier
     /** The SSC released seats and this person is not ticketed yet (their files still need approval). */
     public static function ticketsReleased(int $userId): void
     {
-        self::notice($userId, 'approved', 'The SSC opened more tickets for your group',
+        self::notice($userId, 'approved', 'The SSC opened more tickets',
             'Your files go through the normal review. Your ticket is issued once they are all approved.', route('tracking'));
         self::mail($userId, fn (User $u) => StudentNotice::ticketsReleased($u->name));
     }
