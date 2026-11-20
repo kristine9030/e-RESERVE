@@ -154,8 +154,18 @@ class AdminController extends Controller
             unset($filters['sort']);
         }
 
+        $queue = $this->stats->pendingStudentsPage($filters);
+
+        // People leave the list as they are approved, so the page you were on may no longer exist: go to the last one.
+        if ($queue->lastPage() > 0 && $queue->currentPage() > $queue->lastPage()) {
+            return redirect()->route('admin.documents', $filters + ['page' => $queue->lastPage()]);
+        }
+
+        // "Back to the queue" on a student's page returns to this exact page, filters and all.
+        session(['review_list' => $request->getRequestUri()]);
+
         return view('admin.documents', [
-            'queue'    => $this->stats->pendingStudentsPage($filters),
+            'queue'    => $queue,
             'counts'   => $this->stats->pendingGroupCounts($filters),
             'filters'  => $filters,
         ]);
@@ -193,7 +203,19 @@ class AdminController extends Controller
             'previous' => $previous,
             'next'    => $this->stats->nextWaitingStudent((int) $user->id, $request->query('college'), $mark),
             'college' => (string) $request->query('college', ''),
+            'backUrl' => $this->backToList($request->query('college')),
         ]);
+    }
+
+    /** The list page the reviewer came from (same page number and filters), or the plain queue. */
+    private function backToList(?string $college): string
+    {
+        $saved = (string) session('review_list', '');
+
+        // only ever a path inside the admin documents list
+        return str_starts_with($saved, '/admin/documents') && !str_starts_with($saved, '/admin/documents/student')
+            ? $saved
+            : route('admin.documents', array_filter(['college' => $college]));
     }
 
     /**

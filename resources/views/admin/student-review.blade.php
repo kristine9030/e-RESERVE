@@ -13,7 +13,7 @@
     $okIds   = array_filter($waiting, fn ($d) => !\App\Services\DocumentChecker::needsLook($parse($d)));
     $counts  = ['approved' => 0, 'submitted' => 0, 'rejected' => 0, 'none' => 0];
     foreach ($docs as $d) { $counts[$d['status'] ?? 'none']++; }
-    $back    = route('admin.documents', array_filter(['college' => $college]));
+    $back    = $backUrl ?? route('admin.documents', array_filter(['college' => $college]));
 ?>
 
 @section('content')

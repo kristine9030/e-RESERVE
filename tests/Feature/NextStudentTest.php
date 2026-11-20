@@ -68,4 +68,28 @@ class NextStudentTest extends TestCase
 
         $this->assertSame($skipped, $this->next($admin, $last), 'nobody is behind the last one, so it goes back to who is still waiting');
     }
+
+    public function test_back_to_the_queue_returns_to_the_list_page_you_came_from(): void
+    {
+        $admin = $this->admin();
+        for ($i = 1; $i <= 25; $i++) {
+            $last = $this->waiting([sprintf('2026-11-16 08:%02d:00', $i)]);
+        }
+
+        $this->actingAs($admin)->get(route('admin.documents', ['page' => 2]))->assertOk();
+        $back = $this->actingAs($admin)->get(route('admin.documents.student', $last))->assertOk()->viewData('backUrl');
+
+        $this->assertStringContainsString('/admin/documents', $back);
+        $this->assertStringContainsString('page=2', $back);
+    }
+
+    public function test_a_list_page_that_no_longer_exists_goes_to_the_last_one(): void
+    {
+        $admin = $this->admin();
+        for ($i = 1; $i <= 25; $i++) {
+            $this->waiting([sprintf('2026-11-16 08:%02d:00', $i)]);
+        }
+
+        $this->actingAs($admin)->get(route('admin.documents', ['page' => 9]))->assertRedirect(route('admin.documents', ['page' => 2]));
+    }
 }
