@@ -21,7 +21,21 @@ use Illuminate\Support\Facades\DB;
  */
 class CheckinController extends Controller
 {
-    public const GATES = ['Gate A', 'Gate B', 'Gate C', 'Gate D', 'Gate E'];
+    public const GATES = ['Gate 1', 'Gate 2', 'Gate 3', 'Gate 4', 'Gate 5'];
+
+    /**
+     * The gate a scan is counted under. A scanner account pinned to a gate always uses it,
+     * whatever the form says; anyone else (full SSC staff) picks one.
+     */
+    private function resolveGate(Request $request, string $chosen): string
+    {
+        $assigned = (string) ($request->user()->gate ?? '');
+        if (in_array($assigned, self::GATES, true)) {
+            return $assigned;
+        }
+
+        return in_array($chosen, self::GATES, true) ? $chosen : self::GATES[0];
+    }
 
     public function __construct(private TicketService $tickets, private Stats $stats)
     {
@@ -47,6 +61,7 @@ class CheckinController extends Controller
             'byGate'   => $byGate,
             'lastScan' => $scanLog[0]['time_in'] ?? null,
             'prefix'   => config('ereserve.ticket.prefix'),
+            'myGate'   => in_array((string) auth()->user()->gate, self::GATES, true) ? auth()->user()->gate : null,
         ]);
     }
 
@@ -108,7 +123,7 @@ class CheckinController extends Controller
      */
     private function admitBySrCode(Request $request, string $input, string $gate): array
     {
-        $gate = in_array($gate, self::GATES, true) ? $gate : 'Gate A';
+        $gate = $this->resolveGate($request, $gate);
         $code = strtoupper(trim($input));
 
         // Students may type 2370362 or 23-70362.
@@ -143,7 +158,7 @@ class CheckinController extends Controller
     private function admit(Request $request, string $payload, string $gate): array
     {
         $code = $this->extractCode($payload);
-        $gate = in_array($gate, self::GATES, true) ? $gate : 'Gate A';
+        $gate = $this->resolveGate($request, $gate);
 
         // fromPayload() also checks the signature carried in the QR, so an
         // edited code is rejected before it ever reaches the database.

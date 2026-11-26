@@ -108,6 +108,15 @@
                     <input type="text" class="form-control" id="ad-id" name="id_no" value="{{ old('id_no') }}" maxlength="32">
                 </div>
 
+                <div id="ad-gatebox" class="d-none">
+                    <label class="form-label small fw-bold mt-3" for="ad-gate">Assigned gate</label>
+                    <select class="form-select" id="ad-gate" name="gate">
+                        <option value="">Choose…</option>
+                        @foreach (\App\Http\Controllers\Admin\CheckinController::GATES as $g)<option @selected(old('gate') === $g)>{{ $g }}</option>@endforeach
+                    </select>
+                    <div class="form-text">Every ticket this account scans is counted under this gate.</div>
+                </div>
+
                 <div id="ad-sponsorbox" class="d-none">
                     <label class="form-label small fw-bold mt-3" for="ad-stype">Availed Sponsorship</label>
                     <select class="form-select" id="ad-stype" name="sponsor_type">
@@ -175,6 +184,8 @@
             inp.required = student;
             lab.textContent = student ? 'SR-code (e.g. 24-12345)' : 'Employee ID (optional)';
             document.getElementById('ad-sponsorbox').classList.toggle('d-none', !sponsor);
+            document.getElementById('ad-gatebox').classList.toggle('d-none', k !== 'scanner');
+            document.getElementById('ad-gate').required = k === 'scanner';
             stype.required = sponsor; stier.required = sponsor;
         }
         /* The tier (or package) choices follow the kind of sponsorship; the server re-checks them. */

@@ -103,9 +103,10 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label-sm d-block" for="gate">Gate</label>
-                        <select class="form-select" id="gate" name="gate">
-                            @foreach (\App\Http\Controllers\Admin\CheckinController::GATES as $g)<option>{{ $g }}</option>@endforeach
+                        <select class="form-select" id="gate" name="gate" @disabled($myGate)>
+                            @foreach (\App\Http\Controllers\Admin\CheckinController::GATES as $g)<option @selected($g === $myGate)>{{ $g }}</option>@endforeach
                         </select>
+                        @if ($myGate)<div class="form-text">This account is assigned to {{ $myGate }}. Every scan counts there.</div>@endif
                     </div>
                     <button type="submit" class="btn btn-green btn-block2 btn-lg2">
                         <i class="fa-solid fa-user-check"></i> Verify &amp; Admit

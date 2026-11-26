@@ -161,7 +161,7 @@ class TicketApprovalTest extends TestCase
         $before = $this->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])->get(route('admin.checkin'));
         $before->assertOk()->assertDontSee('Student 1');
 
-        $this->postJson(route('admin.checkin.scan'), ['ticket_no' => $payload, 'gate' => 'Gate A'])->assertJson(['ok' => true]);
+        $this->postJson(route('admin.checkin.scan'), ['ticket_no' => $payload, 'gate' => 'Gate 1'])->assertJson(['ok' => true]);
 
         $after = $this->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])->get(route('admin.checkin'));
         $after->assertOk()->assertSee('data-live="log"', false)->assertSee('Student 1');
@@ -175,25 +175,42 @@ class TicketApprovalTest extends TestCase
         $this->actingAs($admin);
 
         // Registered but not approved yet: no ticket, nobody admitted.
-        $this->postJson(route('admin.checkin.manual'), ['sr_code' => '26-00001', 'gate' => 'Gate B'])
+        $this->postJson(route('admin.checkin.manual'), ['sr_code' => '26-00001', 'gate' => 'Gate 2'])
             ->assertJson(['ok' => false, 'title' => 'No ticket yet']);
 
         $this->review($admin, $s, 'approved');
 
         // Unknown SR-code.
-        $this->postJson(route('admin.checkin.manual'), ['sr_code' => '99-99999', 'gate' => 'Gate B'])
+        $this->postJson(route('admin.checkin.manual'), ['sr_code' => '99-99999', 'gate' => 'Gate 2'])
             ->assertJson(['ok' => false, 'title' => 'Not registered']);
 
         // Typed without the dash, lower case spacing: still found, admitted at the chosen gate.
-        $this->postJson(route('admin.checkin.manual'), ['sr_code' => ' 2600001 ', 'gate' => 'Gate B'])
+        $this->postJson(route('admin.checkin.manual'), ['sr_code' => ' 2600001 ', 'gate' => 'Gate 2'])
             ->assertJson(['ok' => true]);
-        $this->assertSame('Gate B', DB::table('checkins')->value('gate'));
+        $this->assertSame('Gate 2', DB::table('checkins')->value('gate'));
         $this->assertSame(1, DB::table('checkins')->count());
 
         // Same person again: refused, still one check-in.
-        $this->postJson(route('admin.checkin.manual'), ['sr_code' => '26-00001', 'gate' => 'Gate A'])
+        $this->postJson(route('admin.checkin.manual'), ['sr_code' => '26-00001', 'gate' => 'Gate 1'])
             ->assertJson(['ok' => false, 'title' => 'Already checked in']);
         $this->assertSame(1, DB::table('checkins')->count());
+    }
+
+    public function test_scanner_account_pinned_to_a_gate_counts_under_that_gate(): void
+    {
+        $admin = $this->admin();
+        $s     = $this->student(1);
+        $this->docs($s);
+        $this->review($admin, $s, 'approved');
+        $payload = app(TicketService::class)->qrPayload(app(TicketService::class)->ticketFor($s->id));
+
+        $scanner = User::create(['email' => 'gate3@g.batstate-u.edu.ph', 'name' => 'Gate Three', 'password' => 'secret-pass-1']);
+        $scanner->forceFill(['role' => 'scanner', 'status' => 'active', 'gate' => 'Gate 3'])->save();
+
+        // The form claims Gate 5, but the account is Gate 3.
+        $this->actingAs($scanner)->postJson(route('admin.checkin.scan'), ['ticket_no' => $payload, 'gate' => 'Gate 5'])
+            ->assertJson(['ok' => true]);
+        $this->assertSame('Gate 3', DB::table('checkins')->value('gate'));
     }
 
     public function test_a_used_ticket_cannot_be_scanned_again(): void
@@ -206,11 +223,11 @@ class TicketApprovalTest extends TestCase
         $payload = app(TicketService::class)->qrPayload($ticket);
 
         $this->actingAs($admin);
-        $this->post(route('admin.checkin.store'), ['ticket_no' => $payload, 'gate' => 'Gate A']);
+        $this->post(route('admin.checkin.store'), ['ticket_no' => $payload, 'gate' => 'Gate 1']);
         $this->assertSame('used', DB::table('tickets')->where('id', $ticket['id'])->value('status'));
         $this->assertSame(1, DB::table('checkins')->count());
 
-        $this->post(route('admin.checkin.store'), ['ticket_no' => $payload, 'gate' => 'Gate B']);
+        $this->post(route('admin.checkin.store'), ['ticket_no' => $payload, 'gate' => 'Gate 2']);
         $this->assertSame(1, DB::table('checkins')->count(), 'second scan must not admit again');
     }
 
@@ -225,7 +242,7 @@ class TicketApprovalTest extends TestCase
 
         DB::table('tickets')->where('id', $ticket['id'])->update(['status' => 'void']);
 
-        $this->actingAs($admin)->post(route('admin.checkin.store'), ['ticket_no' => $payload, 'gate' => 'Gate A']);
+        $this->actingAs($admin)->post(route('admin.checkin.store'), ['ticket_no' => $payload, 'gate' => 'Gate 1']);
         $this->assertSame(0, DB::table('checkins')->count());
     }
 }

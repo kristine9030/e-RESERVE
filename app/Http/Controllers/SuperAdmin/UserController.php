@@ -145,6 +145,14 @@ class UserController extends Controller
             return $bad('That ID number is already registered to someone else.');
         }
 
+        $gate = null;
+        if ($group === 'scanner') {
+            $gate = (string) $request->input('gate');
+            if (!in_array($gate, \App\Http\Controllers\Admin\CheckinController::GATES, true)) {
+                return $bad('Choose which gate this scanner account is assigned to.');
+            }
+        }
+
         $stype = $stier = null;
         if ($group === 'sponsor') {
             $stype = (string) $request->input('sponsor_type');
@@ -169,7 +177,7 @@ class UserController extends Controller
             'role' => in_array($group, ['superadmin', 'admin', 'scanner'], true) ? $group : 'student',
             'member_type' => match ($group) { 'student' => 'student', 'sponsor' => 'sponsor', 'employee' => $kind, default => 'student' },
             'student_no' => $no === '' ? null : $no,
-            'sponsor_type' => $stype, 'sponsor_tier' => $stier,
+            'sponsor_type' => $stype, 'sponsor_tier' => $stier, 'gate' => $gate,
             'program' => $group === 'employee' ? config('ereserve.employee_types')[$kind] : ($group === 'admin' || $group === 'scanner' ? 'Supreme Student Council' : null),
             'status' => 'active', 'must_change_password' => true, 'email_verified_at' => now(),
         ])->save();

@@ -111,7 +111,7 @@ class SuperAdminTest extends TestCase
         $this->assertSame('admin', User::where('email', 'sam@g.batstate-u.edu.ph')->value('role'));
         $this->assertTrue((bool) User::where('email', 'sam@g.batstate-u.edu.ph')->value('must_change_password'));
 
-        $add(['kind' => 'scanner', 'name' => 'Gate One', 'email' => 'gate@g.batstate-u.edu.ph'])->assertSessionHas('flash.type', 'success');
+        $add(['kind' => 'scanner', 'name' => 'Gate One', 'email' => 'gate@g.batstate-u.edu.ph', 'gate' => 'Gate 1'])->assertSessionHas('flash.type', 'success');
         $add(['kind' => 'superadmin', 'name' => 'Second Owner', 'email' => 'second@example.com', 'password' => 'Strong-pass-1'])->assertSessionHas('flash.type', 'success');
         $add(['kind' => 'sponsor', 'name' => 'Acme Foods', 'email' => 'acme@example.com', 'sponsor_type' => 'event', 'sponsor_tier' => 'puso'])->assertSessionHas('flash.type', 'success');
         $add(['kind' => 'staff', 'name' => 'Maria Staff', 'email' => 'maria@g.batstate-u.edu.ph', 'id_no' => 'EMP-100'])->assertSessionHas('flash.type', 'success');

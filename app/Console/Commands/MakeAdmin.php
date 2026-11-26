@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 /** Create (or reset) an SSC staff account. Staff can never self-register. */
 class MakeAdmin extends Command
 {
-    protected $signature = 'ereserve:make-admin {email : University address} {--name= : Full name} {--password= : Leave empty to generate one} {--role=admin : admin (full staff) or scanner (gate check-in only)}';
+    protected $signature = 'ereserve:make-admin {email : University address} {--name= : Full name} {--password= : Leave empty to generate one} {--role=admin : admin (full staff) or scanner (gate check-in only)} {--gate= : Gate number 1-5 for a scanner account; its scans count under that gate}';
 
     protected $description = 'Create or reset an SSC staff account';
 
@@ -29,6 +29,15 @@ class MakeAdmin extends Command
             return self::FAILURE;
         }
 
+        $gate = null;
+        if (($g = trim((string) $this->option('gate'))) !== '') {
+            $gate = 'Gate ' . $g;
+            if ($role !== 'scanner' || !in_array($gate, \App\Http\Controllers\Admin\CheckinController::GATES, true)) {
+                $this->error('--gate must be 1 to 5 and only applies to --role=scanner.');
+                return self::FAILURE;
+            }
+        }
+
         $password = (string) ($this->option('password') ?: Str::password(14, symbols: false));
         if ($problem = $accounts->passwordProblem($password)) {
             $this->error($problem);
@@ -40,7 +49,7 @@ class MakeAdmin extends Command
         $new  = !$user->exists;
 
         $user->forceFill([
-            'role' => $role, 'name' => $name, 'password' => $password, 'status' => 'active',
+            'role' => $role, 'gate' => $role === 'scanner' ? ($gate ?? $user->gate) : null, 'name' => $name, 'password' => $password, 'status' => 'active',
             'initials' => strtoupper(mb_substr($name, 0, 1) . mb_substr((string) strrchr(' ' . $name, ' '), 1, 1)),
             'email_verified_at' => $user->email_verified_at ?? now(),
         ])->save();
